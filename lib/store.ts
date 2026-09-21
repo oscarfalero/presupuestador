@@ -6,11 +6,12 @@ import { createBudget, emptyBreakdown, type Budget, type BudgetItem, type Chapte
 interface BudgetState {
   budget: Budget;
   setMeta: (patch: Partial<Pick<Budget, "name" | "details" | "clientName" | "date" | "ivaPct">>) => void;
-  addChapter: (title?: string) => void;
+  addChapter: (title?: string) => string;
   renameChapter: (id: string, title: string) => void;
   moveChapter: (id: string, direction: -1 | 1) => void;
   moveChapterTo: (id: string, toIndex: number) => void;
-  addItem: (chapterId: string, patch?: Partial<BudgetItem>) => void;
+  removeChapter: (id: string) => void;
+  addItem: (chapterId: string, patch?: Partial<BudgetItem>) => string;
   updateItem: (id: string, patch: Partial<BudgetItem>) => void;
   moveItem: (id: string, toChapterId: string, toIndex: number) => void;
   removeItem: (id: string) => void;
@@ -81,14 +82,14 @@ export const useBudgetStore = create<BudgetState>()(
     (set) => ({
       budget: sampleBudget(),
       setMeta: (patch) => set((s) => ({ budget: { ...s.budget, ...patch } })),
-      addChapter: (title = "New chapter") =>
+      addChapter: (title = "New chapter") => {
+        const id = uid();
         set((s) => {
-          const chapters: Chapter[] = [
-            ...s.budget.chapters,
-            { id: uid(), order: s.budget.chapters.length, title },
-          ];
+          const chapters: Chapter[] = [...s.budget.chapters, { id, order: s.budget.chapters.length, title }];
           return { budget: renumber({ ...s.budget, chapters }) };
-        }),
+        });
+        return id;
+      },
       renameChapter: (id, title) =>
         set((s) => ({
           budget: {
@@ -121,11 +122,20 @@ export const useBudgetStore = create<BudgetState>()(
           const chapters = next.map((c, order) => ({ ...c, order }));
           return { budget: renumber({ ...s.budget, chapters }) };
         }),
-      addItem: (chapterId, patch) =>
+      removeChapter: (id) =>
+        set((s) => ({
+          budget: renumber({
+            ...s.budget,
+            chapters: s.budget.chapters.filter((c) => c.id !== id),
+            items: s.budget.items.filter((i) => i.chapterId !== id),
+          }),
+        })),
+      addItem: (chapterId, patch) => {
+        const id = uid();
         set((s) => {
           const order = s.budget.items.filter((i) => i.chapterId === chapterId).length;
           const item: BudgetItem = {
-            id: uid(),
+            id,
             chapterId,
             order,
             code: "",
@@ -137,7 +147,9 @@ export const useBudgetStore = create<BudgetState>()(
             ...patch,
           };
           return { budget: renumber({ ...s.budget, items: [...s.budget.items, item] }) };
-        }),
+        });
+        return id;
+      },
       updateItem: (id, patch) =>
         set((s) => ({
           budget: {
