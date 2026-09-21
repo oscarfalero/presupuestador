@@ -6,6 +6,7 @@ import { budgetSubtotal, budgetTotalWithIva, chapterSubtotal, itemAmount } from 
 import { IVA_PRESETS } from "@/lib/budget-types";
 import { exportBudgetToExcel } from "@/lib/exportExcel";
 import { BudgetPdfDocument } from "./BudgetPdfDocument";
+import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((m) => m.PDFDownloadLink),
@@ -13,12 +14,12 @@ const PDFDownloadLink = dynamic(
 );
 
 /**
- * v0 placeholder editor: renders the budget from the store with
- * chapter subtotals and global VAT. Inline editing, drag & drop and
- * the internal breakdown panel land in upcoming issues.
+ * Budget editor with inline editing (issue #1): every field is edited
+ * in place — click to edit, Enter/blur to save, Esc to cancel.
+ * Drag & drop (#2), breakdown panel (#3) and full CRUD (#4) come next.
  */
 export function BudgetEditor() {
-  const { budget, setMeta, addChapter } = useBudgetStore();
+  const { budget, setMeta, renameChapter, updateItem } = useBudgetStore();
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const subtotal = budgetSubtotal(budget.items);
   const total = budgetTotalWithIva(subtotal, budget.ivaPct);
@@ -27,18 +28,19 @@ export function BudgetEditor() {
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <input
-            className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none focus:underline"
+          <InlineText
             value={budget.name}
-            onChange={(e) => setMeta({ name: e.target.value })}
-            aria-label="Budget name"
+            onCommit={(name) => setMeta({ name })}
+            ariaLabel="Budget name"
+            required
+            className="text-3xl font-semibold tracking-tight"
           />
-          <input
-            className="mt-1 w-full bg-transparent text-sm text-zinc-500 outline-none focus:underline"
+          <InlineText
             value={budget.details}
-            onChange={(e) => setMeta({ details: e.target.value })}
+            onCommit={(details) => setMeta({ details })}
+            ariaLabel="Budget details"
             placeholder="Add description…"
-            aria-label="Budget details"
+            className="mt-1 text-sm text-zinc-500"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -66,6 +68,17 @@ export function BudgetEditor() {
             value={budget.clientName}
             onChange={(e) => setMeta({ clientName: e.target.value })}
             placeholder="Optional"
+            aria-label="Client name"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          Date
+          <input
+            type="date"
+            className="rounded-md border border-zinc-300 px-2 py-1"
+            value={budget.date}
+            onChange={(e) => setMeta({ date: e.target.value })}
+            aria-label="Budget date"
           />
         </label>
         <label className="flex items-center gap-2">
@@ -74,6 +87,7 @@ export function BudgetEditor() {
             className="rounded-md border border-zinc-300 px-2 py-1"
             value={budget.ivaPct}
             onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
+            aria-label="VAT percentage"
           >
             {IVA_PRESETS.map((v) => (
               <option key={v} value={v}>
@@ -82,7 +96,7 @@ export function BudgetEditor() {
             ))}
           </select>
         </label>
-        <span className="ml-auto font-semibold">
+        <span className="ml-auto font-semibold tabular-nums">
           Subtotal {subtotal.toFixed(2)}€ · Total {total.toFixed(2)}€
         </span>
       </div>
@@ -94,11 +108,17 @@ export function BudgetEditor() {
             .sort((a, b) => a.order - b.order);
           return (
             <section key={ch.id} className="overflow-hidden rounded-xl border border-zinc-200">
-              <div className="flex items-center justify-between bg-zinc-50 px-4 py-3">
-                <h2 className="font-semibold">
-                  {ch.order + 1}. {ch.title}
-                </h2>
-                <span className="text-sm text-zinc-500">
+              <div className="flex items-center justify-between gap-3 bg-zinc-50 px-4 py-2">
+                <span className="font-semibold whitespace-nowrap">{ch.order + 1}.</span>
+                <div className="min-w-0 flex-1 font-semibold">
+                  <InlineText
+                    value={ch.title}
+                    onCommit={(title) => renameChapter(ch.id, title)}
+                    ariaLabel={`Chapter ${ch.order + 1} title`}
+                    required
+                  />
+                </div>
+                <span className="text-sm whitespace-nowrap text-zinc-500 tabular-nums">
                   Subtotal {chapterSubtotal(budget.items, ch.id).toFixed(2)}€
                 </span>
               </div>
@@ -107,7 +127,7 @@ export function BudgetEditor() {
                   <tr>
                     <th className="px-4 py-2 font-medium">Code</th>
                     <th className="px-4 py-2 font-medium">Title</th>
-                    <th className="px-4 py-2 font-medium">UM</th>
+                    <th className="px-4 py-2 text-center font-medium">UM</th>
                     <th className="px-4 py-2 text-right font-medium">Qty</th>
                     <th className="px-4 py-2 text-right font-medium">Price</th>
                     <th className="px-4 py-2 text-right font-medium">Amount</th>
@@ -115,18 +135,49 @@ export function BudgetEditor() {
                 </thead>
                 <tbody>
                   {chItems.map((item) => (
-                    <tr key={item.id} className="border-t border-zinc-100">
-                      <td className="px-4 py-2 text-zinc-500">{item.code}</td>
-                      <td className="px-4 py-2">
-                        <div className="font-medium">{item.title}</div>
-                        {item.description ? (
-                          <div className="text-zinc-500">{item.description}</div>
-                        ) : null}
+                    <tr key={item.id} className="border-t border-zinc-100 align-top">
+                      <td className="px-4 py-2 whitespace-nowrap text-zinc-500 tabular-nums">
+                        {item.code}
                       </td>
-                      <td className="px-4 py-2">{item.um}</td>
-                      <td className="px-4 py-2 text-right">{item.quantity}</td>
-                      <td className="px-4 py-2 text-right">{item.price.toFixed(2)}€</td>
-                      <td className="px-4 py-2 text-right font-medium">
+                      <td className="min-w-52 px-2 py-1.5">
+                        <InlineText
+                          value={item.title}
+                          onCommit={(title) => updateItem(item.id, { title })}
+                          ariaLabel={`Item ${item.code} title`}
+                          required
+                          className="font-medium"
+                        />
+                        <InlineText
+                          value={item.description}
+                          onCommit={(description) => updateItem(item.id, { description })}
+                          ariaLabel={`Item ${item.code} description`}
+                          placeholder="Add description…"
+                          className="text-zinc-500"
+                        />
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <InlineUnit
+                          value={item.um}
+                          onCommit={(um) => updateItem(item.id, { um })}
+                          ariaLabel={`Item ${item.code} unit of measure`}
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <InlineNumber
+                          value={item.quantity}
+                          onCommit={(quantity) => updateItem(item.id, { quantity })}
+                          ariaLabel={`Item ${item.code} quantity`}
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <InlineNumber
+                          value={item.price}
+                          onCommit={(price) => updateItem(item.id, { price })}
+                          ariaLabel={`Item ${item.code} price`}
+                          format={(n) => `${n.toFixed(2)}€`}
+                        />
+                      </td>
+                      <td className="px-4 py-2 text-right font-medium tabular-nums">
                         {itemAmount(item).toFixed(2)}€
                       </td>
                     </tr>
@@ -137,13 +188,6 @@ export function BudgetEditor() {
           );
         })}
       </div>
-
-      <button
-        className="mt-6 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
-        onClick={() => addChapter()}
-      >
-        + Add chapter
-      </button>
     </div>
   );
 }
