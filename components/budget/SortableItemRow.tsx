@@ -7,17 +7,20 @@ import type { BudgetItem } from "@/lib/budget-types";
 import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
 
 export const ITEM_GRID_CLS =
-  "grid grid-cols-[1.75rem_3rem_minmax(0,1fr)_3.5rem_5.5rem_6.5rem_6rem] items-start gap-1";
+  "grid grid-cols-[1.75rem_3rem_minmax(0,1fr)_3.5rem_5.5rem_6.5rem_6rem_2rem] items-start gap-1";
 
 interface SortableItemRowProps {
   item: BudgetItem;
   chapterId: string;
+  expanded: boolean;
+  hasBreakdown: boolean;
+  onToggleBreakdown: () => void;
   onUpdate: (id: string, patch: Partial<BudgetItem>) => void;
 }
 
 /** Draggable item row. The drag listeners live only on the grip handle,
  *  so click-to-edit keeps working everywhere else. */
-export function SortableItemRow({ item, chapterId, onUpdate }: SortableItemRowProps) {
+export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, onToggleBreakdown, onUpdate }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", chapterId },
@@ -81,6 +84,17 @@ export function SortableItemRow({ item, chapterId, onUpdate }: SortableItemRowPr
       <span className="px-1 py-1 text-right font-medium tabular-nums">
         {itemAmount(item).toFixed(2)}€
       </span>
+      <button
+        type="button"
+        onClick={onToggleBreakdown}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? "Collapse" : "Expand"} price breakdown for item ${item.code}`}
+        title="Price breakdown (internal)"
+        className="rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+      >
+        {expanded ? "▾" : "▸"}
+        {hasBreakdown && !expanded ? <span className="text-blue-500">•</span> : null}
+      </button>
     </div>
   );
 }

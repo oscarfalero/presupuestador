@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-import { budgetSubtotal, budgetTotalWithIva, chapterSubtotal, itemAmount } from "@/lib/calc";
 import type { Budget } from "@/lib/budget-types";
+import { toClientBudget } from "@/lib/clientExport";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
@@ -16,47 +16,39 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Client-facing PDF. Internal breakdown excluded by design (editor-only).
+ * Client-facing PDF, built from the client-safe model.
+ * Internal breakdown excluded by design (editor-only).
  */
 export function BudgetPdfDocument({ budget }: { budget: Budget }) {
-  const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
-  const subtotal = budgetSubtotal(budget.items);
-  const total = budgetTotalWithIva(subtotal, budget.ivaPct);
+  const client = toClientBudget(budget);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.h1}>{budget.name}</Text>
+        <Text style={styles.h1}>{client.name}</Text>
         <Text style={styles.meta}>
-          {budget.clientName ? `Client: ${budget.clientName} · ` : ""}{budget.date} · VAT {budget.ivaPct}%
+          {client.clientName ? `Client: ${client.clientName} · ` : ""}{client.date} · VAT {client.ivaPct}%
         </Text>
-        {budget.details ? <Text style={styles.meta}>{budget.details}</Text> : null}
-        {chapters.map((ch) => {
-          const chItems = budget.items
-            .filter((i) => i.chapterId === ch.id)
-            .sort((a, b) => a.order - b.order);
-          return (
-            <View key={ch.id}>
-              <Text style={styles.chapter}>
-                {ch.order + 1}. {ch.title}
-              </Text>
-              {chItems.map((item) => (
-                <View key={item.id} style={styles.row}>
-                  <Text style={styles.code}>{item.code}</Text>
-                  <Text style={styles.title}>
-                    {item.title} — {item.quantity} {item.um} x {item.price.toFixed(2)}€
-                  </Text>
-                  <Text style={styles.num}>{itemAmount(item).toFixed(2)}€</Text>
-                </View>
-              ))}
-              <Text style={styles.subtotal}>
-                Subtotal: {chapterSubtotal(budget.items, ch.id).toFixed(2)}€
-              </Text>
-            </View>
-          );
-        })}
-        <Text style={styles.subtotal}>Subtotal: {subtotal.toFixed(2)}€</Text>
-        <Text style={styles.subtotal}>VAT {budget.ivaPct}%: {(total - subtotal).toFixed(2)}€</Text>
-        <Text style={styles.total}>TOTAL: {total.toFixed(2)}€</Text>
+        {client.details ? <Text style={styles.meta}>{client.details}</Text> : null}
+        {client.chapters.map((ch) => (
+          <View key={ch.number}>
+            <Text style={styles.chapter}>
+              {ch.number}. {ch.title}
+            </Text>
+            {ch.items.map((item) => (
+              <View key={item.code} style={styles.row}>
+                <Text style={styles.code}>{item.code}</Text>
+                <Text style={styles.title}>
+                  {item.title} — {item.quantity} {item.um} x {item.price.toFixed(2)}€
+                </Text>
+                <Text style={styles.num}>{item.amount.toFixed(2)}€</Text>
+              </View>
+            ))}
+            <Text style={styles.subtotal}>Subtotal: {ch.subtotal.toFixed(2)}€</Text>
+          </View>
+        ))}
+        <Text style={styles.subtotal}>Subtotal: {client.subtotal.toFixed(2)}€</Text>
+        <Text style={styles.subtotal}>VAT {client.ivaPct}%: {client.vatAmount.toFixed(2)}€</Text>
+        <Text style={styles.total}>TOTAL: {client.total.toFixed(2)}€</Text>
       </Page>
     </Document>
   );

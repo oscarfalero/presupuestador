@@ -34,12 +34,12 @@ interface ActiveDrag {
 }
 
 /**
- * Budget editor (issues #1 + #2): inline editing plus drag & drop.
- * Chapters and items reorder via grip handles; codes renumber automatically.
- * Breakdown panel (#3) and full CRUD (#4) come next.
+ * Budget editor (issues #1 + #2 + #3): inline editing, drag & drop,
+ * and the internal per-item price breakdown panel.
+ * Full CRUD (#4) comes next.
  */
 export function BudgetEditor() {
-  const { budget, setMeta, renameChapter, updateItem, moveItem, moveChapterTo } = useBudgetStore();
+  const { budget, setMeta, renameChapter, updateItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
 
   const sensors = useSensors(
@@ -209,6 +209,10 @@ export function BudgetEditor() {
                 allItems={budget.items}
                 onRename={renameChapter}
                 onUpdateItem={updateItem}
+                onUpdateBreakdown={updateBreakdown}
+                onAddMaterial={addMaterial}
+                onUpdateMaterial={updateMaterial}
+                onRemoveMaterial={removeMaterial}
               />
             ))}
           </SortableContext>

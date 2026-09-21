@@ -1,12 +1,16 @@
 import ExcelJS from "exceljs";
-import { budgetSubtotal, budgetTotalWithIva, chapterSubtotal, itemAmount } from "./calc";
+import { toClientBudget, type ClientBudget } from "./clientExport";
 import type { Budget } from "./budget-types";
 
 /**
- * Client-facing Excel export.
+ * Client-facing Excel export, built from the client-safe model.
  * The internal price breakdown is NEVER included (editor-only).
  */
 export async function exportBudgetToExcel(budget: Budget): Promise<void> {
+  await exportClientBudgetToExcel(toClientBudget(budget));
+}
+
+export async function exportClientBudgetToExcel(client: ClientBudget): Promise<void> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Presupuestador";
   const ws = wb.addWorksheet("Budget");
@@ -24,16 +28,10 @@ export async function exportBudgetToExcel(budget: Budget): Promise<void> {
   const header = ws.getRow(1);
   header.font = { bold: true };
 
-  const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
-  const items = [...budget.items];
-
-  for (const ch of chapters) {
-    const chItems = items
-      .filter((i) => i.chapterId === ch.id)
-      .sort((a, b) => a.order - b.order);
-    const titleRow = ws.addRow({ title: `${ch.order + 1}. ${ch.title}` });
+  for (const ch of client.chapters) {
+    const titleRow = ws.addRow({ title: `${ch.number}. ${ch.title}` });
     titleRow.font = { bold: true };
-    for (const item of chItems) {
+    for (const item of ch.items) {
       ws.addRow({
         code: item.code,
         title: item.title,
@@ -41,18 +39,17 @@ export async function exportBudgetToExcel(budget: Budget): Promise<void> {
         um: item.um,
         qty: item.quantity,
         price: item.price,
-        amount: itemAmount(item),
+        amount: item.amount,
       });
     }
-    const subtotalRow = ws.addRow({ title: `Subtotal ${ch.title}`, amount: chapterSubtotal(items, ch.id) });
+    const subtotalRow = ws.addRow({ title: `Subtotal ${ch.title}`, amount: ch.subtotal });
     subtotalRow.font = { italic: true };
   }
 
-  const subtotal = budgetSubtotal(budget.items);
   ws.addRow({});
-  ws.addRow({ title: "Subtotal", amount: subtotal });
-  ws.addRow({ title: `VAT ${budget.ivaPct}%`, amount: subtotal * (budget.ivaPct / 100) });
-  const totalRow = ws.addRow({ title: "TOTAL", amount: budgetTotalWithIva(subtotal, budget.ivaPct) });
+  ws.addRow({ title: "Subtotal", amount: client.subtotal });
+  ws.addRow({ title: `VAT ${client.ivaPct}%`, amount: client.vatAmount });
+  const totalRow = ws.addRow({ title: "TOTAL", amount: client.total });
   totalRow.font = { bold: true };
 
   const buf = await wb.xlsx.writeBuffer();
@@ -62,7 +59,7 @@ export async function exportBudgetToExcel(budget: Budget): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${slug(budget.name) || "budget"}.xlsx`;
+  a.download = `${slug(client.name) || "budget"}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }

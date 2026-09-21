@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { chapterSubtotal } from "@/lib/calc";
-import type { BudgetItem, Chapter } from "@/lib/budget-types";
+import type { BudgetItem, Chapter, ItemBreakdown, MaterialCost } from "@/lib/budget-types";
 import { InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS, SortableItemRow } from "./SortableItemRow";
+import { ItemBreakdownPanel } from "./ItemBreakdownPanel";
 
 interface ChapterBlockProps {
   chapter: Chapter;
@@ -14,11 +16,15 @@ interface ChapterBlockProps {
   allItems: BudgetItem[];
   onRename: (id: string, title: string) => void;
   onUpdateItem: (id: string, patch: Partial<BudgetItem>) => void;
+  onUpdateBreakdown: (itemId: string, patch: Partial<ItemBreakdown>) => void;
+  onAddMaterial: (itemId: string) => void;
+  onUpdateMaterial: (itemId: string, materialId: string, patch: Partial<MaterialCost>) => void;
+  onRemoveMaterial: (itemId: string, materialId: string) => void;
 }
 
 /** Draggable chapter section. Whole-section drag via the header grip;
  *  items are independently sortable, including across chapters. */
-export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem }: ChapterBlockProps) {
+export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem, onUpdateBreakdown, onAddMaterial, onUpdateMaterial, onRemoveMaterial }: ChapterBlockProps) {
   const {
     attributes,
     listeners,
@@ -32,6 +38,15 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem 
   const { setNodeRef: setDropRef } = useDroppable({ id: `chapter-drop-${chapter.id}` });
 
   const sorted = [...items].sort((a, b) => a.order - b.order);
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   return (
     <section
@@ -76,18 +91,36 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem 
         <span className="text-right font-medium">Qty</span>
         <span className="text-right font-medium">Price</span>
         <span className="px-1 text-right font-medium">Amount</span>
+        <span />
       </div>
 
       <div ref={setDropRef}>
         <SortableContext items={sorted.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-          {sorted.map((item) => (
-            <SortableItemRow
-              key={item.id}
-              item={item}
-              chapterId={chapter.id}
-              onUpdate={onUpdateItem}
-            />
-          ))}
+          {sorted.map((item) => {
+            const open = openIds.has(item.id);
+            return (
+              <div key={item.id}>
+                <SortableItemRow
+                  item={item}
+                  chapterId={chapter.id}
+                  expanded={open}
+                  hasBreakdown={!!item.breakdown}
+                  onToggleBreakdown={() => toggle(item.id)}
+                  onUpdate={onUpdateItem}
+                />
+                {open ? (
+                  <ItemBreakdownPanel
+                    item={item}
+                    onUpdateBreakdown={onUpdateBreakdown}
+                    onAddMaterial={onAddMaterial}
+                    onUpdateMaterial={onUpdateMaterial}
+                    onRemoveMaterial={onRemoveMaterial}
+                    onSyncPrice={(id, price) => onUpdateItem(id, { price })}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
         </SortableContext>
         {sorted.length === 0 ? (
           <p className="border-t border-dashed border-zinc-200 px-4 py-4 text-center text-sm text-zinc-400">
