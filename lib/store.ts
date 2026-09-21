@@ -9,6 +9,7 @@ interface BudgetState {
   addChapter: (title?: string) => void;
   renameChapter: (id: string, title: string) => void;
   moveChapter: (id: string, direction: -1 | 1) => void;
+  moveChapterTo: (id: string, toIndex: number) => void;
   addItem: (chapterId: string, patch?: Partial<BudgetItem>) => void;
   updateItem: (id: string, patch: Partial<BudgetItem>) => void;
   moveItem: (id: string, toChapterId: string, toIndex: number) => void;
@@ -100,6 +101,19 @@ export const useBudgetStore = create<BudgetState>()(
           const next = [...sorted];
           const [moved] = next.splice(idx, 1);
           next.splice(j, 0, moved);
+          const chapters = next.map((c, order) => ({ ...c, order }));
+          return { budget: renumber({ ...s.budget, chapters }) };
+        }),
+      moveChapterTo: (id, toIndex) =>
+        set((s) => {
+          const sorted = [...s.budget.chapters].sort((a, b) => a.order - b.order);
+          const from = sorted.findIndex((c) => c.id === id);
+          if (from < 0) return s;
+          const clamped = Math.max(0, Math.min(toIndex, sorted.length - 1));
+          if (clamped === from) return s;
+          const next = [...sorted];
+          const [moved] = next.splice(from, 1);
+          next.splice(clamped, 0, moved);
           const chapters = next.map((c, order) => ({ ...c, order }));
           return { budget: renumber({ ...s.budget, chapters }) };
         }),
