@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { renumber } from "./calc";
-import { createBudget, type Budget, type BudgetItem, type Chapter } from "./budget-types";
+import { createBudget, emptyBreakdown, type Budget, type BudgetItem, type Chapter, type ItemBreakdown, type MaterialCost } from "./budget-types";
 
 interface BudgetState {
   budget: Budget;
@@ -14,6 +14,10 @@ interface BudgetState {
   updateItem: (id: string, patch: Partial<BudgetItem>) => void;
   moveItem: (id: string, toChapterId: string, toIndex: number) => void;
   removeItem: (id: string) => void;
+  updateBreakdown: (itemId: string, patch: Partial<ItemBreakdown>) => void;
+  addMaterial: (itemId: string) => void;
+  updateMaterial: (itemId: string, materialId: string, patch: Partial<MaterialCost>) => void;
+  removeMaterial: (itemId: string, materialId: string) => void;
   reset: () => void;
 }
 
@@ -183,6 +187,68 @@ export const useBudgetStore = create<BudgetState>()(
       removeItem: (id) =>
         set((s) => ({
           budget: renumber({ ...s.budget, items: s.budget.items.filter((i) => i.id !== id) }),
+        })),
+      updateBreakdown: (itemId, patch) =>
+        set((s) => ({
+          budget: {
+            ...s.budget,
+            items: s.budget.items.map((i) =>
+              i.id === itemId
+                ? { ...i, breakdown: { ...emptyBreakdown(), ...i.breakdown, ...patch } }
+                : i,
+            ),
+          },
+        })),
+      addMaterial: (itemId) =>
+        set((s) => ({
+          budget: {
+            ...s.budget,
+            items: s.budget.items.map((i) => {
+              if (i.id !== itemId) return i;
+              const breakdown = { ...emptyBreakdown(), ...i.breakdown };
+              const material: MaterialCost = {
+                id: uid(),
+                description: "",
+                quantity: 1,
+                price: 0,
+              };
+              return { ...i, breakdown: { ...breakdown, materials: [...breakdown.materials, material] } };
+            }),
+          },
+        })),
+      updateMaterial: (itemId, materialId, patch) =>
+        set((s) => ({
+          budget: {
+            ...s.budget,
+            items: s.budget.items.map((i) => {
+              if (i.id !== itemId || !i.breakdown) return i;
+              return {
+                ...i,
+                breakdown: {
+                  ...i.breakdown,
+                  materials: i.breakdown.materials.map((m) =>
+                    m.id === materialId ? { ...m, ...patch } : m,
+                  ),
+                },
+              };
+            }),
+          },
+        })),
+      removeMaterial: (itemId, materialId) =>
+        set((s) => ({
+          budget: {
+            ...s.budget,
+            items: s.budget.items.map((i) => {
+              if (i.id !== itemId || !i.breakdown) return i;
+              return {
+                ...i,
+                breakdown: {
+                  ...i.breakdown,
+                  materials: i.breakdown.materials.filter((m) => m.id !== materialId),
+                },
+              };
+            }),
+          },
         })),
       reset: () => set({ budget: sampleBudget() }),
     }),
