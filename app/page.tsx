@@ -1,9 +1,9 @@
-import { BudgetEditor } from "@/components/budget/BudgetEditor";
+import { BudgetEditorLoader } from "@/components/budget/BudgetEditorLoader";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-zinc-900">
-      <BudgetEditor />
+      <BudgetEditorLoader />
     </main>
   );
 }
