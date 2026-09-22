@@ -97,6 +97,12 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
           </Text>
         ) : null}
         {client.intro ? <Text style={styles.pre}>{client.intro}</Text> : null}
+        {client.terms ? (
+          <View>
+            <Text style={styles.sectionTitle}>{t["section.terms"]}</Text>
+            <Text style={styles.sectionBody}>{client.terms}</Text>
+          </View>
+        ) : null}
         <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
         {client.chapters.map((ch) => (
           <View key={ch.number}>
@@ -138,12 +144,6 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
         <Text style={styles.total}>
           {t["export.total"]}: {client.total.toFixed(2)}€
         </Text>
-        {client.terms ? (
-          <View>
-            <Text style={styles.sectionTitle}>{t["section.terms"]}</Text>
-            <Text style={styles.sectionBody}>{client.terms}</Text>
-          </View>
-        ) : null}
         {client.payment ? (
           <View>
             <Text style={styles.sectionTitle}>{t["section.payment"]}</Text>

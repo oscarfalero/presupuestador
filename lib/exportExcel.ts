@@ -92,6 +92,13 @@ export async function exportClientBudgetToExcel(
     r.alignment = { wrapText: true };
   }
 
+  if (client.terms) {
+    const label = ws.addRow({ title: t["section.terms"] });
+    label.font = { bold: true };
+    const r = tallRow(ws, { title: client.terms }, blockLines(client.terms));
+    r.alignment = { wrapText: true };
+    ws.addRow({});
+  }
   const chaptersTitle = ws.addRow({ title: t["section.chapters"].toUpperCase() });
   chaptersTitle.font = { bold: true, size: 12 };
   const headerRow = ws.addRow({
@@ -129,13 +136,6 @@ export async function exportClientBudgetToExcel(
   const totalRow = ws.addRow({ title: t["export.total"], amount: client.total });
   totalRow.font = { bold: true };
 
-  if (client.terms) {
-    ws.addRow({});
-    const label = ws.addRow({ title: t["section.terms"] });
-    label.font = { bold: true };
-    const r = tallRow(ws, { title: client.terms }, blockLines(client.terms));
-    r.alignment = { wrapText: true };
-  }
   if (client.payment) {
     ws.addRow({});
     const label = ws.addRow({ title: t["section.payment"] });
