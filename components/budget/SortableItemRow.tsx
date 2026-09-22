@@ -31,7 +31,8 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
   const unpriced = isUnpriced(item);
   const priceMissing = item.price === 0;
   const qtyMissing = item.quantity === 0;
-  const warnCls = "rounded bg-amber-100 font-medium text-amber-900 hover:bg-amber-200";
+  const warnCls =
+    "rounded bg-amber-100 font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70";
 
   return (
     <div
@@ -42,7 +43,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 ${unpriced ? "bg-amber-50/70" : "bg-white"}`}
+      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}`}
     >
       <button
         type="button"
@@ -50,11 +51,11 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         title="Drag to reorder"
         {...attributes}
         {...listeners}
-        className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 active:cursor-grabbing"
+        className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
       >
         ⠿
       </button>
-      <span className="px-1 py-1 text-zinc-500 tabular-nums">{item.code}</span>
+      <span className="px-1 py-1 text-zinc-500 tabular-nums dark:text-zinc-400">{item.code}</span>
       <span className="min-w-0">
         <InlineText
           value={item.title}
@@ -71,7 +72,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           ariaLabel={`Item ${item.code} description`}
           placeholder="Add description…"
           navId={`item:${item.id}:desc`}
-          className="text-zinc-500"
+          className="text-zinc-500 dark:text-zinc-400"
         />
       </span>
       <span className="py-1 text-center">
@@ -109,7 +110,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           aria-expanded={expanded}
           aria-label={`${expanded ? "Collapse" : "Expand"} price breakdown for item ${item.code}`}
           title="Price breakdown (internal)"
-          className="rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+          className="rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {expanded ? "▾" : "▸"}
           {hasBreakdown && !expanded ? <span className="text-blue-500">•</span> : null}
@@ -119,7 +120,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           confirmLabel="Sure?"
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`Delete item ${item.code}`}
-          className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
+          className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium text-white hover:bg-red-500"
         />
       </span>

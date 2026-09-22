@@ -21,6 +21,7 @@ import { exportBudgetToExcel } from "@/lib/exportExcel";
 import { BudgetPdfDocument } from "./BudgetPdfDocument";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { UndoToast } from "./UndoToast";
 
 const PDFDownloadLink = dynamic(
@@ -141,12 +142,13 @@ export function BudgetEditor() {
             ariaLabel="Budget details"
             placeholder="Add description…"
             navId="meta:details"
-            className="mt-1 text-sm text-zinc-500"
+            className="mt-1 text-sm text-zinc-500 dark:text-zinc-400"
           />
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <button
-            className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+            className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             onClick={() => void exportBudgetToExcel(budget)}
           >
             Export Excel
@@ -154,7 +156,7 @@ export function BudgetEditor() {
           <PDFDownloadLink
             document={<BudgetPdfDocument budget={budget} />}
             fileName="budget.pdf"
-            className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100"
+            className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             {({ loading }) => (loading ? "Preparing PDF…" : "Export PDF")}
           </PDFDownloadLink>
@@ -165,7 +167,7 @@ export function BudgetEditor() {
         <label className="flex items-center gap-2">
           Client
           <input
-            className="rounded-md border border-zinc-300 px-2 py-1"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.clientName}
             onChange={(e) => setMeta({ clientName: e.target.value })}
             placeholder="Optional"
@@ -177,7 +179,7 @@ export function BudgetEditor() {
           Date
           <input
             type="date"
-            className="rounded-md border border-zinc-300 px-2 py-1"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.date}
             onChange={(e) => setMeta({ date: e.target.value })}
             aria-label="Budget date"
@@ -187,7 +189,7 @@ export function BudgetEditor() {
         <label className="flex items-center gap-2">
           VAT
           <select
-            className="rounded-md border border-zinc-300 px-2 py-1"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900"
             value={budget.ivaPct}
             onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
             aria-label="VAT percentage"
@@ -208,7 +210,7 @@ export function BudgetEditor() {
             type="button"
             onClick={scrollToFirstUnpriced}
             title="Scroll to the first item without price"
-            className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200"
+            className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
           >
             ⚠ {unpricedCount} {unpricedCount === 1 ? "item" : "items"} without price
           </button>
@@ -223,15 +225,15 @@ export function BudgetEditor() {
         onDragCancel={() => setActiveDrag(null)}
       >
         {chapters.length === 0 ? (
-          <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center">
+          <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
             <p className="text-lg font-medium">No chapters yet</p>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               Chapters group your items (e.g. Masonry, Plumbing) and are numbered automatically.
             </p>
             <button
               type="button"
               onClick={() => addChapter()}
-              className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+              className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               + Create first chapter
             </button>
@@ -263,14 +265,14 @@ export function BudgetEditor() {
           <button
             type="button"
             onClick={() => addChapter()}
-            className="mt-6 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+            className="mt-6 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             + Add chapter
           </button>
         ) : null}
         <DragOverlay dropAnimation={null}>
           {activeDrag ? (
-            <div className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium shadow-lg">
+            <div className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
               {activeDrag.label}
             </div>
           ) : null}

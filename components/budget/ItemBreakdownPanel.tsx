@@ -30,12 +30,12 @@ export function ItemBreakdownPanel({
 
   if (!breakdown) {
     return (
-      <div className="border-t border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-3 text-sm">
-        <p className="text-zinc-500">No price breakdown yet — document how this price was calculated.</p>
+      <div className="border-t border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-900/60">
+        <p className="text-zinc-500 dark:text-zinc-400">No price breakdown yet — document how this price was calculated.</p>
         <button
           type="button"
           onClick={() => onUpdateBreakdown(item.id, {})}
-          className="mt-2 rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100"
+          className="mt-2 rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           + Add breakdown
         </button>
@@ -48,13 +48,13 @@ export function ItemBreakdownPanel({
   const matches = Math.abs(diff) < 0.005;
 
   return (
-    <div className="space-y-3 border-t border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-3 text-sm">
-      <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+    <div className="space-y-3 border-t border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-900/60">
+      <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
         Price breakdown · internal, not exported
       </p>
 
       <div>
-        <div className="grid grid-cols-[minmax(0,1.4fr)_4rem_5rem_minmax(0,1fr)_5rem_2rem] gap-1 text-xs uppercase text-zinc-400">
+        <div className="grid grid-cols-[minmax(0,1.4fr)_4rem_5rem_minmax(0,1fr)_5rem_2rem] gap-1 text-xs uppercase text-zinc-400 dark:text-zinc-500">
           <span className="px-1 font-medium">Material</span>
           <span className="text-right font-medium">Qty</span>
           <span className="text-right font-medium">Price</span>
@@ -65,7 +65,7 @@ export function ItemBreakdownPanel({
         {breakdown.materials.map((m) => (
           <div
             key={m.id}
-            className="grid grid-cols-[minmax(0,1.4fr)_4rem_5rem_minmax(0,1fr)_5rem_2rem] items-start gap-1 border-t border-zinc-100 py-1"
+            className="grid grid-cols-[minmax(0,1.4fr)_4rem_5rem_minmax(0,1fr)_5rem_2rem] items-start gap-1 border-t border-zinc-100 py-1 dark:border-zinc-800"
           >
             <InlineText
               value={m.description}
@@ -102,7 +102,7 @@ export function ItemBreakdownPanel({
                 ariaLabel={`Material source URL for item ${item.code}`}
                 placeholder="https://…"
                 navId={`item:${item.id}:mat:${m.id}:srcurl`}
-                className="text-xs text-blue-700"
+                className="text-xs text-blue-700 dark:text-blue-400"
               />
             </span>
             <span className="px-1 py-1 text-right tabular-nums">
@@ -113,7 +113,7 @@ export function ItemBreakdownPanel({
               onClick={() => onRemoveMaterial(item.id, m.id)}
               aria-label={`Remove material from item ${item.code}`}
               title="Remove material"
-              className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
+              className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
             >
               ✕
             </button>
@@ -122,7 +122,7 @@ export function ItemBreakdownPanel({
         <button
           type="button"
           onClick={() => onAddMaterial(item.id)}
-          className="mt-1 rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100"
+          className="mt-1 rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           + Add material
         </button>
@@ -181,28 +181,28 @@ export function ItemBreakdownPanel({
           ariaLabel={`Breakdown notes for item ${item.code}`}
           placeholder="Explain the calculation… e.g. 289 + 4h × 35 = 140 + sealing 21 ⇒ 450"
           navId={`item:${item.id}:notes`}
-          className="text-zinc-600"
+          className="text-zinc-600 dark:text-zinc-300"
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-2">
+      <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-700">
         <span className="tabular-nums">
           Breakdown total <strong>{total.toFixed(2)}€</strong> · Item price{" "}
           <strong>{item.price.toFixed(2)}€</strong>
         </span>
         {matches ? (
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/50 dark:text-green-200">
             ✓ matches
           </span>
         ) : (
           <>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-100">
               ⚠ differs by {diff.toFixed(2)}€
             </span>
             <button
               type="button"
               onClick={() => onSyncPrice(item.id, total)}
-              className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700"
+              className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               Use {total.toFixed(2)}€ as price
             </button>
