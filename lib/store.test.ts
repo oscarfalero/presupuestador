@@ -117,9 +117,9 @@ describe("chapters", () => {
 
 describe("items CRUD", () => {
   it("addItem appends with defaults and a derived code", () => {
-    const id = useBudgetStore.getState().addItem("c2");
+    const id = useBudgetStore.getState().addItem("c2", "Gadget");
     const added = useBudgetStore.getState().budget.items.find((i) => i.id === id);
-    expect(added).toMatchObject({ um: "ud", quantity: 1, price: 0, code: "2.2" });
+    expect(added).toMatchObject({ title: "Gadget", um: "ud", quantity: 1, price: 0, code: "2.2" });
   });
 
   it("removeItem renumbers the chapter", () => {

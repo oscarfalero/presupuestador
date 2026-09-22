@@ -22,7 +22,9 @@ import { BudgetPdfDocument } from "./BudgetPdfDocument";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
+import { useStrings } from "@/lib/locale";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((m) => m.PDFDownloadLink),
@@ -50,6 +52,7 @@ export function BudgetEditor() {
   );
 
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
+  const t = useStrings();
   const subtotal = budgetSubtotal(budget.items);
   const total = budgetTotalWithIva(subtotal, budget.ivaPct);
   const unpricedCount = budget.items.filter(isUnpriced).length;
@@ -131,7 +134,7 @@ export function BudgetEditor() {
           <InlineText
             value={budget.name}
             onCommit={(name) => setMeta({ name })}
-            ariaLabel="Budget name"
+            ariaLabel={t["budget.name"]}
             required
             navId="meta:name"
             className="text-3xl font-semibold tracking-tight"
@@ -139,60 +142,61 @@ export function BudgetEditor() {
           <InlineText
             value={budget.details}
             onCommit={(details) => setMeta({ details })}
-            ariaLabel="Budget details"
-            placeholder="Add description…"
+            ariaLabel={t["budget.details"]}
+            placeholder={t["budget.detailsPlaceholder"]}
             navId="meta:details"
             className="mt-1 text-sm text-zinc-500 dark:text-zinc-400"
           />
         </div>
         <div className="flex items-center gap-2">
+          <LocaleToggle />
           <ThemeToggle />
           <button
             className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             onClick={() => void exportBudgetToExcel(budget)}
           >
-            Export Excel
+            {t["header.exportExcel"]}
           </button>
           <PDFDownloadLink
             document={<BudgetPdfDocument budget={budget} />}
             fileName="budget.pdf"
             className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
-            {({ loading }) => (loading ? "Preparing PDF…" : "Export PDF")}
+            {({ loading }) => (loading ? t["header.preparingPdf"] : t["header.exportPdf"])}
           </PDFDownloadLink>
         </div>
       </header>
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
-          Client
+          {t["meta.client"]}
           <input
             className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.clientName}
             onChange={(e) => setMeta({ clientName: e.target.value })}
-            placeholder="Optional"
-            aria-label="Client name"
+            placeholder={t["meta.clientPlaceholder"]}
+            aria-label={t["meta.client"]}
             data-nav-id="meta:client"
           />
         </label>
         <label className="flex items-center gap-2">
-          Date
+          {t["meta.date"]}
           <input
             type="date"
             className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.date}
             onChange={(e) => setMeta({ date: e.target.value })}
-            aria-label="Budget date"
+            aria-label={t["meta.date"]}
             data-nav-id="meta:date"
           />
         </label>
         <label className="flex items-center gap-2">
-          VAT
+          {t["meta.vat"]}
           <select
             className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900"
             value={budget.ivaPct}
             onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
-            aria-label="VAT percentage"
+            aria-label={t["meta.vat"]}
             data-nav-id="meta:vat"
           >
             {IVA_PRESETS.map((v) => (
@@ -203,16 +207,16 @@ export function BudgetEditor() {
           </select>
         </label>
         <span className="ml-auto font-semibold tabular-nums">
-          Subtotal {subtotal.toFixed(2)}€ · Total {total.toFixed(2)}€
+          {t["meta.subtotal"]} {subtotal.toFixed(2)}€ · {t["meta.total"]} {total.toFixed(2)}€
         </span>
         {unpricedCount > 0 ? (
           <button
             type="button"
             onClick={scrollToFirstUnpriced}
-            title="Scroll to the first item without price"
+            title={t["unpriced.scrollHint"]}
             className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
           >
-            ⚠ {unpricedCount} {unpricedCount === 1 ? "item" : "items"} without price
+            ⚠ {unpricedCount} {unpricedCount === 1 ? t["unpriced.pill.one"] : t["unpriced.pill.other"]}
           </button>
         ) : null}
       </div>
@@ -226,16 +230,16 @@ export function BudgetEditor() {
       >
         {chapters.length === 0 ? (
           <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
-            <p className="text-lg font-medium">No chapters yet</p>
+            <p className="text-lg font-medium">{t["empty.title"]}</p>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Chapters group your items (e.g. Masonry, Plumbing) and are numbered automatically.
+              {t["empty.body"]}
             </p>
             <button
               type="button"
-              onClick={() => addChapter()}
+              onClick={() => addChapter(t["chapter.newTitle"])}
               className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              + Create first chapter
+              {t["empty.cta"]}
             </button>
           </div>
         ) : (
@@ -264,10 +268,10 @@ export function BudgetEditor() {
         {chapters.length > 0 ? (
           <button
             type="button"
-            onClick={() => addChapter()}
+            onClick={() => addChapter(t["chapter.newTitle"])}
             className="mt-6 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
-            + Add chapter
+            {t["chapter.add"]}
           </button>
         ) : null}
         <DragOverlay dropAnimation={null}>
