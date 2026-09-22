@@ -6,7 +6,7 @@ import { fmt } from "@/lib/i18n";
 import { useStrings } from "@/lib/locale";
 
 const displayCls =
-  "w-full rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
+  "w-full cursor-text rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
 const inputCls =
   "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-300";
 
@@ -83,6 +83,10 @@ interface InlineTextProps extends NavProps {
   ariaLabel: string;
   placeholder?: string;
   className?: string;
+  /** Overrides the default hover tooltip. */
+  title?: string;
+  /** Multiline display + textarea editing (preserves line breaks). */
+  multiline?: boolean;
   /** When true, empty commits are ignored (field is required). */
   required?: boolean;
   /** When true, enters edit mode on mount (e.g. freshly added rows). */
@@ -99,9 +103,11 @@ export function InlineText({
   ariaLabel,
   placeholder,
   className,
+  title,
   required,
   autoEdit,
   navId,
+  multiline,
 }: InlineTextProps) {
   const t = useStrings();
   const [editing, setEditing] = useState(!!autoEdit);
@@ -150,11 +156,11 @@ export function InlineText({
         ref={btnRef}
         type="button"
         aria-label={ariaLabel}
-        title={t["field.clickToEdit"]}
+        title={title ?? t["field.clickToEdit"]}
         data-nav-id={navId}
         onClick={startEdit}
         onFocus={onFocus}
-        className={`${displayCls} ${className ?? ""}`}
+        className={`${displayCls} ${multiline ? "whitespace-pre-wrap break-words" : ""} ${className ?? ""}`}
       >
         {value ? (
           value
@@ -162,6 +168,29 @@ export function InlineText({
           <span className="text-zinc-400 italic dark:text-zinc-500">{placeholder ?? t["field.clickToEditPlaceholder"]}</span>
         )}
       </button>
+    );
+  }
+
+  if (multiline) {
+    return (
+      <textarea
+        autoFocus
+        value={draft}
+        data-nav-id={navId}
+        rows={Math.min(2 + draft.split("\n").length, 8)}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        onBlur={() => commit(draft)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            cancelRef.current = true;
+            setEditing(false);
+          } else if (e.key === "Tab") handleTab(e);
+        }}
+        aria-label={ariaLabel}
+        placeholder={placeholder}
+        className={`${inputCls} resize-y ${className ?? ""}`}
+      />
     );
   }
 
@@ -353,7 +382,7 @@ export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProp
       }}
       aria-label={ariaLabel}
       title={t["field.unit"]}
-      className="cursor-pointer appearance-none rounded bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
+      className="cursor-pointer appearance-none rounded border border-transparent bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:border-zinc-400 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:border-zinc-600 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
     >
       {UNITS.map((u) => (
         <option key={u} value={u}>

@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { itemAmount, isUnpriced } from "@/lib/calc";
 import type { BudgetItem } from "@/lib/budget-types";
 import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
-import { ConfirmButton } from "./ConfirmButton";
+import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { useStrings } from "@/lib/locale";
 
 export const ITEM_GRID_CLS =
@@ -15,7 +15,6 @@ interface SortableItemRowProps {
   item: BudgetItem;
   chapterId: string;
   expanded: boolean;
-  hasBreakdown: boolean;
   autoEditTitle?: boolean;
   onToggleBreakdown: () => void;
   onRemoveItem: (id: string) => void;
@@ -24,7 +23,7 @@ interface SortableItemRowProps {
 
 /** Draggable item row. The drag listeners live only on the grip handle,
  *  so click-to-edit keeps working everywhere else. */
-export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoEditTitle, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
+export function SortableItemRow({ item, chapterId, expanded, autoEditTitle, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", chapterId },
@@ -74,6 +73,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           ariaLabel={`${t["item.descField"]} ${item.code}`}
           placeholder={t["item.titlePlaceholder"]}
           navId={`item:${item.id}:desc`}
+          multiline
           className="text-zinc-500 dark:text-zinc-400"
         />
       </span>
@@ -102,7 +102,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         title={priceMissing ? t["item.missingPrice"] : undefined}
         className={priceMissing ? warnCls : undefined}
       />
-      <span className="px-1 py-1 text-right font-medium tabular-nums">
+      <span className="cursor-default px-1 py-1 text-right font-medium tabular-nums">
         {itemAmount(item).toFixed(2)}€
       </span>
       <span className="flex items-start justify-end">
@@ -112,18 +112,21 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           aria-expanded={expanded}
           aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
           title={t["detail.toggle"]}
-          className="rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {expanded ? "▾" : "▸"}
-          {hasBreakdown && !expanded ? <span className="text-blue-500">•</span> : null}
         </button>
         <ConfirmButton
-          label="✕"
-          confirmLabel={t["item.deleteConfirm"]}
+          label={<TrashIcon />}
+          confirmLabel={
+            <span className="inline-flex items-center gap-1">
+              {t["item.deleteConfirm"]} <TrashIcon />
+            </span>
+          }
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`${t["item.delete"]} ${item.code}`}
-          className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium text-white hover:bg-red-500"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
       </span>
     </div>

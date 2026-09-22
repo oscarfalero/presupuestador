@@ -152,7 +152,7 @@ export function BudgetEditor() {
           <LocaleToggle />
           <ThemeToggle />
           <button
-            className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             onClick={() => void exportBudgetToExcel(budget)}
           >
             {t["header.exportExcel"]}
@@ -160,7 +160,7 @@ export function BudgetEditor() {
           <PDFDownloadLink
             document={<BudgetPdfDocument budget={budget} />}
             fileName="budget.pdf"
-            className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             {({ loading }) => (loading ? t["header.preparingPdf"] : t["header.exportPdf"])}
           </PDFDownloadLink>
@@ -214,7 +214,7 @@ export function BudgetEditor() {
             type="button"
             onClick={scrollToFirstUnpriced}
             title={t["unpriced.scrollHint"]}
-            className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
+            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
           >
             ⚠ {unpricedCount} {unpricedCount === 1 ? t["unpriced.pill.one"] : t["unpriced.pill.other"]}
           </button>
@@ -237,7 +237,7 @@ export function BudgetEditor() {
             <button
               type="button"
               onClick={() => addChapter(t["chapter.newTitle"])}
-              className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="mt-4 cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               {t["empty.cta"]}
             </button>
@@ -269,7 +269,7 @@ export function BudgetEditor() {
           <button
             type="button"
             onClick={() => addChapter(t["chapter.newTitle"])}
-            className="mt-6 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            className="mt-6 cursor-pointer rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             {t["chapter.add"]}
           </button>

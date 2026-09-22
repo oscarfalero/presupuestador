@@ -64,7 +64,7 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
       <button
         type="button"
         onClick={() => undoDelete()}
-        className="rounded-full bg-white px-3 py-1 font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-700"
+        className="cursor-pointer rounded-full bg-white px-3 py-1 font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-700"
       >
         {t["undo.action"]} ({fmt(t["undo.seconds"], { n: secondsLeft })})
       </button>
@@ -72,7 +72,7 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
         type="button"
         onClick={() => dismissDelete()}
         aria-label={t["undo.dismiss"]}
-        className="rounded-full px-2 text-zinc-400 hover:text-white dark:text-zinc-500 dark:hover:text-zinc-900"
+        className="cursor-pointer rounded-full px-2 text-zinc-400 hover:text-white dark:text-zinc-500 dark:hover:text-zinc-900"
       >
         ✕
       </button>
