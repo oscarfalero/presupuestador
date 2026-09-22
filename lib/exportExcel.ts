@@ -65,6 +65,10 @@ export async function exportClientBudgetToExcel(
   if (company.taxId) ws.addRow({ title: `${t["export.nif"]} ${company.taxId}` });
   if (company.phone) ws.addRow({ title: company.phone });
   if (company.web) ws.addRow({ title: company.web });
+  if (company.address) {
+    const r = tallRow(ws, { title: company.address }, blockLines(company.address));
+    r.alignment = { wrapText: true };
+  }
 
   // Budget info block: number, date, client, address.
   ws.addRow({});

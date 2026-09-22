@@ -60,6 +60,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             <View>
               {company.name ? <Text style={styles.companyName}>{company.name}</Text> : null}
               {company.taxId ? <Text style={styles.companyLine}>{t["export.nif"]} {company.taxId}</Text> : null}
+              {company.address ? <Text style={styles.companyLine}>{company.address}</Text> : null}
               {company.phone ? <Text style={styles.companyLine}>{company.phone}</Text> : null}
               {company.web ? <Text style={styles.companyLine}>{company.web}</Text> : null}
             </View>

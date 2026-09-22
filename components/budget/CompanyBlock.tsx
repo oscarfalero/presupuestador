@@ -114,11 +114,15 @@ export function CompanyBlock() {
               }}
             />
           </div>
-          <label className="flex items-start gap-2 sm:col-span-2">
+          <label className="flex items-center gap-2 sm:col-span-2">
             {t["company.address"]}
-            <span className="min-w-0 flex-1">
-              <InlineText value={profile.address} onCommit={(address) => updateProfile({ address })} ariaLabel={t["company.address"]} multiline navId="company:address" />
-            </span>
+            <input
+              className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+              value={profile.address}
+              onChange={(e) => updateProfile({ address: e.target.value })}
+              aria-label={t["company.address"]}
+              data-nav-id="company:address"
+            />
           </label>
           {logoError ? (
             <p role="alert" className="text-xs text-red-600 sm:col-span-2 dark:text-red-400">
