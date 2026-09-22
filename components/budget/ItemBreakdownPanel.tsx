@@ -145,7 +145,7 @@ export function ItemBreakdownPanel({
                   {(m.quantity * m.price).toFixed(2)}€
                 </span>
                 <ConfirmButton
-                  label="✕"
+                  label="🗑"
                   confirmLabel={t["breakdown.removeConfirm"]}
                   onConfirm={() => onRemoveMaterial(item.id, m.id)}
                   ariaLabel={`${t["breakdown.removeMaterial"]} ${item.code}`}
@@ -218,34 +218,29 @@ export function ItemBreakdownPanel({
             ariaLabel={`${t["breakdown.notesField"]} ${item.code}`}
             placeholder={t["breakdown.notesPlaceholder"]}
             navId={`item:${item.id}:notes`}
+            multiline
             className="text-zinc-600 dark:text-zinc-300"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-700">
-          <span className="tabular-nums">
-            {t["breakdown.totalLabel"]} <strong>{total.toFixed(2)}€</strong> · {t["breakdown.priceLabel"]}{" "}
-            <strong>{item.price.toFixed(2)}€</strong>
-          </span>
-          {matches ? (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/50 dark:text-green-200">
-              {t["breakdown.matches"]}
+        {!matches ? (
+          <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-700">
+            <span className="tabular-nums">
+              {t["breakdown.totalLabel"]} <strong>{total.toFixed(2)}€</strong> · {t["breakdown.priceLabel"]}{" "}
+              <strong>{item.price.toFixed(2)}€</strong>
             </span>
-          ) : (
-            <>
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-100">
-                {t["breakdown.differs"]} {diff.toFixed(2)}€
-              </span>
-              <button
-                type="button"
-                onClick={() => onSyncPrice(item.id, total)}
-                className="cursor-pointer rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                {fmt(t["breakdown.useTotal"], { n: `${total.toFixed(2)}€` })}
-              </button>
-            </>
-          )}
-        </div>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-100">
+              {t["breakdown.differs"]} {diff.toFixed(2)}€
+            </span>
+            <button
+              type="button"
+              onClick={() => onSyncPrice(item.id, total)}
+              className="cursor-pointer rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              {fmt(t["breakdown.useTotal"], { n: `${total.toFixed(2)}€` })}
+            </button>
+          </div>
+        ) : null}
       </div>
       <span />
     </div>

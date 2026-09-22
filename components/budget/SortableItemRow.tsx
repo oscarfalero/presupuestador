@@ -74,6 +74,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           ariaLabel={`${t["item.descField"]} ${item.code}`}
           placeholder={t["item.titlePlaceholder"]}
           navId={`item:${item.id}:desc`}
+          multiline
           className="text-zinc-500 dark:text-zinc-400"
         />
       </span>
@@ -102,7 +103,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         title={priceMissing ? t["item.missingPrice"] : undefined}
         className={priceMissing ? warnCls : undefined}
       />
-      <span className="px-1 py-1 text-right font-medium tabular-nums">
+      <span className="cursor-default px-1 py-1 text-right font-medium tabular-nums">
         {itemAmount(item).toFixed(2)}€
       </span>
       <span className="flex items-start justify-end">
@@ -118,7 +119,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           {hasBreakdown && !expanded ? <span className="text-blue-500">•</span> : null}
         </button>
         <ConfirmButton
-          label="✕"
+          label="🗑"
           confirmLabel={t["item.deleteConfirm"]}
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`${t["item.delete"]} ${item.code}`}

@@ -85,6 +85,8 @@ interface InlineTextProps extends NavProps {
   className?: string;
   /** Overrides the default hover tooltip. */
   title?: string;
+  /** Multiline display + textarea editing (preserves line breaks). */
+  multiline?: boolean;
   /** When true, empty commits are ignored (field is required). */
   required?: boolean;
   /** When true, enters edit mode on mount (e.g. freshly added rows). */
@@ -105,6 +107,7 @@ export function InlineText({
   required,
   autoEdit,
   navId,
+  multiline,
 }: InlineTextProps) {
   const t = useStrings();
   const [editing, setEditing] = useState(!!autoEdit);
@@ -157,7 +160,7 @@ export function InlineText({
         data-nav-id={navId}
         onClick={startEdit}
         onFocus={onFocus}
-        className={`${displayCls} ${className ?? ""}`}
+        className={`${displayCls} ${multiline ? "whitespace-pre-wrap break-words" : ""} ${className ?? ""}`}
       >
         {value ? (
           value
@@ -165,6 +168,29 @@ export function InlineText({
           <span className="text-zinc-400 italic dark:text-zinc-500">{placeholder ?? t["field.clickToEditPlaceholder"]}</span>
         )}
       </button>
+    );
+  }
+
+  if (multiline) {
+    return (
+      <textarea
+        autoFocus
+        value={draft}
+        data-nav-id={navId}
+        rows={Math.min(2 + draft.split("\n").length, 8)}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        onBlur={() => commit(draft)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            cancelRef.current = true;
+            setEditing(false);
+          } else if (e.key === "Tab") handleTab(e);
+        }}
+        aria-label={ariaLabel}
+        placeholder={placeholder}
+        className={`${inputCls} resize-y ${className ?? ""}`}
+      />
     );
   }
 

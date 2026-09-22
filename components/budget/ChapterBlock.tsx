@@ -90,7 +90,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           {t["chapter.subtotal"]} {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
         </span>
         <ConfirmButton
-          label="✕"
+          label="🗑"
           confirmLabel={t["chapter.deleteConfirm"]}
           onConfirm={() => onRemoveChapter(chapter.id)}
           ariaLabel={`${t["chapter.delete"]} ${chapter.order + 1}`}
