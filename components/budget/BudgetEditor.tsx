@@ -264,6 +264,10 @@ export function BudgetEditor() {
 
       <DocSections />
 
+      <h2 className="mt-8 mb-2 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        {t["section.chapters"]}
+      </h2>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -272,7 +276,7 @@ export function BudgetEditor() {
         onDragCancel={() => setActiveDrag(null)}
       >
         {chapters.length === 0 ? (
-          <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
+          <div className="rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
             <p className="text-lg font-medium">{t["empty.title"]}</p>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               {t["empty.body"]}
@@ -286,7 +290,7 @@ export function BudgetEditor() {
             </button>
           </div>
         ) : (
-          <div className="mt-8 space-y-8">
+          <div className="space-y-8">
             <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
               {chapters.map((ch) => (
                 <ChapterBlock

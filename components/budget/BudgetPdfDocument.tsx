@@ -84,6 +84,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
           </Text>
         ) : null}
         {client.intro ? <Text style={styles.pre}>{client.intro}</Text> : null}
+        <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
         {client.chapters.map((ch) => (
           <View key={ch.number} wrap={false}>
             <Text style={styles.chapter}>

@@ -92,6 +92,8 @@ export async function exportClientBudgetToExcel(
     r.alignment = { wrapText: true };
   }
 
+  const chaptersTitle = ws.addRow({ title: t["section.chapters"].toUpperCase() });
+  chaptersTitle.font = { bold: true, size: 12 };
   const headerRow = ws.addRow({
     code: t["col.code"],
     title: t["col.title"],
