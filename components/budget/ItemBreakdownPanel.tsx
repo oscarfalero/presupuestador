@@ -5,7 +5,7 @@ import { withProtocol } from "@/lib/urls";
 import type { BudgetItem, ItemBreakdown, MaterialCost } from "@/lib/budget-types";
 import { InlineNumber, InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS } from "./SortableItemRow";
-import { ConfirmButton } from "./ConfirmButton";
+import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { fmt } from "@/lib/i18n";
 import { useStrings } from "@/lib/locale";
 
@@ -135,7 +135,7 @@ export function ItemBreakdownPanel({
                         onConfirm={() => window.open(withProtocol(url), "_blank", "noopener,noreferrer")}
                         ariaLabel={`${t["breakdown.visit"]}: ${m.sourceLabel || url}`}
                         title={t["breakdown.visit"]}
-                        className="rounded px-1 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                        className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                         confirmClassName="rounded bg-zinc-900 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
                       />
                     ) : null}
@@ -145,12 +145,16 @@ export function ItemBreakdownPanel({
                   {(m.quantity * m.price).toFixed(2)}€
                 </span>
                 <ConfirmButton
-                  label="🗑"
-                  confirmLabel={t["breakdown.removeConfirm"]}
+                  label={<TrashIcon />}
+                  confirmLabel={
+                    <span className="inline-flex items-center gap-1">
+                      {t["breakdown.removeConfirm"]} <TrashIcon />
+                    </span>
+                  }
                   onConfirm={() => onRemoveMaterial(item.id, m.id)}
                   ariaLabel={`${t["breakdown.removeMaterial"]} ${item.code}`}
                   title={t["breakdown.removeMaterial"]}
-                  className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
                   confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
                 />
               </div>

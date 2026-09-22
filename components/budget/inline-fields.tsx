@@ -382,7 +382,7 @@ export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProp
       }}
       aria-label={ariaLabel}
       title={t["field.unit"]}
-      className="cursor-pointer appearance-none rounded bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
+      className="cursor-pointer appearance-none rounded border border-transparent bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:border-zinc-400 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:border-zinc-600 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
     >
       {UNITS.map((u) => (
         <option key={u} value={u}>
