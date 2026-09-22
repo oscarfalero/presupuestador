@@ -21,10 +21,23 @@ const styles = StyleSheet.create({
   signCol: { flex: 1 },
   signLine: { marginTop: 4 },
   chapter: { marginTop: 12, marginBottom: 4, fontSize: 12, fontWeight: "bold" },
-  row: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#ddd", paddingVertical: 4 },
-  code: { width: 36 },
-  title: { flex: 1 },
-  num: { width: 60, textAlign: "right" },
+  tableHeader: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#999",
+    paddingVertical: 4,
+    fontSize: 8,
+    fontWeight: "bold",
+    color: "#555",
+  },
+  tableRow: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#ddd", paddingVertical: 4 },
+  cellCode: { width: 30 },
+  cellTitle: { flex: 1, paddingRight: 6 },
+  cellUm: { width: 28, textAlign: "center" },
+  cellQty: { width: 36, textAlign: "right" },
+  cellPrice: { width: 52, textAlign: "right" },
+  cellAmount: { width: 60, textAlign: "right" },
+  itemDesc: { fontSize: 8, color: "#555", marginTop: 1 },
   total: { marginTop: 12, textAlign: "right", fontSize: 12, fontWeight: "bold" },
   subtotal: { textAlign: "right", marginTop: 4 },
   footer: {
@@ -86,17 +99,29 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
         {client.intro ? <Text style={styles.pre}>{client.intro}</Text> : null}
         <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
         {client.chapters.map((ch) => (
-          <View key={ch.number} wrap={false}>
+          <View key={ch.number}>
             <Text style={styles.chapter}>
               {ch.number}. {ch.title}
             </Text>
+            <View style={styles.tableHeader}>
+              <Text style={styles.cellCode}>{t["col.code"]}</Text>
+              <Text style={styles.cellTitle}>{t["col.title"]}</Text>
+              <Text style={styles.cellUm}>{t["col.um"]}</Text>
+              <Text style={styles.cellQty}>{t["col.qty"]}</Text>
+              <Text style={styles.cellPrice}>{t["col.price"]}</Text>
+              <Text style={styles.cellAmount}>{t["col.amount"]}</Text>
+            </View>
             {ch.items.map((item) => (
-              <View key={item.code} style={styles.row} wrap={false}>
-                <Text style={styles.code}>{item.code}</Text>
-                <Text style={styles.title}>
-                  {item.title} — {item.quantity} {item.um} x {item.price.toFixed(2)}€
-                </Text>
-                <Text style={styles.num}>{item.amount.toFixed(2)}€</Text>
+              <View key={item.code} style={styles.tableRow} wrap={false}>
+                <Text style={styles.cellCode}>{item.code}</Text>
+                <View style={styles.cellTitle}>
+                  <Text>{item.title}</Text>
+                  {item.description ? <Text style={styles.itemDesc}>{item.description}</Text> : null}
+                </View>
+                <Text style={styles.cellUm}>{item.um}</Text>
+                <Text style={styles.cellQty}>{item.quantity}</Text>
+                <Text style={styles.cellPrice}>{item.price.toFixed(2)}€</Text>
+                <Text style={styles.cellAmount}>{item.amount.toFixed(2)}€</Text>
               </View>
             ))}
             <Text style={styles.subtotal}>
