@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UNITS, type UnitOfMeasure } from "@/lib/budget-types";
 
 const displayCls =
@@ -8,7 +8,74 @@ const displayCls =
 const inputCls =
   "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900";
 
-interface InlineTextProps {
+/**
+ * Spreadsheet-like keyboard navigation.
+ *
+ * Every editable field carries a `data-nav-id` in DOM order. Tab commits
+ * the current cell and opens the next one already in edit mode
+ * (Shift+Tab goes backwards). Display buttons also enter edit mode when
+ * they receive keyboard focus, so plain Tab walks the grid editing.
+ */
+const ENTER_EDIT_EVENT = "presupuestador:enter-edit";
+
+export function moveEditFocus(currentNavId: string, direction: 1 | -1): boolean {
+  if (typeof document === "undefined" || !currentNavId) return false;
+  const els = Array.from(document.querySelectorAll<HTMLElement>("[data-nav-id]"));
+  const idx = els.findIndex((el) => el.dataset.navId === currentNavId);
+  const target = idx >= 0 ? els[idx + direction] : undefined;
+  const id = target?.dataset.navId;
+  if (!target || !id) return false;
+  window.dispatchEvent(new CustomEvent<string>(ENTER_EDIT_EVENT, { detail: id }));
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement
+  ) {
+    target.focus();
+  }
+  return true;
+}
+
+function useEnterEditSignal(navId: string | undefined, editing: boolean, onEnter: () => void) {
+  const onEnterRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    onEnterRef.current = onEnter;
+  });
+  useEffect(() => {
+    if (!navId || editing) return;
+    const handler = (e: Event) => {
+      if ((e as CustomEvent<string>).detail === navId) onEnterRef.current();
+    };
+    window.addEventListener(ENTER_EDIT_EVENT, handler);
+    return () => window.removeEventListener(ENTER_EDIT_EVENT, handler);
+  }, [navId, editing]);
+}
+
+interface NavProps {
+  /** Unique id locating this field in the Tab order. */
+  navId?: string;
+}
+
+function useDisplayButton(navId: string | undefined, editing: boolean, startEdit: () => void) {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const suppressRef = useRef(false);
+  /** Return focus to the cell after keyboard commit, without reopening it. */
+  const refocus = () => {
+    suppressRef.current = true;
+    btnRef.current?.focus({ preventScroll: true });
+  };
+  const onFocus = () => {
+    if (suppressRef.current) {
+      suppressRef.current = false;
+      return;
+    }
+    startEdit();
+  };
+  useEnterEditSignal(navId, editing, startEdit);
+  return { btnRef, refocus, onFocus };
+}
+
+interface InlineTextProps extends NavProps {
   value: string;
   onCommit: (next: string) => void;
   ariaLabel: string;
@@ -21,7 +88,8 @@ interface InlineTextProps {
 }
 
 /**
- * Click-to-edit text field. Enter/blur commits, Esc cancels.
+ * Click-to-edit text field. Enter/blur commits, Esc cancels,
+ * Tab commits and opens the next field editing.
  */
 export function InlineText({
   value,
@@ -31,6 +99,7 @@ export function InlineText({
   className,
   required,
   autoEdit,
+  navId,
 }: InlineTextProps) {
   const [editing, setEditing] = useState(!!autoEdit);
   const [draft, setDraft] = useState(value);
@@ -42,23 +111,46 @@ export function InlineText({
     setEditing(true);
   };
 
+  const { btnRef, refocus, onFocus } = useDisplayButton(navId, editing, startEdit);
+
+  const refocusIfKeyboard = () => {
+    if (typeof document !== "undefined" && document.activeElement === document.body) refocus();
+  };
+
   const commit = (next: string) => {
     const cancelled = cancelRef.current;
     cancelRef.current = false;
     setEditing(false);
     if (cancelled) return;
-    if (next === value) return;
+    if (next === value) {
+      refocusIfKeyboard();
+      return;
+    }
     if (required && next.trim() === "") return;
     onCommit(next);
+    refocusIfKeyboard();
+  };
+
+  const handleTab = (e: React.KeyboardEvent) => {
+    if (e.key !== "Tab" || !navId) return;
+    e.preventDefault();
+    const draftValue = (e.target as HTMLInputElement).value;
+    // Order matters: resolve the target while this input is still mounted.
+    const moved = moveEditFocus(navId, e.shiftKey ? -1 : 1);
+    commit(draftValue);
+    if (!moved) refocus();
   };
 
   if (!editing) {
     return (
       <button
+        ref={btnRef}
         type="button"
         aria-label={ariaLabel}
         title="Click to edit"
+        data-nav-id={navId}
         onClick={startEdit}
+        onFocus={onFocus}
         className={`${displayCls} ${className ?? ""}`}
       >
         {value ? (
@@ -74,15 +166,16 @@ export function InlineText({
     <input
       autoFocus
       value={draft}
+      data-nav-id={navId}
       onChange={(e) => setDraft(e.target.value)}
       onFocus={(e) => e.target.select()}
       onBlur={() => commit(draft)}
       onKeyDown={(e) => {
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-        if (e.key === "Escape") {
+        else if (e.key === "Escape") {
           cancelRef.current = true;
           setEditing(false);
-        }
+        } else if (e.key === "Tab") handleTab(e);
       }}
       aria-label={ariaLabel}
       placeholder={placeholder}
@@ -91,7 +184,7 @@ export function InlineText({
   );
 }
 
-interface InlineNumberProps {
+interface InlineNumberProps extends NavProps {
   value: number;
   onCommit: (next: number) => void;
   ariaLabel: string;
@@ -105,7 +198,7 @@ interface InlineNumberProps {
 /**
  * Click-to-edit numeric field. Rejects NaN and values below `min`
  * with an inline hint and keeps the editor open; Esc cancels.
- * Accepts comma as decimal separator.
+ * Accepts comma as decimal separator. Tab commits and advances.
  */
 export function InlineNumber({
   value,
@@ -116,6 +209,7 @@ export function InlineNumber({
   format,
   className,
   title,
+  navId,
 }: InlineNumberProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -130,37 +224,63 @@ export function InlineNumber({
     setEditing(true);
   };
 
-  const commit = (raw: string) => {
+  const { btnRef, refocus, onFocus } = useDisplayButton(navId, editing, startEdit);
+
+  const refocusIfKeyboard = () => {
+    if (typeof document !== "undefined" && document.activeElement === document.body) refocus();
+  };
+
+  /** Returns false when the value is invalid (editor stays open). */
+  const commit = (raw: string): boolean => {
     const cancelled = cancelRef.current;
     cancelRef.current = false;
     if (cancelled) {
       setError(null);
       setEditing(false);
-      return;
+      return true;
     }
     const parsed = Number(raw.replace(",", "."));
     if (raw.trim() === "" || !Number.isFinite(parsed)) {
       setError("Enter a valid number");
       inputRef.current?.focus();
-      return;
+      return false;
     }
     if (parsed < min) {
       setError(`Must be ≥ ${min}`);
       inputRef.current?.focus();
-      return;
+      return false;
     }
     setError(null);
     setEditing(false);
     if (parsed !== value) onCommit(parsed);
+    refocusIfKeyboard();
+    return true;
+  };
+
+  const handleTab = (e: React.KeyboardEvent) => {
+    if (e.key !== "Tab" || !navId) return;
+    e.preventDefault();
+    const draftValue = (e.target as HTMLInputElement).value;
+    // Validate first: an invalid value keeps the editor open.
+    const parsed = Number(draftValue.replace(",", "."));
+    if (draftValue.trim() === "" || !Number.isFinite(parsed) || parsed < min) {
+      commit(draftValue);
+      return;
+    }
+    moveEditFocus(navId, e.shiftKey ? -1 : 1);
+    commit(draftValue);
   };
 
   if (!editing) {
     return (
       <button
+        ref={btnRef}
         type="button"
         aria-label={ariaLabel}
         title={title ?? "Click to edit"}
+        data-nav-id={navId}
         onClick={startEdit}
+        onFocus={onFocus}
         className={`${displayCls} text-right tabular-nums ${className ?? ""}`}
       >
         {format ? format(value) : String(value)}
@@ -174,6 +294,7 @@ export function InlineNumber({
         ref={inputRef}
         autoFocus
         value={draft}
+        data-nav-id={navId}
         inputMode="decimal"
         onChange={(e) => {
           setDraft(e.target.value);
@@ -183,11 +304,11 @@ export function InlineNumber({
         onBlur={() => commit(draft)}
         onKeyDown={(e) => {
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-          if (e.key === "Escape") {
+          else if (e.key === "Escape") {
             cancelRef.current = true;
             setError(null);
             setEditing(false);
-          }
+          } else if (e.key === "Tab") handleTab(e);
         }}
         aria-label={ariaLabel}
         aria-invalid={error !== null}
@@ -204,20 +325,26 @@ export function InlineNumber({
   );
 }
 
-interface InlineUnitProps {
+interface InlineUnitProps extends NavProps {
   value: UnitOfMeasure;
   onCommit: (next: UnitOfMeasure) => void;
   ariaLabel: string;
 }
 
 /** Unit selector styled as plain text until hovered/focused. */
-export function InlineUnit({ value, onCommit, ariaLabel }: InlineUnitProps) {
+export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProps) {
   return (
     <select
       value={value}
+      data-nav-id={navId}
       onChange={(e) => {
         const next = e.target.value as UnitOfMeasure;
         if (next !== value) onCommit(next);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Tab" && navId && moveEditFocus(navId, e.shiftKey ? -1 : 1)) {
+          e.preventDefault();
+        }
       }}
       aria-label={ariaLabel}
       title="Unit of measure"
