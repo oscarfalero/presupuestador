@@ -9,7 +9,7 @@ const es = {
   "header.exportPdf": "Exportar PDF",
   "header.preparingPdf": "Preparando PDF…",
   "header.preparing": "Preparando…",
-  "meta.client": "Cliente",
+  "meta.client": "Contacto",
   "meta.number": "Número",
   "meta.address": "Dirección",
   "meta.clientPlaceholder": "Opcional",
@@ -138,7 +138,7 @@ const es = {
   "export.subtotal": "Subtotal",
   "export.vat": "IVA {n}%",
   "export.total": "TOTAL",
-  "export.client": "Cliente:",
+  "export.client": "Contacto:",
 } as const;
 
 export type StringKey = keyof typeof es;
@@ -149,7 +149,7 @@ const en: Record<StringKey, string> = {
   "header.exportPdf": "Export PDF",
   "header.preparingPdf": "Preparing PDF…",
   "header.preparing": "Preparing…",
-  "meta.client": "Client",
+  "meta.client": "Contact",
   "meta.number": "Number",
   "meta.address": "Address",
   "meta.clientPlaceholder": "Optional",
@@ -278,7 +278,7 @@ const en: Record<StringKey, string> = {
   "export.subtotal": "Subtotal",
   "export.vat": "VAT {n}%",
   "export.total": "TOTAL",
-  "export.client": "Client:",
+  "export.client": "Contact:",
 };
 
 export type Locale = "es" | "en";

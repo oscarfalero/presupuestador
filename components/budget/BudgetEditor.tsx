@@ -203,20 +203,18 @@ export function BudgetEditor() {
             data-nav-id="meta:number"
           />
         </label>
-        <div className="min-w-52 flex-1">
-          <InlineText
-            value={budget.address}
-            onCommit={(address) => setMeta({ address })}
-            ariaLabel={t["meta.address"]}
-            placeholder={t["meta.address"]}
-            multiline
-            navId="meta:address"
-            className="text-sm"
+        <label className="flex items-center gap-2">
+          {t["meta.date"]}
+          <input
+            type="date"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={budget.date}
+            onChange={(e) => setMeta({ date: e.target.value })}
+            aria-label={t["meta.date"]}
+            data-nav-id="meta:date"
           />
-        </div>
+        </label>
       </div>
-
-      <DocSections />
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
@@ -230,16 +228,19 @@ export function BudgetEditor() {
             data-nav-id="meta:client"
           />
         </label>
-        <label className="flex items-center gap-2">
-          {t["meta.date"]}
-          <input
-            type="date"
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-            value={budget.date}
-            onChange={(e) => setMeta({ date: e.target.value })}
-            aria-label={t["meta.date"]}
-            data-nav-id="meta:date"
-          />
+        <label className="flex min-w-52 flex-1 items-center gap-2">
+          {t["meta.address"]}
+          <span className="min-w-0 flex-1">
+            <InlineText
+              value={budget.address}
+              onCommit={(address) => setMeta({ address })}
+              ariaLabel={t["meta.address"]}
+              placeholder={t["meta.address"]}
+              multiline
+              navId="meta:address"
+              className="text-sm"
+            />
+          </span>
         </label>
         <label className="flex items-center gap-2">
           {t["meta.vat"]}
@@ -271,6 +272,8 @@ export function BudgetEditor() {
           </button>
         ) : null}
       </div>
+
+      <DocSections />
 
       <DndContext
         sensors={sensors}
