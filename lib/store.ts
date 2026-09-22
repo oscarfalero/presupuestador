@@ -307,6 +307,15 @@ export const useBudgetStore = create<BudgetState>()(
         })),
       reset: () => set({ budget: sampleBudget(), lastDeleted: null }),
     }),
-    { name: "presupuestador-budget-v1", partialize: (s) => ({ budget: s.budget }) },
+    {
+      name: "presupuestador-budget-v1",
+      partialize: (s) => ({ budget: s.budget }),
+      // Fill fields added after the snapshot was saved (e.g. number,
+      // address, intro, terms, payment) with model defaults.
+      merge: (persisted, current) => ({
+        ...current,
+        budget: { ...createBudget(), ...((persisted as Partial<BudgetState>)?.budget ?? {}) },
+      }),
+    },
   ),
 );

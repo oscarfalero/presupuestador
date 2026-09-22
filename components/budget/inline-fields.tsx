@@ -110,13 +110,14 @@ export function InlineText({
   multiline,
 }: InlineTextProps) {
   const t = useStrings();
+  const safeValue = value ?? "";
   const [editing, setEditing] = useState(!!autoEdit);
-  const [draft, setDraft] = useState(value);
+  const [draft, setDraft] = useState(safeValue);
   // Guards against a blur-commit racing the unmount triggered by Esc.
   const cancelRef = useRef(false);
 
   const startEdit = () => {
-    setDraft(value);
+    setDraft(safeValue);
     setEditing(true);
   };
 
@@ -131,7 +132,7 @@ export function InlineText({
     cancelRef.current = false;
     setEditing(false);
     if (cancelled) return;
-    if (next === value) {
+    if (next === safeValue) {
       refocusIfKeyboard();
       return;
     }
@@ -162,8 +163,8 @@ export function InlineText({
         onFocus={onFocus}
         className={`${displayCls} ${multiline ? "whitespace-pre-wrap break-words" : ""} ${className ?? ""}`}
       >
-        {value ? (
-          value
+        {safeValue ? (
+          safeValue
         ) : (
           <span className="text-zinc-400 italic dark:text-zinc-500">{placeholder ?? t["field.clickToEditPlaceholder"]}</span>
         )}
