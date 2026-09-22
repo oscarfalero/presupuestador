@@ -3,8 +3,14 @@ import { persist } from "zustand/middleware";
 import { renumber } from "./calc";
 import { createBudget, emptyBreakdown, type Budget, type BudgetItem, type Chapter, type ItemBreakdown, type MaterialCost } from "./budget-types";
 
+export type DeletedSnapshot =
+  | { kind: "item"; item: BudgetItem; at: number }
+  | { kind: "chapter"; chapter: Chapter; items: BudgetItem[]; at: number };
+
 interface BudgetState {
   budget: Budget;
+  /** Single-level deleted snapshot for timed undo. Never persisted. */
+  lastDeleted: DeletedSnapshot | null;
   setMeta: (patch: Partial<Pick<Budget, "name" | "details" | "clientName" | "date" | "ivaPct">>) => void;
   addChapter: (title?: string) => string;
   renameChapter: (id: string, title: string) => void;
@@ -15,6 +21,9 @@ interface BudgetState {
   updateItem: (id: string, patch: Partial<BudgetItem>) => void;
   moveItem: (id: string, toChapterId: string, toIndex: number) => void;
   removeItem: (id: string) => void;
+  /** Restores the last deleted snapshot. Returns false when there is nothing to undo. */
+  undoDelete: () => boolean;
+  dismissDelete: () => void;
   updateBreakdown: (itemId: string, patch: Partial<ItemBreakdown>) => void;
   addMaterial: (itemId: string) => void;
   updateMaterial: (itemId: string, materialId: string, patch: Partial<MaterialCost>) => void;
@@ -79,8 +88,9 @@ function sampleBudget(): Budget {
 
 export const useBudgetStore = create<BudgetState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       budget: sampleBudget(),
+      lastDeleted: null,
       setMeta: (patch) => set((s) => ({ budget: { ...s.budget, ...patch } })),
       addChapter: (title = "New chapter") => {
         const id = uid();
@@ -123,13 +133,62 @@ export const useBudgetStore = create<BudgetState>()(
           return { budget: renumber({ ...s.budget, chapters }) };
         }),
       removeChapter: (id) =>
-        set((s) => ({
+        set((s) => {
+          const chapter = s.budget.chapters.find((c) => c.id === id);
+          if (!chapter) return s;
+          return {
+            budget: renumber({
+              ...s.budget,
+              chapters: s.budget.chapters.filter((c) => c.id !== id),
+              items: s.budget.items.filter((i) => i.chapterId !== id),
+            }),
+            lastDeleted: {
+              kind: "chapter",
+              chapter,
+              items: s.budget.items.filter((i) => i.chapterId === id),
+              at: Date.now(),
+            },
+          };
+        }),
+      undoDelete: () => {
+        const { budget, lastDeleted: snap } = get();
+        if (!snap) return false;
+        if (snap.kind === "item") {
+          if (!budget.chapters.some((c) => c.id === snap.item.chapterId)) return false;
+          const siblings = budget.items
+            .filter((i) => i.chapterId === snap.item.chapterId)
+            .sort((a, b) => a.order - b.order);
+          const idx = Math.max(0, Math.min(snap.item.order, siblings.length));
+          const reordered = [...siblings];
+          reordered.splice(idx, 0, snap.item);
+          const restoredIds = new Set(reordered.map((i) => i.id));
+          set({
+            budget: renumber({
+              ...budget,
+              items: [
+                ...budget.items.filter((i) => !restoredIds.has(i.id)),
+                ...reordered.map((i, order) => ({ ...i, order })),
+              ],
+            }),
+            lastDeleted: null,
+          });
+          return true;
+        }
+        const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
+        const idx = Math.max(0, Math.min(snap.chapter.order, chapters.length));
+        const next = [...chapters];
+        next.splice(idx, 0, snap.chapter);
+        set({
           budget: renumber({
-            ...s.budget,
-            chapters: s.budget.chapters.filter((c) => c.id !== id),
-            items: s.budget.items.filter((i) => i.chapterId !== id),
+            ...budget,
+            chapters: next.map((c, order) => ({ ...c, order })),
+            items: [...budget.items, ...snap.items],
           }),
-        })),
+          lastDeleted: null,
+        });
+        return true;
+      },
+      dismissDelete: () => set({ lastDeleted: null }),
       addItem: (chapterId, patch) => {
         const id = uid();
         set((s) => {
@@ -176,9 +235,14 @@ export const useBudgetStore = create<BudgetState>()(
           return { budget: renumber({ ...s.budget, items }) };
         }),
       removeItem: (id) =>
-        set((s) => ({
-          budget: renumber({ ...s.budget, items: s.budget.items.filter((i) => i.id !== id) }),
-        })),
+        set((s) => {
+          const item = s.budget.items.find((i) => i.id === id);
+          if (!item) return s;
+          return {
+            budget: renumber({ ...s.budget, items: s.budget.items.filter((i) => i.id !== id) }),
+            lastDeleted: { kind: "item", item, at: Date.now() },
+          };
+        }),
       updateBreakdown: (itemId, patch) =>
         set((s) => ({
           budget: {
@@ -241,8 +305,8 @@ export const useBudgetStore = create<BudgetState>()(
             }),
           },
         })),
-      reset: () => set({ budget: sampleBudget() }),
+      reset: () => set({ budget: sampleBudget(), lastDeleted: null }),
     }),
-    { name: "presupuestador-budget-v1" },
+    { name: "presupuestador-budget-v1", partialize: (s) => ({ budget: s.budget }) },
   ),
 );

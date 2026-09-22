@@ -131,6 +131,57 @@ describe("items CRUD", () => {
   });
 });
 
+describe("undo delete", () => {
+  it("restores a deleted item at its position", () => {
+    const s = useBudgetStore.getState();
+    s.removeItem("a1");
+    expect(codes()).toEqual([
+      ["a2", "1.1"],
+      ["b1", "2.1"],
+    ]);
+    expect(useBudgetStore.getState().undoDelete()).toBe(true);
+    expect(codes()).toEqual([
+      ["a1", "1.1"],
+      ["a2", "1.2"],
+      ["b1", "2.1"],
+    ]);
+    expect(useBudgetStore.getState().lastDeleted).toBeNull();
+  });
+
+  it("restores a deleted chapter with its items", () => {
+    useBudgetStore.getState().removeChapter("c1");
+    expect(codes()).toEqual([["b1", "1.1"]]);
+    expect(useBudgetStore.getState().undoDelete()).toBe(true);
+    const { budget } = useBudgetStore.getState();
+    expect(budget.chapters.map((c) => c.id)).toEqual(["c1", "c2"]);
+    expect(codes()).toEqual([
+      ["a1", "1.1"],
+      ["a2", "1.2"],
+      ["b1", "2.1"],
+    ]);
+  });
+
+  it("a new delete replaces the pending snapshot", () => {
+    const s = useBudgetStore.getState();
+    s.removeItem("a1");
+    s.removeItem("a2");
+    expect(useBudgetStore.getState().undoDelete()).toBe(true);
+    // Only the latest delete (a2) is restored; a1 stays deleted.
+    expect(codes()).toEqual([
+      ["a2", "1.1"],
+      ["b1", "2.1"],
+    ]);
+  });
+
+  it("returns false and dismiss clears when nothing is pending", () => {
+    expect(useBudgetStore.getState().undoDelete()).toBe(false);
+    useBudgetStore.getState().removeItem("a1");
+    useBudgetStore.getState().dismissDelete();
+    expect(useBudgetStore.getState().lastDeleted).toBeNull();
+    expect(useBudgetStore.getState().undoDelete()).toBe(false);
+  });
+});
+
 describe("breakdown", () => {
   it("updateBreakdown auto-creates and merges", () => {
     const { updateBreakdown } = useBudgetStore.getState();

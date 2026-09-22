@@ -21,6 +21,7 @@ import { exportBudgetToExcel } from "@/lib/exportExcel";
 import { BudgetPdfDocument } from "./BudgetPdfDocument";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
+import { UndoToast } from "./UndoToast";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((m) => m.PDFDownloadLink),
@@ -275,6 +276,7 @@ export function BudgetEditor() {
           ) : null}
         </DragOverlay>
       </DndContext>
+      <UndoToast />
     </div>
   );
 }
