@@ -20,10 +20,15 @@ export interface ClientChapter {
 
 export interface ClientBudget {
   name: string;
+  number: string;
   details: string;
   clientName: string;
+  address: string;
   date: string;
   ivaPct: number;
+  intro: string;
+  terms: string;
+  payment: string;
   subtotal: number;
   vatAmount: number;
   total: number;
@@ -40,10 +45,15 @@ export function toClientBudget(budget: Budget): ClientBudget {
   const subtotal = budgetSubtotal(budget.items);
   return {
     name: budget.name,
+    number: budget.number,
     details: budget.details,
     clientName: budget.clientName,
+    address: budget.address,
     date: budget.date,
     ivaPct: budget.ivaPct,
+    intro: budget.intro,
+    terms: budget.terms,
+    payment: budget.payment,
     subtotal,
     vatAmount: round2(subtotal * (budget.ivaPct / 100)),
     total: budgetTotalWithIva(subtotal, budget.ivaPct),

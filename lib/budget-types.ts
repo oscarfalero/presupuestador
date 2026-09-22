@@ -69,12 +69,20 @@ export interface Chapter {
 
 export interface Budget {
   id: string;
+  /** Human-readable budget reference, e.g. 2026-001. User-overridable. */
+  number: string;
   name: string;
   details: string;
   clientName: string;
+  /** Site/client address (multiline). */
+  address: string;
   date: string;
   /** Global VAT %, editable. Presets: 10 | 21. */
   ivaPct: number;
+  /** Free-text document sections (optional, hidden when empty). */
+  intro: string;
+  terms: string;
+  payment: string;
   chapters: Chapter[];
   items: BudgetItem[];
 }
@@ -88,11 +96,16 @@ export function emptyBreakdown(): ItemBreakdown {
 export function createBudget(partial?: Partial<Budget>): Budget {
   return {
     id: crypto.randomUUID(),
+    number: "",
     name: "Untitled budget",
     details: "",
     clientName: "",
+    address: "",
     date: new Date().toISOString().slice(0, 10),
     ivaPct: 21,
+    intro: "",
+    terms: "",
+    payment: "",
     chapters: [],
     items: [],
     ...partial,

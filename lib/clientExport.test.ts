@@ -62,6 +62,25 @@ describe("toClientBudget", () => {
     expect(client.total).toBe(1089);
   });
 
+  it("maps header data and document sections", () => {
+    const base = budgetWithBreakdown();
+    const client = toClientBudget({
+      ...base,
+      number: "2026-007",
+      address: "Calle Falsa 123\nMadrid",
+      intro: "Intro text",
+      terms: "Terms text",
+      payment: "Cash",
+    });
+    expect(client).toMatchObject({
+      number: "2026-007",
+      address: "Calle Falsa 123\nMadrid",
+      intro: "Intro text",
+      terms: "Terms text",
+      payment: "Cash",
+    });
+  });
+
   it("never leaks the internal breakdown (regression check for client exports)", () => {
     const client = toClientBudget(budgetWithBreakdown());
     const serialized = JSON.stringify(client);

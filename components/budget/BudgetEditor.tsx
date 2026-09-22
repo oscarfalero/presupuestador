@@ -21,6 +21,8 @@ import { exportBudgetToExcel } from "@/lib/exportExcel";
 import { BudgetPdfDocument } from "./BudgetPdfDocument";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
+import { CompanyBlock } from "./CompanyBlock";
+import { DocSection } from "./DocSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
@@ -129,6 +131,7 @@ export function BudgetEditor() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
+      <CompanyBlock />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
           <InlineText
@@ -166,6 +169,38 @@ export function BudgetEditor() {
           </PDFDownloadLink>
         </div>
       </header>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+        <label className="flex items-center gap-2">
+          {t["meta.number"]}
+          <input
+            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={budget.number}
+            onChange={(e) => setMeta({ number: e.target.value })}
+            aria-label={t["meta.number"]}
+            data-nav-id="meta:number"
+          />
+        </label>
+        <div className="min-w-52 flex-1">
+          <InlineText
+            value={budget.address}
+            onCommit={(address) => setMeta({ address })}
+            ariaLabel={t["meta.address"]}
+            placeholder={t["meta.address"]}
+            multiline
+            navId="meta:address"
+            className="text-sm"
+          />
+        </div>
+      </div>
+
+      <DocSection
+        title={t["section.intro"]}
+        value={budget.intro}
+        placeholder={t["section.introPh"]}
+        navId="meta:intro"
+        onChange={(intro) => setMeta({ intro })}
+      />
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
@@ -282,6 +317,20 @@ export function BudgetEditor() {
           ) : null}
         </DragOverlay>
       </DndContext>
+      <DocSection
+        title={t["section.terms"]}
+        value={budget.terms}
+        placeholder={t["section.termsPh"]}
+        navId="meta:terms"
+        onChange={(terms) => setMeta({ terms })}
+      />
+      <DocSection
+        title={t["section.payment"]}
+        value={budget.payment}
+        placeholder={t["section.paymentPh"]}
+        navId="meta:payment"
+        onChange={(payment) => setMeta({ payment })}
+      />
       <UndoToast />
     </div>
   );
