@@ -1,4 +1,4 @@
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
 import { toClientBudget, type ClientBudget } from "./clientExport";
 import { fmt, getStrings } from "./i18n";
 import { useLocaleStore } from "./locale";
@@ -32,6 +32,8 @@ export async function exportClientBudgetToExcel(
   client: ClientBudget,
   company: CompanyProfile,
 ): Promise<void> {
+  // Loaded on demand so editing never pays the spreadsheet library cost.
+  const { default: ExcelJS } = await import("exceljs");
   const t = getStrings(useLocaleStore.getState().locale);
   const wb = new ExcelJS.Workbook();
   wb.creator = "Presupuestador";
@@ -159,12 +161,12 @@ export async function exportClientBudgetToExcel(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${slug(client.number || client.name) || "budget"}.xlsx`;
+  a.download = `${slugify(client.number || client.name) || "budget"}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function slug(s: string): string {
+export function slugify(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import {
   DndContext,
   DragOverlay,
@@ -17,8 +16,7 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva, isUnpriced } from "@/lib/calc";
 import { IVA_PRESETS } from "@/lib/budget-types";
-import { exportBudgetToExcel } from "@/lib/exportExcel";
-import { BudgetPdfDocument } from "./BudgetPdfDocument";
+import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
 import { CompanyBlock } from "./CompanyBlock";
@@ -27,11 +25,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
 import { useStrings } from "@/lib/locale";
-
-const PDFDownloadLink = dynamic(
-  () => import("@react-pdf/renderer").then((m) => m.PDFDownloadLink),
-  { ssr: false },
-);
 
 interface ActiveDrag {
   type: "item" | "chapter";
@@ -58,6 +51,30 @@ export function BudgetEditor() {
   const subtotal = budgetSubtotal(budget.items);
   const total = budgetTotalWithIva(subtotal, budget.ivaPct);
   const unpricedCount = budget.items.filter(isUnpriced).length;
+  const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
+
+  // Both export libraries are loaded on demand so typing never pays
+  // their cost; the PDF used to regenerate on every keystroke.
+  const handleExportPdf = async () => {
+    if (exporting) return;
+    setExporting("pdf");
+    try {
+      const [{ pdf }, { BudgetPdfDocument }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("./BudgetPdfDocument"),
+      ]);
+      const current = useBudgetStore.getState().budget;
+      const blob = await pdf(<BudgetPdfDocument budget={current} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slugify(current.number || current.name) || "budget"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const scrollToFirstUnpriced = () => {
     const first = budget.items.find(isUnpriced);
@@ -155,18 +172,23 @@ export function BudgetEditor() {
           <LocaleToggle />
           <ThemeToggle />
           <button
-            className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-            onClick={() => void exportBudgetToExcel(budget)}
+            className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            disabled={exporting !== null}
+            onClick={() => {
+              if (exporting) return;
+              setExporting("excel");
+              void exportBudgetToExcel(budget).finally(() => setExporting(null));
+            }}
           >
-            {t["header.exportExcel"]}
+            {exporting === "excel" ? t["header.preparing"] : t["header.exportExcel"]}
           </button>
-          <PDFDownloadLink
-            document={<BudgetPdfDocument budget={budget} />}
-            fileName="budget.pdf"
-            className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          <button
+            className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            disabled={exporting !== null}
+            onClick={() => void handleExportPdf()}
           >
-            {({ loading }) => (loading ? t["header.preparingPdf"] : t["header.exportPdf"])}
-          </PDFDownloadLink>
+            {exporting === "pdf" ? t["header.preparingPdf"] : t["header.exportPdf"]}
+          </button>
         </div>
       </header>
 
