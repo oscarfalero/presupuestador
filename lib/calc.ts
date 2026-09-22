@@ -4,6 +4,11 @@ export function itemAmount(item: Pick<BudgetItem, "quantity" | "price">): number
   return round2(item.quantity * item.price);
 }
 
+/** An item with zero price or zero quantity is treated as "not quoted yet". */
+export function isUnpriced(item: Pick<BudgetItem, "quantity" | "price">): boolean {
+  return item.price === 0 || item.quantity === 0;
+}
+
 export function chapterSubtotal(items: BudgetItem[], chapterId: string): number {
   return round2(
     items.filter((i) => i.chapterId === chapterId).reduce((acc, i) => acc + itemAmount(i), 0),

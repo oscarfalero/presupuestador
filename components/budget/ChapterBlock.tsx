@@ -91,7 +91,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           confirmLabel={sorted.length > 0 ? `Delete ${sorted.length} items?` : "Delete?"}
           onConfirm={() => onRemoveChapter(chapter.id)}
           ariaLabel={`Delete chapter ${chapter.order + 1}`}
-          className="rounded px-1.5 py-1 text-zinc-300 hover:bg-red-50 hover:text-red-600"
+          className="rounded px-1.5 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
           confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
       </div>

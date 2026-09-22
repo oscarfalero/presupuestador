@@ -108,7 +108,7 @@ export function ItemBreakdownPanel({
               onClick={() => onRemoveMaterial(item.id, m.id)}
               aria-label={`Remove material from item ${item.code}`}
               title="Remove material"
-              className="rounded px-1 py-1 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+              className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
             >
               ✕
             </button>

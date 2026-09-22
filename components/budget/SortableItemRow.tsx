@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { itemAmount } from "@/lib/calc";
+import { itemAmount, isUnpriced } from "@/lib/calc";
 import type { BudgetItem } from "@/lib/budget-types";
 import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
 import { ConfirmButton } from "./ConfirmButton";
@@ -28,16 +28,24 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
     id: item.id,
     data: { type: "item", chapterId },
   });
+  const unpriced = isUnpriced(item);
+  const missingLabel =
+    item.price === 0 && item.quantity === 0
+      ? "Missing price and quantity"
+      : item.price === 0
+        ? "Missing price"
+        : "Missing quantity";
 
   return (
     <div
       ref={setNodeRef}
+      id={`item-row-${item.id}`}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className={`${ITEM_GRID_CLS} border-t border-zinc-100 bg-white px-2 py-1`}
+      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 ${unpriced ? "bg-amber-50/70" : "bg-white"}`}
     >
       <button
         type="button"
@@ -85,7 +93,13 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         ariaLabel={`Item ${item.code} price`}
         format={(n) => `${n.toFixed(2)}€`}
       />
-      <span className="px-1 py-1 text-right font-medium tabular-nums">
+      <span
+        title={unpriced ? missingLabel : undefined}
+        className={`px-1 py-1 text-right font-medium tabular-nums ${
+          unpriced ? "rounded bg-amber-100 text-amber-900" : ""
+        }`}
+      >
+        {unpriced ? "⚠ " : null}
         {itemAmount(item).toFixed(2)}€
       </span>
       <span className="flex items-start justify-end">
@@ -105,7 +119,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           confirmLabel="Sure?"
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`Delete item ${item.code}`}
-          className="rounded px-1 py-1 text-zinc-300 hover:bg-red-50 hover:text-red-600"
+          className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
           confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium text-white hover:bg-red-500"
         />
       </span>

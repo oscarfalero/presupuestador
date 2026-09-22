@@ -5,6 +5,7 @@ import {
   budgetSubtotal,
   budgetTotalWithIva,
   chapterSubtotal,
+  isUnpriced,
   itemAmount,
   renumber,
   round2,
@@ -103,6 +104,15 @@ describe("renumber", () => {
     b.items.push(item({ id: "orphan", chapterId: "nope", order: 0 }));
     const orphan = renumber(b).items.find((i) => i.id === "orphan");
     expect(orphan?.code).toBe("1");
+  });
+});
+
+describe("isUnpriced", () => {
+  it("flags zero price or zero quantity", () => {
+    expect(isUnpriced({ quantity: 1, price: 0 })).toBe(true);
+    expect(isUnpriced({ quantity: 0, price: 100 })).toBe(true);
+    expect(isUnpriced({ quantity: 0, price: 0 })).toBe(true);
+    expect(isUnpriced({ quantity: 2, price: 50 })).toBe(false);
   });
 });
 
