@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { UNITS, type UnitOfMeasure } from "@/lib/budget-types";
+import { fmt } from "@/lib/i18n";
+import { useStrings } from "@/lib/locale";
 
 const displayCls =
   "w-full rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
@@ -101,6 +103,7 @@ export function InlineText({
   autoEdit,
   navId,
 }: InlineTextProps) {
+  const t = useStrings();
   const [editing, setEditing] = useState(!!autoEdit);
   const [draft, setDraft] = useState(value);
   // Guards against a blur-commit racing the unmount triggered by Esc.
@@ -147,7 +150,7 @@ export function InlineText({
         ref={btnRef}
         type="button"
         aria-label={ariaLabel}
-        title="Click to edit"
+        title={t["field.clickToEdit"]}
         data-nav-id={navId}
         onClick={startEdit}
         onFocus={onFocus}
@@ -156,7 +159,7 @@ export function InlineText({
         {value ? (
           value
         ) : (
-          <span className="text-zinc-400 italic dark:text-zinc-500">{placeholder ?? "Click to edit…"}</span>
+          <span className="text-zinc-400 italic dark:text-zinc-500">{placeholder ?? t["field.clickToEditPlaceholder"]}</span>
         )}
       </button>
     );
@@ -211,6 +214,7 @@ export function InlineNumber({
   title,
   navId,
 }: InlineNumberProps) {
+  const t = useStrings();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const [error, setError] = useState<string | null>(null);
@@ -241,12 +245,12 @@ export function InlineNumber({
     }
     const parsed = Number(raw.replace(",", "."));
     if (raw.trim() === "" || !Number.isFinite(parsed)) {
-      setError("Enter a valid number");
+      setError(t["field.invalidNumber"]);
       inputRef.current?.focus();
       return false;
     }
     if (parsed < min) {
-      setError(`Must be ≥ ${min}`);
+      setError(fmt(t["field.minNumber"], { n: min }));
       inputRef.current?.focus();
       return false;
     }
@@ -277,7 +281,7 @@ export function InlineNumber({
         ref={btnRef}
         type="button"
         aria-label={ariaLabel}
-        title={title ?? "Click to edit"}
+        title={title ?? t["field.clickToEdit"]}
         data-nav-id={navId}
         onClick={startEdit}
         onFocus={onFocus}
@@ -318,7 +322,7 @@ export function InlineNumber({
       />
       {error ? (
         <span role="alert" className="mt-0.5 block text-right text-xs text-red-600 dark:text-red-400">
-          {error} — Esc to cancel
+          {error} {t["field.escToCancel"]}
         </span>
       ) : null}
     </span>
@@ -333,6 +337,7 @@ interface InlineUnitProps extends NavProps {
 
 /** Unit selector styled as plain text until hovered/focused. */
 export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProps) {
+  const t = useStrings();
   return (
     <select
       value={value}
@@ -347,7 +352,7 @@ export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProp
         }
       }}
       aria-label={ariaLabel}
-      title="Unit of measure"
+      title={t["field.unit"]}
       className="cursor-pointer appearance-none rounded bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
     >
       {UNITS.map((u) => (

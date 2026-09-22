@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { useStrings } from "@/lib/locale";
 
 /** Sun/moon toggle. Renders a placeholder until mounted to avoid hydration mismatch. */
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const t = useStrings();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,8 +25,8 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(dark ? "light" : "dark")}
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      title={dark ? "Light mode" : "Dark mode"}
+      aria-label={dark ? t["theme.light"] : t["theme.dark"]}
+      title={dark ? t["theme.light"] : t["theme.dark"]}
       className="rounded-full border border-zinc-300 p-2 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
     >
       {dark ? (

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useBudgetStore, type DeletedSnapshot } from "@/lib/store";
+import { fmt } from "@/lib/i18n";
+import { useStrings } from "@/lib/locale";
 
 const UNDO_SECONDS = 5;
 
@@ -19,6 +21,7 @@ export function UndoToast() {
 function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
   const undoDelete = useBudgetStore((s) => s.undoDelete);
   const dismissDelete = useBudgetStore((s) => s.dismissDelete);
+  const t = useStrings();
   const [secondsLeft, setSecondsLeft] = useState(UNDO_SECONDS);
 
   useEffect(() => {
@@ -47,9 +50,9 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
 
   const label =
     snapshot.kind === "item"
-      ? `Item “${snapshot.item.title}” deleted`
-      : `Chapter “${snapshot.chapter.title}” deleted${
-          snapshot.items.length > 0 ? ` (${snapshot.items.length} items)` : ""
+      ? fmt(t["undo.itemDeleted"], { n: snapshot.item.title })
+      : `${fmt(t["undo.chapterDeleted"], { n: snapshot.chapter.title })}${
+          snapshot.items.length > 0 ? ` ${fmt(t["undo.withItems"], { n: snapshot.items.length })}` : ""
         }`;
 
   return (
@@ -63,12 +66,12 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
         onClick={() => undoDelete()}
         className="rounded-full bg-white px-3 py-1 font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-700"
       >
-        Undo ({secondsLeft}s)
+        {t["undo.action"]} ({fmt(t["undo.seconds"], { n: secondsLeft })})
       </button>
       <button
         type="button"
         onClick={() => dismissDelete()}
-        aria-label="Dismiss"
+        aria-label={t["undo.dismiss"]}
         className="rounded-full px-2 text-zinc-400 hover:text-white dark:text-zinc-500 dark:hover:text-zinc-900"
       >
         ✕

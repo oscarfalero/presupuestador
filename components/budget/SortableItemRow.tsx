@@ -6,6 +6,7 @@ import { itemAmount, isUnpriced } from "@/lib/calc";
 import type { BudgetItem } from "@/lib/budget-types";
 import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
 import { ConfirmButton } from "./ConfirmButton";
+import { useStrings } from "@/lib/locale";
 
 export const ITEM_GRID_CLS =
   "grid grid-cols-[1.75rem_3rem_minmax(0,1fr)_3.5rem_5.5rem_6.5rem_6rem_3.25rem] items-start gap-1";
@@ -29,6 +30,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
     data: { type: "item", chapterId },
   });
   const unpriced = isUnpriced(item);
+  const t = useStrings();
   const priceMissing = item.price === 0;
   const qtyMissing = item.quantity === 0;
   const warnCls =
@@ -47,8 +49,8 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
     >
       <button
         type="button"
-        aria-label={`Drag item ${item.code}`}
-        title="Drag to reorder"
+        aria-label={`${t["item.drag"]} ${item.code}`}
+        title={t["item.reorderHint"]}
         {...attributes}
         {...listeners}
         className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
@@ -60,7 +62,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         <InlineText
           value={item.title}
           onCommit={(title) => onUpdate(item.id, { title })}
-          ariaLabel={`Item ${item.code} title`}
+          ariaLabel={`${t["item.titleField"]} ${item.code}`}
           required
           autoEdit={autoEditTitle}
           navId={`item:${item.id}:title`}
@@ -69,8 +71,8 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         <InlineText
           value={item.description}
           onCommit={(description) => onUpdate(item.id, { description })}
-          ariaLabel={`Item ${item.code} description`}
-          placeholder="Add description…"
+          ariaLabel={`${t["item.descField"]} ${item.code}`}
+          placeholder={t["item.titlePlaceholder"]}
           navId={`item:${item.id}:desc`}
           className="text-zinc-500 dark:text-zinc-400"
         />
@@ -79,25 +81,25 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         <InlineUnit
           value={item.um}
           onCommit={(um) => onUpdate(item.id, { um })}
-          ariaLabel={`Item ${item.code} unit of measure`}
+          ariaLabel={`${t["item.umField"]} ${item.code}`}
           navId={`item:${item.id}:um`}
         />
       </span>
       <InlineNumber
         value={item.quantity}
         onCommit={(quantity) => onUpdate(item.id, { quantity })}
-        ariaLabel={`Item ${item.code} quantity`}
+        ariaLabel={`${t["item.qtyField"]} ${item.code}`}
         navId={`item:${item.id}:qty`}
-        title={qtyMissing ? "Missing quantity — click to set" : undefined}
+        title={qtyMissing ? t["item.missingQty"] : undefined}
         className={qtyMissing ? warnCls : undefined}
       />
       <InlineNumber
         value={item.price}
         onCommit={(price) => onUpdate(item.id, { price })}
-        ariaLabel={`Item ${item.code} price`}
+        ariaLabel={`${t["item.priceField"]} ${item.code}`}
         format={(n) => `${n.toFixed(2)}€`}
         navId={`item:${item.id}:price`}
-        title={priceMissing ? "Missing price — click to set" : undefined}
+        title={priceMissing ? t["item.missingPrice"] : undefined}
         className={priceMissing ? warnCls : undefined}
       />
       <span className="px-1 py-1 text-right font-medium tabular-nums">
@@ -108,8 +110,8 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           type="button"
           onClick={onToggleBreakdown}
           aria-expanded={expanded}
-          aria-label={`${expanded ? "Collapse" : "Expand"} price breakdown for item ${item.code}`}
-          title="Price breakdown (internal)"
+          aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
+          title={t["detail.toggle"]}
           className="rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {expanded ? "▾" : "▸"}
@@ -117,9 +119,9 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         </button>
         <ConfirmButton
           label="✕"
-          confirmLabel="Sure?"
+          confirmLabel={t["item.deleteConfirm"]}
           onConfirm={() => onRemoveItem(item.id)}
-          ariaLabel={`Delete item ${item.code}`}
+          ariaLabel={`${t["item.delete"]} ${item.code}`}
           className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium text-white hover:bg-red-500"
         />

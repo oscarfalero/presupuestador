@@ -17,7 +17,7 @@ interface BudgetState {
   moveChapter: (id: string, direction: -1 | 1) => void;
   moveChapterTo: (id: string, toIndex: number) => void;
   removeChapter: (id: string) => void;
-  addItem: (chapterId: string, patch?: Partial<BudgetItem>) => string;
+  addItem: (chapterId: string, title: string) => string;
   updateItem: (id: string, patch: Partial<BudgetItem>) => void;
   moveItem: (id: string, toChapterId: string, toIndex: number) => void;
   removeItem: (id: string) => void;
@@ -92,10 +92,10 @@ export const useBudgetStore = create<BudgetState>()(
       budget: sampleBudget(),
       lastDeleted: null,
       setMeta: (patch) => set((s) => ({ budget: { ...s.budget, ...patch } })),
-      addChapter: (title = "New chapter") => {
+      addChapter: (title) => {
         const id = uid();
         set((s) => {
-          const chapters: Chapter[] = [...s.budget.chapters, { id, order: s.budget.chapters.length, title }];
+          const chapters: Chapter[] = [...s.budget.chapters, { id, order: s.budget.chapters.length, title: title || "New chapter" }];
           return { budget: renumber({ ...s.budget, chapters }) };
         });
         return id;
@@ -189,7 +189,7 @@ export const useBudgetStore = create<BudgetState>()(
         return true;
       },
       dismissDelete: () => set({ lastDeleted: null }),
-      addItem: (chapterId, patch) => {
+      addItem: (chapterId, title) => {
         const id = uid();
         set((s) => {
           const order = s.budget.items.filter((i) => i.chapterId === chapterId).length;
@@ -198,12 +198,11 @@ export const useBudgetStore = create<BudgetState>()(
             chapterId,
             order,
             code: "",
-            title: "New item",
+            title,
             description: "",
             um: "ud",
             quantity: 1,
             price: 0,
-            ...patch,
           };
           return { budget: renumber({ ...s.budget, items: [...s.budget.items, item] }) };
         });

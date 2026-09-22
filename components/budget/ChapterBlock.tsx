@@ -10,13 +10,15 @@ import { InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS, SortableItemRow } from "./SortableItemRow";
 import { ItemBreakdownPanel } from "./ItemBreakdownPanel";
 import { ConfirmButton } from "./ConfirmButton";
+import { fmt } from "@/lib/i18n";
+import { useStrings } from "@/lib/locale";
 
 interface ChapterBlockProps {
   chapter: Chapter;
   items: BudgetItem[];
   allItems: BudgetItem[];
   onRename: (id: string, title: string) => void;
-  onAddItem: (chapterId: string) => string;
+  onAddItem: (chapterId: string, title: string) => string;
   onUpdateItem: (id: string, patch: Partial<BudgetItem>) => void;
   onRemoveItem: (id: string) => void;
   onRemoveChapter: (id: string) => void;
@@ -42,6 +44,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
   const { setNodeRef: setDropRef } = useDroppable({ id: `chapter-drop-${chapter.id}` });
 
   const sorted = [...items].sort((a, b) => a.order - b.order);
+  const t = useStrings();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [focusTitleId, setFocusTitleId] = useState<string | null>(null);
 
@@ -66,8 +69,8 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
       <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 dark:bg-zinc-900">
         <button
           type="button"
-          aria-label={`Drag chapter ${chapter.order + 1}`}
-          title="Drag to reorder chapter"
+          aria-label={`${t["chapter.drag"]} ${chapter.order + 1}`}
+          title={t["chapter.reorderHint"]}
           {...attributes}
           {...listeners}
           className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
@@ -79,19 +82,19 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           <InlineText
             value={chapter.title}
             onCommit={(title) => onRename(chapter.id, title)}
-            ariaLabel={`Chapter ${chapter.order + 1} title`}
+            ariaLabel={`${t["chapter.titleField"]} ${chapter.order + 1}`}
             required
             navId={`chapter:${chapter.id}:title`}
           />
         </div>
         <span className="pr-2 text-sm whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
-          Subtotal {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
+          {t["chapter.subtotal"]} {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
         </span>
         <ConfirmButton
           label="✕"
-          confirmLabel={sorted.length > 0 ? `Delete ${sorted.length} items?` : "Delete?"}
+          confirmLabel={sorted.length > 0 ? fmt(t["chapter.deleteConfirm"], { n: sorted.length }) : t["chapter.deleteConfirmEmpty"]}
           onConfirm={() => onRemoveChapter(chapter.id)}
-          ariaLabel={`Delete chapter ${chapter.order + 1}`}
+          ariaLabel={`${t["chapter.delete"]} ${chapter.order + 1}`}
           className="rounded px-1.5 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
@@ -99,12 +102,12 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
 
       <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400 dark:text-zinc-500`}>
         <span />
-        <span className="px-1 font-medium">Code</span>
-        <span className="px-1 font-medium">Title</span>
-        <span className="text-center font-medium">UM</span>
-        <span className="text-right font-medium">Qty</span>
-        <span className="text-right font-medium">Price</span>
-        <span className="px-1 text-right font-medium">Amount</span>
+        <span className="px-1 font-medium">{t["col.code"]}</span>
+        <span className="px-1 font-medium">{t["col.title"]}</span>
+        <span className="text-center font-medium">{t["col.um"]}</span>
+        <span className="text-right font-medium">{t["col.qty"]}</span>
+        <span className="text-right font-medium">{t["col.price"]}</span>
+        <span className="px-1 text-right font-medium">{t["col.amount"]}</span>
         <span />
       </div>
 
@@ -140,15 +143,15 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         </SortableContext>
         {sorted.length === 0 ? (
           <p className="border-t border-dashed border-zinc-200 px-4 py-4 text-center text-sm text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
-            Drop items here, or add the first one below
+            {t["chapter.dropHint"]}
           </p>
         ) : null}
         <button
           type="button"
-          onClick={() => setFocusTitleId(onAddItem(chapter.id))}
+          onClick={() => setFocusTitleId(onAddItem(chapter.id, t["item.newTitle"]))}
           className="w-full border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
         >
-          + Add item
+          {t["item.add"]}
         </button>
       </div>
     </section>

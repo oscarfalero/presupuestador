@@ -1,5 +1,7 @@
 import ExcelJS from "exceljs";
 import { toClientBudget, type ClientBudget } from "./clientExport";
+import { fmt, getStrings } from "./i18n";
+import { useLocaleStore } from "./locale";
 import type { Budget } from "./budget-types";
 
 /**
@@ -11,18 +13,19 @@ export async function exportBudgetToExcel(budget: Budget): Promise<void> {
 }
 
 export async function exportClientBudgetToExcel(client: ClientBudget): Promise<void> {
+  const t = getStrings(useLocaleStore.getState().locale);
   const wb = new ExcelJS.Workbook();
   wb.creator = "Presupuestador";
-  const ws = wb.addWorksheet("Budget");
+  const ws = wb.addWorksheet(t["export.sheet"]);
 
   ws.columns = [
-    { header: "Code", key: "code", width: 10 },
-    { header: "Title", key: "title", width: 42 },
-    { header: "Description", key: "description", width: 50 },
-    { header: "UM", key: "um", width: 8 },
-    { header: "Qty", key: "qty", width: 10 },
-    { header: "Price", key: "price", width: 14 },
-    { header: "Amount", key: "amount", width: 16 },
+    { header: t["col.code"], key: "code", width: 10 },
+    { header: t["col.title"], key: "title", width: 42 },
+    { header: t["col.description"], key: "description", width: 50 },
+    { header: t["col.um"], key: "um", width: 8 },
+    { header: t["col.qty"], key: "qty", width: 10 },
+    { header: t["col.price"], key: "price", width: 14 },
+    { header: t["col.amount"], key: "amount", width: 16 },
   ];
 
   const header = ws.getRow(1);
@@ -42,14 +45,14 @@ export async function exportClientBudgetToExcel(client: ClientBudget): Promise<v
         amount: item.amount,
       });
     }
-    const subtotalRow = ws.addRow({ title: `Subtotal ${ch.title}`, amount: ch.subtotal });
+    const subtotalRow = ws.addRow({ title: `${t["export.subtotalChapter"]} ${ch.title}`, amount: ch.subtotal });
     subtotalRow.font = { italic: true };
   }
 
   ws.addRow({});
-  ws.addRow({ title: "Subtotal", amount: client.subtotal });
-  ws.addRow({ title: `VAT ${client.ivaPct}%`, amount: client.vatAmount });
-  const totalRow = ws.addRow({ title: "TOTAL", amount: client.total });
+  ws.addRow({ title: t["export.subtotal"], amount: client.subtotal });
+  ws.addRow({ title: fmt(t["export.vat"], { n: client.ivaPct }), amount: client.vatAmount });
+  const totalRow = ws.addRow({ title: t["export.total"], amount: client.total });
   totalRow.font = { bold: true };
 
   const buf = await wb.xlsx.writeBuffer();
