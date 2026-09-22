@@ -10,7 +10,6 @@ import { InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS, SortableItemRow } from "./SortableItemRow";
 import { ItemBreakdownPanel } from "./ItemBreakdownPanel";
 import { ConfirmButton } from "./ConfirmButton";
-import { fmt } from "@/lib/i18n";
 import { useStrings } from "@/lib/locale";
 
 interface ChapterBlockProps {
@@ -92,7 +91,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         </span>
         <ConfirmButton
           label="✕"
-          confirmLabel={sorted.length > 0 ? fmt(t["chapter.deleteConfirm"], { n: sorted.length }) : t["chapter.deleteConfirmEmpty"]}
+          confirmLabel={t["chapter.deleteConfirm"]}
           onConfirm={() => onRemoveChapter(chapter.id)}
           ariaLabel={`${t["chapter.delete"]} ${chapter.order + 1}`}
           className="rounded px-1.5 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
@@ -149,7 +148,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         <button
           type="button"
           onClick={() => setFocusTitleId(onAddItem(chapter.id, t["item.newTitle"]))}
-          className="w-full border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          className="w-full cursor-pointer border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
         >
           {t["item.add"]}
         </button>

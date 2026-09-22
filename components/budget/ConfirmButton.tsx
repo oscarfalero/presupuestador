@@ -34,7 +34,7 @@ export function ConfirmButton({
         onClick={() => setArmed(true)}
         aria-label={ariaLabel}
         title={title ?? ariaLabel}
-        className={className ?? ""}
+        className={`cursor-pointer ${className ?? ""}`}
       >
         {label}
       </button>
@@ -54,7 +54,7 @@ export function ConfirmButton({
         if (e.key === "Escape") setArmed(false);
       }}
       aria-label={`Confirm: ${ariaLabel}`}
-      className={confirmClassName ?? ""}
+      className={`cursor-pointer ${confirmClassName ?? ""}`}
     >
       {confirmLabel}
     </button>

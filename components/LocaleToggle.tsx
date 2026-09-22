@@ -21,7 +21,7 @@ export function LocaleToggle() {
       onClick={() => setLocale(value)}
       aria-pressed={locale === value}
       aria-label={`${t["locale.label"]}: ${label}`}
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+      className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium ${
         locale === value
           ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
           : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"

@@ -6,7 +6,7 @@ import { fmt } from "@/lib/i18n";
 import { useStrings } from "@/lib/locale";
 
 const displayCls =
-  "w-full rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
+  "w-full cursor-text rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
 const inputCls =
   "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-300";
 
@@ -83,6 +83,8 @@ interface InlineTextProps extends NavProps {
   ariaLabel: string;
   placeholder?: string;
   className?: string;
+  /** Overrides the default hover tooltip. */
+  title?: string;
   /** When true, empty commits are ignored (field is required). */
   required?: boolean;
   /** When true, enters edit mode on mount (e.g. freshly added rows). */
@@ -99,6 +101,7 @@ export function InlineText({
   ariaLabel,
   placeholder,
   className,
+  title,
   required,
   autoEdit,
   navId,
@@ -150,7 +153,7 @@ export function InlineText({
         ref={btnRef}
         type="button"
         aria-label={ariaLabel}
-        title={t["field.clickToEdit"]}
+        title={title ?? t["field.clickToEdit"]}
         data-nav-id={navId}
         onClick={startEdit}
         onFocus={onFocus}

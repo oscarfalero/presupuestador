@@ -48,7 +48,7 @@ export function ItemBreakdownPanel({
           <button
             type="button"
             onClick={() => onUpdateBreakdown(item.id, {})}
-            className="mt-2 rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="mt-2 cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {t["breakdown.add"]}
           </button>
@@ -124,7 +124,8 @@ export function ItemBreakdownPanel({
                         ariaLabel={`${t["breakdown.srcUrl"]} ${item.code}`}
                         placeholder={t["breakdown.sourceUrl"]}
                         navId={`item:${item.id}:mat:${m.id}:srcurl`}
-                        className="text-xs text-blue-700 dark:text-blue-400"
+                        title={url || undefined}
+                        className="truncate text-xs text-blue-700 dark:text-blue-400"
                       />
                     </span>
                     {url ? (
@@ -143,22 +144,22 @@ export function ItemBreakdownPanel({
                 <span className="px-1 py-1 text-right tabular-nums">
                   {(m.quantity * m.price).toFixed(2)}€
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onRemoveMaterial(item.id, m.id)}
-                  aria-label={`${t["breakdown.removeMaterial"]} ${item.code}`}
+                <ConfirmButton
+                  label="✕"
+                  confirmLabel={t["breakdown.removeConfirm"]}
+                  onConfirm={() => onRemoveMaterial(item.id, m.id)}
+                  ariaLabel={`${t["breakdown.removeMaterial"]} ${item.code}`}
                   title={t["breakdown.removeMaterial"]}
                   className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-                >
-                  ✕
-                </button>
+                  confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+                />
               </div>
             );
           })}
           <button
             type="button"
             onClick={() => onAddMaterial(item.id)}
-            className="mt-1 rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="mt-1 cursor-pointer rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {t["breakdown.addMaterial"]}
           </button>
@@ -238,7 +239,7 @@ export function ItemBreakdownPanel({
               <button
                 type="button"
                 onClick={() => onSyncPrice(item.id, total)}
-                className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="cursor-pointer rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
                 {fmt(t["breakdown.useTotal"], { n: `${total.toFixed(2)}€` })}
               </button>

@@ -112,7 +112,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           aria-expanded={expanded}
           aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
           title={t["detail.toggle"]}
-          className="rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          className="cursor-pointer rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {expanded ? "▾" : "▸"}
           {hasBreakdown && !expanded ? <span className="text-blue-500">•</span> : null}
