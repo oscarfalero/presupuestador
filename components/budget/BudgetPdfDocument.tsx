@@ -4,6 +4,7 @@ import { toClientBudget } from "@/lib/clientExport";
 import { fmt, getStrings } from "@/lib/i18n";
 import { useLocaleStore } from "@/lib/locale";
 import { useCompanyStore } from "@/lib/company";
+import { formatPhone } from "@/lib/phone";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
@@ -63,7 +64,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
   const t = getStrings(useLocaleStore.getState().locale);
   const company = useCompanyStore.getState().profile;
   const client = toClientBudget(budget);
-  const footerBits = [company.phone, company.email, company.web].filter((s) => s && s.trim() !== "");
+  const footerBits = [company.phone ? formatPhone(company.phone) : "", company.email, company.web].filter((s) => s && s.trim() !== "");
 
   return (
     <Document>
@@ -77,7 +78,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
               {company.name ? <Text style={styles.companyName}>{company.name}</Text> : null}
               {company.taxId ? <Text style={styles.companyLine}>{t["export.nif"]} {company.taxId}</Text> : null}
               {company.address ? <Text style={styles.companyLine}>{company.address}</Text> : null}
-              {company.phone ? <Text style={styles.companyLine}>{company.phone}</Text> : null}
+              {company.phone ? <Text style={styles.companyLine}>{formatPhone(company.phone)}</Text> : null}
               {company.web ? <Text style={styles.companyLine}>{company.web}</Text> : null}
             </View>
           </View>

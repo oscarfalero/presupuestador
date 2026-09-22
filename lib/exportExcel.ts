@@ -3,6 +3,7 @@ import { toClientBudget, type ClientBudget } from "./clientExport";
 import { fmt, getStrings } from "./i18n";
 import { useLocaleStore } from "./locale";
 import { useCompanyStore, type CompanyProfile } from "./company";
+import { formatPhone } from "./phone";
 import type { Budget } from "./budget-types";
 
 /**
@@ -63,7 +64,7 @@ export async function exportClientBudgetToExcel(
     r.font = { bold: true, size: 14 };
   }
   if (company.taxId) ws.addRow({ title: `${t["export.nif"]} ${company.taxId}` });
-  if (company.phone) ws.addRow({ title: company.phone });
+  if (company.phone) ws.addRow({ title: formatPhone(company.phone) });
   if (company.web) ws.addRow({ title: company.web });
   if (company.address) {
     const r = tallRow(ws, { title: company.address }, blockLines(company.address));
