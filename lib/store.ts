@@ -159,42 +159,21 @@ export const useBudgetStore = create<BudgetState>()(
         })),
       moveItem: (id, toChapterId, toIndex) =>
         set((s) => {
-          const item = s.budget.items.find((i) => i.id === id);
-          if (!item) return s;
-          const without = s.budget.items.filter((i) => i.id !== id);
-          // Normalize order within target chapter
-          const target = without
+          const moving = s.budget.items.find((i) => i.id === id);
+          if (!moving) return s;
+          const rest = s.budget.items.filter((i) => i.id !== id);
+          const target = rest
             .filter((i) => i.chapterId === toChapterId)
             .sort((a, b) => a.order - b.order);
           const clamped = Math.max(0, Math.min(toIndex, target.length));
-          const reordered: BudgetItem[] = [];
-          target.forEach((t, idx) => {
-            if (idx === clamped) reordered.push({ ...item, chapterId: toChapterId, order: -1 });
-            reordered.push(t);
-          });
-          if (clamped >= target.length) reordered.push({ ...item, chapterId: toChapterId, order: -1 });
-          const others = without.filter((i) => i.chapterId !== toChapterId);
-          const withOrders = reordered.map((i, order) => ({ ...i, order }));
-          const merged = [...others, ...withOrders];
-          // Reassign source chapter orders contiguously as well
-          const result: BudgetItem[] = [];
-          const byChapter = new Map<string, BudgetItem[]>();
-          merged.forEach((i) => {
-            const arr = byChapter.get(i.chapterId) ?? [];
-            arr.push(i);
-            byChapter.set(i.chapterId, arr);
-          });
-          byChapter.forEach((arr) => {
-            arr
-              .sort((a, b) => a.order - b.order)
-              .forEach((i, order) => result.push({ ...i, order }));
-          });
-          // Keep items of chapters without items untouched (no-op)
-          const knownIds = new Set(result.map((i) => i.id));
-          without.forEach((i) => {
-            if (!knownIds.has(i.id)) result.push(i);
-          });
-          return { budget: renumber({ ...s.budget, items: result }) };
+          const inserted = [...target];
+          inserted.splice(clamped, 0, { ...moving, chapterId: toChapterId });
+          const insertedIds = new Set(inserted.map((i) => i.id));
+          const items = [
+            ...rest.filter((i) => !insertedIds.has(i.id)),
+            ...inserted.map((i, order) => ({ ...i, order })),
+          ];
+          return { budget: renumber({ ...s.budget, items }) };
         }),
       removeItem: (id) =>
         set((s) => ({
