@@ -124,7 +124,6 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
                   item={item}
                   chapterId={chapter.id}
                   expanded={open}
-                  hasBreakdown={!!item.breakdown}
                   autoEditTitle={focusTitleId === item.id}
                   onToggleBreakdown={() => toggle(item.id)}
                   onRemoveItem={onRemoveItem}

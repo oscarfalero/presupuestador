@@ -15,7 +15,6 @@ interface SortableItemRowProps {
   item: BudgetItem;
   chapterId: string;
   expanded: boolean;
-  hasBreakdown: boolean;
   autoEditTitle?: boolean;
   onToggleBreakdown: () => void;
   onRemoveItem: (id: string) => void;
@@ -24,7 +23,7 @@ interface SortableItemRowProps {
 
 /** Draggable item row. The drag listeners live only on the grip handle,
  *  so click-to-edit keeps working everywhere else. */
-export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoEditTitle, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
+export function SortableItemRow({ item, chapterId, expanded, autoEditTitle, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", chapterId },
@@ -116,7 +115,6 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           className="inline-flex size-7 cursor-pointer items-center justify-center rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {expanded ? "▾" : "▸"}
-          {hasBreakdown && !expanded ? <span className="text-blue-500">•</span> : null}
         </button>
         <ConfirmButton
           label={<TrashIcon />}
