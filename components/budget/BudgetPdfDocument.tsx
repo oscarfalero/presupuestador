@@ -21,6 +21,9 @@ const styles = StyleSheet.create({
   signCol: { flex: 1 },
   signLine: { marginTop: 4 },
   chapter: { marginTop: 12, marginBottom: 4, fontSize: 12, fontWeight: "bold" },
+  chapterHead: { flexDirection: "row", alignItems: "baseline", marginTop: 12, marginBottom: 4 },
+  chapterTitle: { flex: 1, fontSize: 12, fontWeight: "bold" },
+  chapterSubtotal: { fontSize: 10, fontWeight: "bold" },
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -110,9 +113,14 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
         <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
         {client.chapters.map((ch) => (
           <View key={ch.number} wrap={false}>
-            <Text style={styles.chapter}>
-              {ch.number}. {ch.title}
-            </Text>
+            <View style={styles.chapterHead}>
+              <Text style={styles.chapterTitle}>
+                {ch.number}. {ch.title}
+              </Text>
+              <Text style={styles.chapterSubtotal}>
+                {t["export.subtotal"]}: {ch.subtotal.toFixed(2)}€
+              </Text>
+            </View>
             <View style={styles.tableHeader}>
               <Text style={styles.cellCode}>{t["col.code"]}</Text>
               <Text style={styles.cellTitle}>{t["col.title"]}</Text>
@@ -134,9 +142,6 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
                 <Text style={styles.cellAmount}>{item.amount.toFixed(2)}€</Text>
               </View>
             ))}
-            <Text style={styles.subtotal}>
-              {t["export.subtotal"]}: {ch.subtotal.toFixed(2)}€
-            </Text>
           </View>
         ))}
         <Text style={styles.subtotal}>

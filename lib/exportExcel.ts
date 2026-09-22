@@ -113,7 +113,7 @@ export async function exportClientBudgetToExcel(
   headerRow.font = { bold: true };
 
   for (const ch of client.chapters) {
-    const titleRow = ws.addRow({ title: `${ch.number}. ${ch.title}` });
+    const titleRow = ws.addRow({ title: `${ch.number}. ${ch.title}`, amount: ch.subtotal });
     titleRow.font = { bold: true };
     for (const item of ch.items) {
       ws.addRow({
@@ -126,8 +126,6 @@ export async function exportClientBudgetToExcel(
         amount: item.amount,
       });
     }
-    const subtotalRow = ws.addRow({ title: `${t["export.subtotalChapter"]} ${ch.title}`, amount: ch.subtotal });
-    subtotalRow.font = { italic: true };
   }
 
   ws.addRow({});
