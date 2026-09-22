@@ -198,7 +198,7 @@ export const useBudgetStore = create<BudgetState>()(
             chapterId,
             order,
             code: "",
-            title,
+            title: title || "New item",
             description: "",
             um: "ud",
             quantity: 1,
