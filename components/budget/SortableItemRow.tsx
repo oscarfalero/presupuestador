@@ -29,12 +29,9 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
     data: { type: "item", chapterId },
   });
   const unpriced = isUnpriced(item);
-  const missingLabel =
-    item.price === 0 && item.quantity === 0
-      ? "Missing price and quantity"
-      : item.price === 0
-        ? "Missing price"
-        : "Missing quantity";
+  const priceMissing = item.price === 0;
+  const qtyMissing = item.quantity === 0;
+  const warnCls = "rounded bg-amber-100 font-medium text-amber-900 hover:bg-amber-200";
 
   return (
     <div
@@ -86,20 +83,18 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         value={item.quantity}
         onCommit={(quantity) => onUpdate(item.id, { quantity })}
         ariaLabel={`Item ${item.code} quantity`}
+        title={qtyMissing ? "Missing quantity — click to set" : undefined}
+        className={qtyMissing ? warnCls : undefined}
       />
       <InlineNumber
         value={item.price}
         onCommit={(price) => onUpdate(item.id, { price })}
         ariaLabel={`Item ${item.code} price`}
         format={(n) => `${n.toFixed(2)}€`}
+        title={priceMissing ? "Missing price — click to set" : undefined}
+        className={priceMissing ? warnCls : undefined}
       />
-      <span
-        title={unpriced ? missingLabel : undefined}
-        className={`px-1 py-1 text-right font-medium tabular-nums ${
-          unpriced ? "rounded bg-amber-100 text-amber-900" : ""
-        }`}
-      >
-        {unpriced ? "⚠ " : null}
+      <span className="px-1 py-1 text-right font-medium tabular-nums">
         {itemAmount(item).toFixed(2)}€
       </span>
       <span className="flex items-start justify-end">
