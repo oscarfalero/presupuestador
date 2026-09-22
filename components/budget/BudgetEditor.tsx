@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBudgetStore } from "@/lib/store";
-import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
+import { budgetSubtotal, budgetTotalWithIva, isUnpriced } from "@/lib/calc";
 import { IVA_PRESETS } from "@/lib/budget-types";
 import { exportBudgetToExcel } from "@/lib/exportExcel";
 import { BudgetPdfDocument } from "./BudgetPdfDocument";
@@ -50,6 +50,13 @@ export function BudgetEditor() {
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const subtotal = budgetSubtotal(budget.items);
   const total = budgetTotalWithIva(subtotal, budget.ivaPct);
+  const unpricedCount = budget.items.filter(isUnpriced).length;
+
+  const scrollToFirstUnpriced = () => {
+    const first = budget.items.find(isUnpriced);
+    if (first)
+      document.getElementById(`item-row-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -190,6 +197,16 @@ export function BudgetEditor() {
         <span className="ml-auto font-semibold tabular-nums">
           Subtotal {subtotal.toFixed(2)}€ · Total {total.toFixed(2)}€
         </span>
+        {unpricedCount > 0 ? (
+          <button
+            type="button"
+            onClick={scrollToFirstUnpriced}
+            title="Scroll to the first item without price"
+            className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200"
+          >
+            ⚠ {unpricedCount} {unpricedCount === 1 ? "item" : "items"} without price
+          </button>
+        ) : null}
       </div>
 
       <DndContext

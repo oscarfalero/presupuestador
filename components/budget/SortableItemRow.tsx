@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { itemAmount } from "@/lib/calc";
+import { itemAmount, isUnpriced } from "@/lib/calc";
 import type { BudgetItem } from "@/lib/budget-types";
 import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
 import { ConfirmButton } from "./ConfirmButton";
@@ -28,16 +28,21 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
     id: item.id,
     data: { type: "item", chapterId },
   });
+  const unpriced = isUnpriced(item);
+  const priceMissing = item.price === 0;
+  const qtyMissing = item.quantity === 0;
+  const warnCls = "rounded bg-amber-100 font-medium text-amber-900 hover:bg-amber-200";
 
   return (
     <div
       ref={setNodeRef}
+      id={`item-row-${item.id}`}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className={`${ITEM_GRID_CLS} border-t border-zinc-100 bg-white px-2 py-1`}
+      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 ${unpriced ? "bg-amber-50/70" : "bg-white"}`}
     >
       <button
         type="button"
@@ -78,12 +83,16 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         value={item.quantity}
         onCommit={(quantity) => onUpdate(item.id, { quantity })}
         ariaLabel={`Item ${item.code} quantity`}
+        title={qtyMissing ? "Missing quantity — click to set" : undefined}
+        className={qtyMissing ? warnCls : undefined}
       />
       <InlineNumber
         value={item.price}
         onCommit={(price) => onUpdate(item.id, { price })}
         ariaLabel={`Item ${item.code} price`}
         format={(n) => `${n.toFixed(2)}€`}
+        title={priceMissing ? "Missing price — click to set" : undefined}
+        className={priceMissing ? warnCls : undefined}
       />
       <span className="px-1 py-1 text-right font-medium tabular-nums">
         {itemAmount(item).toFixed(2)}€
@@ -105,7 +114,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           confirmLabel="Sure?"
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`Delete item ${item.code}`}
-          className="rounded px-1 py-1 text-zinc-300 hover:bg-red-50 hover:text-red-600"
+          className="rounded px-1 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
           confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium text-white hover:bg-red-500"
         />
       </span>

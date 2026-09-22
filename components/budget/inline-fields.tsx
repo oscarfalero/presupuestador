@@ -98,6 +98,8 @@ interface InlineNumberProps {
   min?: number;
   step?: string;
   format?: (n: number) => string;
+  className?: string;
+  title?: string;
 }
 
 /**
@@ -112,6 +114,8 @@ export function InlineNumber({
   min = 0,
   step = "any",
   format,
+  className,
+  title,
 }: InlineNumberProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -155,9 +159,9 @@ export function InlineNumber({
       <button
         type="button"
         aria-label={ariaLabel}
-        title="Click to edit"
+        title={title ?? "Click to edit"}
         onClick={startEdit}
-        className={`${displayCls} text-right tabular-nums`}
+        className={`${displayCls} text-right tabular-nums ${className ?? ""}`}
       >
         {format ? format(value) : String(value)}
       </button>
@@ -188,7 +192,8 @@ export function InlineNumber({
         aria-label={ariaLabel}
         aria-invalid={error !== null}
         step={step}
-        className={`${inputCls} text-right tabular-nums ${error ? "border-red-500" : ""}`}
+        title={title}
+        className={`${inputCls} text-right tabular-nums ${error ? "border-red-500" : ""} ${className ?? ""}`}
       />
       {error ? (
         <span role="alert" className="mt-0.5 block text-right text-xs text-red-600">
