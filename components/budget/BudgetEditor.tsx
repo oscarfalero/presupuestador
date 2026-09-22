@@ -22,7 +22,7 @@ import { BudgetPdfDocument } from "./BudgetPdfDocument";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
 import { CompanyBlock } from "./CompanyBlock";
-import { DocSection } from "./DocSection";
+import { DocSections } from "./DocSections";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
@@ -194,13 +194,7 @@ export function BudgetEditor() {
         </div>
       </div>
 
-      <DocSection
-        title={t["section.intro"]}
-        value={budget.intro}
-        placeholder={t["section.introPh"]}
-        navId="meta:intro"
-        onChange={(intro) => setMeta({ intro })}
-      />
+      <DocSections />
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
@@ -317,20 +311,6 @@ export function BudgetEditor() {
           ) : null}
         </DragOverlay>
       </DndContext>
-      <DocSection
-        title={t["section.terms"]}
-        value={budget.terms}
-        placeholder={t["section.termsPh"]}
-        navId="meta:terms"
-        onChange={(terms) => setMeta({ terms })}
-      />
-      <DocSection
-        title={t["section.payment"]}
-        value={budget.payment}
-        placeholder={t["section.paymentPh"]}
-        navId="meta:payment"
-        onChange={(payment) => setMeta({ payment })}
-      />
       <UndoToast />
     </div>
   );
