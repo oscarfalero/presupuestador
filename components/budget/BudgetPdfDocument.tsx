@@ -16,6 +16,10 @@ const styles = StyleSheet.create({
   pre: { marginBottom: 10 },
   sectionTitle: { fontSize: 12, fontWeight: "bold", marginTop: 10, marginBottom: 3 },
   sectionBody: { marginBottom: 6 },
+  signBlock: { marginTop: 24 },
+  signCols: { flexDirection: "row", gap: 48, marginTop: 56 },
+  signCol: { flex: 1 },
+  signLine: { marginTop: 4 },
   chapter: { marginTop: 12, marginBottom: 4, fontSize: 12, fontWeight: "bold" },
   row: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#ddd", paddingVertical: 4 },
   code: { width: 36 },
@@ -55,19 +59,19 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             {company.logoDataUrl ? <Image style={styles.logo} src={company.logoDataUrl} /> : null}
             <View>
               {company.name ? <Text style={styles.companyName}>{company.name}</Text> : null}
-              {company.address ? <Text style={styles.companyLine}>{company.address}</Text> : null}
-              {company.taxId ? <Text style={styles.companyLine}>{company.taxId}</Text> : null}
+              {company.taxId ? <Text style={styles.companyLine}>{t["export.nif"]} {company.taxId}</Text> : null}
+              {company.phone ? <Text style={styles.companyLine}>{company.phone}</Text> : null}
+              {company.web ? <Text style={styles.companyLine}>{company.web}</Text> : null}
             </View>
           </View>
         )}
         <Text style={styles.h1}>{client.name}</Text>
-        <Text style={styles.meta}>
-          {[client.number ? `${t["export.number"]} ${client.number}` : "", client.date]
-            .filter((s) => s !== "")
-            .join(" · ")}
-          {" · "}
-          {fmt(t["export.vat"], { n: client.ivaPct })}
-        </Text>
+        {client.number ? (
+          <Text style={styles.meta}>
+            {t["export.number"]} {client.number}
+          </Text>
+        ) : null}
+        {client.date ? <Text style={styles.meta}>{client.date}</Text> : null}
         {client.clientName ? (
           <Text style={styles.meta}>
             {t["export.client"]} {client.clientName}
@@ -79,12 +83,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
           </Text>
         ) : null}
         {client.details ? <Text style={styles.meta}>{client.details}</Text> : null}
-        {client.intro ? (
-          <View>
-            <Text style={styles.sectionTitle}>{t["section.intro"]}</Text>
-            <Text style={styles.sectionBody}>{client.intro}</Text>
-          </View>
-        ) : null}
+        {client.intro ? <Text style={styles.pre}>{client.intro}</Text> : null}
         {client.chapters.map((ch) => (
           <View key={ch.number} wrap={false}>
             <Text style={styles.chapter}>
@@ -125,6 +124,20 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             <Text style={styles.sectionBody}>{client.payment}</Text>
           </View>
         ) : null}
+        <View style={styles.signBlock}>
+          <Text style={styles.sectionTitle}>{t["export.signature"]}</Text>
+          <View style={styles.signCols}>
+            <View style={styles.signCol}>
+              <Text>{t["export.signClient"]}:</Text>
+              <Text style={styles.signLine}>{t["export.sign"]} ________________________</Text>
+              <Text style={styles.signLine}>{t["export.signDate"]} ____________</Text>
+            </View>
+            <View style={styles.signCol}>
+              <Text>{t["export.signCompany"]}:</Text>
+              <Text style={styles.signLine}>{t["export.sign"]} ________________________</Text>
+            </View>
+          </View>
+        </View>
         {footerBits.length > 0 ? (
           <Text style={styles.footer} fixed>
             {[company.name, ...footerBits].filter((s) => s && s.trim() !== "").join(" · ")}

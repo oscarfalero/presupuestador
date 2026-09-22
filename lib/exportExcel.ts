@@ -47,7 +47,7 @@ export async function exportClientBudgetToExcel(
     { key: "amount", width: 16 },
   ];
 
-  // Company header (logo floats top-right over rows 1-4).
+  // Company header: logo, name, NIF, phone, web.
   if (company.logoDataUrl && company.logoExt) {
     const imgId = wb.addImage({
       base64: company.logoDataUrl.split(",")[1] ?? "",
@@ -60,36 +60,33 @@ export async function exportClientBudgetToExcel(
     const r = ws.addRow({ title: company.name });
     r.font = { bold: true, size: 14 };
   }
-  const contact = [company.address, company.phone, company.email, company.web, company.taxId].filter(
-    (s) => s && s.trim() !== "",
-  );
-  for (const line of contact) {
-    const r = tallRow(ws, { title: line }, blockLines(line));
-    r.font = { size: 10, color: { argb: "FF555555" } };
-  }
+  if (company.taxId) ws.addRow({ title: `${t["export.nif"]} ${company.taxId}` });
+  if (company.phone) ws.addRow({ title: company.phone });
+  if (company.web) ws.addRow({ title: company.web });
 
+  // Budget info block: number, date, client, address.
   ws.addRow({});
-  const titleRow = ws.addRow({ title: client.name });
-  titleRow.font = { bold: true, size: 16 };
-  const metaBits = [
-    client.number ? `${t["export.number"]} ${client.number}` : "",
-    client.date,
-    fmt(t["export.vat"], { n: client.ivaPct }),
-  ].filter((s) => s !== "");
-  ws.addRow({ title: metaBits.join(" · ") });
+  if (client.number) {
+    const r = ws.addRow({ title: `${t["export.number"]} ${client.number}` });
+    r.font = { bold: true };
+  }
+  if (client.date) ws.addRow({ title: client.date });
   if (client.clientName) ws.addRow({ title: `${t["export.client"]} ${client.clientName}` });
   if (client.address) {
     const r = tallRow(ws, { title: `${t["meta.address"]}: ${client.address}` }, blockLines(client.address));
     r.alignment = { wrapText: true };
   }
+
+  // Job title block.
+  ws.addRow({});
+  const titleRow = ws.addRow({ title: client.name });
+  titleRow.font = { bold: true, size: 16 };
   if (client.details) {
     const r = tallRow(ws, { title: client.details }, blockLines(client.details));
     r.alignment = { wrapText: true };
     r.font = { italic: true };
   }
   if (client.intro) {
-    const label = ws.addRow({ title: t["section.intro"] });
-    label.font = { bold: true };
     const r = tallRow(ws, { title: client.intro }, blockLines(client.intro));
     r.alignment = { wrapText: true };
   }
@@ -143,6 +140,17 @@ export async function exportClientBudgetToExcel(
     const r = tallRow(ws, { title: client.payment }, blockLines(client.payment));
     r.alignment = { wrapText: true };
   }
+
+  ws.addRow({});
+  const signLabel = ws.addRow({ title: t["export.signature"] });
+  signLabel.font = { bold: true };
+  ws.addRow({});
+  ws.addRow({});
+  ws.addRow({ title: `${t["export.signClient"]}:` });
+  ws.addRow({ title: `${t["export.sign"]} ________________________      ${t["export.signDate"]} ____________` });
+  ws.addRow({});
+  ws.addRow({ title: `${t["export.signCompany"]}:` });
+  ws.addRow({ title: `${t["export.sign"]} ________________________` });
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf as ArrayBuffer], {
