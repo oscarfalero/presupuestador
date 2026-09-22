@@ -72,17 +72,20 @@ export function ItemBreakdownPanel({
               onCommit={(description) => onUpdateMaterial(item.id, m.id, { description })}
               ariaLabel={`Material description for item ${item.code}`}
               placeholder="e.g. Glass shower screen 120cm"
+              navId={`item:${item.id}:mat:${m.id}:desc`}
             />
             <InlineNumber
               value={m.quantity}
               onCommit={(quantity) => onUpdateMaterial(item.id, m.id, { quantity })}
               ariaLabel={`Material quantity for item ${item.code}`}
+              navId={`item:${item.id}:mat:${m.id}:qty`}
             />
             <InlineNumber
               value={m.price}
               onCommit={(price) => onUpdateMaterial(item.id, m.id, { price })}
               ariaLabel={`Material price for item ${item.code}`}
               format={(n) => `${n.toFixed(2)}€`}
+              navId={`item:${item.id}:mat:${m.id}:price`}
             />
             <span className="min-w-0">
               <InlineText
@@ -90,6 +93,7 @@ export function ItemBreakdownPanel({
                 onCommit={(sourceLabel) => onUpdateMaterial(item.id, m.id, { sourceLabel })}
                 ariaLabel={`Material source label for item ${item.code}`}
                 placeholder="Supplier / reference"
+                navId={`item:${item.id}:mat:${m.id}:srclabel`}
                 className="text-xs"
               />
               <InlineText
@@ -97,6 +101,7 @@ export function ItemBreakdownPanel({
                 onCommit={(sourceUrl) => onUpdateMaterial(item.id, m.id, { sourceUrl })}
                 ariaLabel={`Material source URL for item ${item.code}`}
                 placeholder="https://…"
+                navId={`item:${item.id}:mat:${m.id}:srcurl`}
                 className="text-xs text-blue-700"
               />
             </span>
@@ -134,6 +139,7 @@ export function ItemBreakdownPanel({
                   onUpdateBreakdown(item.id, { labor: { ...breakdown.labor, hours } })
                 }
                 ariaLabel={`Labor hours for item ${item.code}`}
+                navId={`item:${item.id}:labor:hours`}
               />
             </span>
             h ×
@@ -145,6 +151,7 @@ export function ItemBreakdownPanel({
                 }
                 ariaLabel={`Labor rate per hour for item ${item.code}`}
                 format={(n) => `${n.toFixed(2)}€`}
+                navId={`item:${item.id}:labor:rate`}
               />
             </span>
             /h =
@@ -161,6 +168,7 @@ export function ItemBreakdownPanel({
               onCommit={(otherCost) => onUpdateBreakdown(item.id, { otherCost })}
               ariaLabel={`Other costs for item ${item.code}`}
               format={(n) => `${n.toFixed(2)}€`}
+              navId={`item:${item.id}:other`}
             />
           </span>
         </span>
@@ -172,6 +180,7 @@ export function ItemBreakdownPanel({
           onCommit={(notes) => onUpdateBreakdown(item.id, { notes })}
           ariaLabel={`Breakdown notes for item ${item.code}`}
           placeholder="Explain the calculation… e.g. 289 + 4h × 35 = 140 + sealing 21 ⇒ 450"
+          navId={`item:${item.id}:notes`}
           className="text-zinc-600"
         />
       </div>

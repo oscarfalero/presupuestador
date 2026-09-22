@@ -131,6 +131,7 @@ export function BudgetEditor() {
             onCommit={(name) => setMeta({ name })}
             ariaLabel="Budget name"
             required
+            navId="meta:name"
             className="text-3xl font-semibold tracking-tight"
           />
           <InlineText
@@ -138,6 +139,7 @@ export function BudgetEditor() {
             onCommit={(details) => setMeta({ details })}
             ariaLabel="Budget details"
             placeholder="Add description…"
+            navId="meta:details"
             className="mt-1 text-sm text-zinc-500"
           />
         </div>
@@ -167,6 +169,7 @@ export function BudgetEditor() {
             onChange={(e) => setMeta({ clientName: e.target.value })}
             placeholder="Optional"
             aria-label="Client name"
+            data-nav-id="meta:client"
           />
         </label>
         <label className="flex items-center gap-2">
@@ -177,6 +180,7 @@ export function BudgetEditor() {
             value={budget.date}
             onChange={(e) => setMeta({ date: e.target.value })}
             aria-label="Budget date"
+            data-nav-id="meta:date"
           />
         </label>
         <label className="flex items-center gap-2">
@@ -186,6 +190,7 @@ export function BudgetEditor() {
             value={budget.ivaPct}
             onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
             aria-label="VAT percentage"
+            data-nav-id="meta:vat"
           >
             {IVA_PRESETS.map((v) => (
               <option key={v} value={v}>

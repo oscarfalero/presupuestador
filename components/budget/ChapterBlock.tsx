@@ -81,6 +81,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
             onCommit={(title) => onRename(chapter.id, title)}
             ariaLabel={`Chapter ${chapter.order + 1} title`}
             required
+            navId={`chapter:${chapter.id}:title`}
           />
         </div>
         <span className="pr-2 text-sm whitespace-nowrap text-zinc-500 tabular-nums">

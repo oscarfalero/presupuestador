@@ -62,6 +62,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           ariaLabel={`Item ${item.code} title`}
           required
           autoEdit={autoEditTitle}
+          navId={`item:${item.id}:title`}
           className="font-medium"
         />
         <InlineText
@@ -69,6 +70,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           onCommit={(description) => onUpdate(item.id, { description })}
           ariaLabel={`Item ${item.code} description`}
           placeholder="Add description…"
+          navId={`item:${item.id}:desc`}
           className="text-zinc-500"
         />
       </span>
@@ -77,12 +79,14 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
           value={item.um}
           onCommit={(um) => onUpdate(item.id, { um })}
           ariaLabel={`Item ${item.code} unit of measure`}
+          navId={`item:${item.id}:um`}
         />
       </span>
       <InlineNumber
         value={item.quantity}
         onCommit={(quantity) => onUpdate(item.id, { quantity })}
         ariaLabel={`Item ${item.code} quantity`}
+        navId={`item:${item.id}:qty`}
         title={qtyMissing ? "Missing quantity — click to set" : undefined}
         className={qtyMissing ? warnCls : undefined}
       />
@@ -91,6 +95,7 @@ export function SortableItemRow({ item, chapterId, expanded, hasBreakdown, autoE
         onCommit={(price) => onUpdate(item.id, { price })}
         ariaLabel={`Item ${item.code} price`}
         format={(n) => `${n.toFixed(2)}€`}
+        navId={`item:${item.id}:price`}
         title={priceMissing ? "Missing price — click to set" : undefined}
         className={priceMissing ? warnCls : undefined}
       />
