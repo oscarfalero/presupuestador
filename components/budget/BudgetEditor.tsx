@@ -34,12 +34,12 @@ interface ActiveDrag {
 }
 
 /**
- * Budget editor (issues #1 + #2 + #3): inline editing, drag & drop,
- * and the internal per-item price breakdown panel.
- * Full CRUD (#4) comes next.
+ * Budget editor (issues #1-#4): inline editing, drag & drop,
+ * internal breakdown panel, and full chapter/item CRUD.
+ * Unit-test suite (#5) comes next.
  */
 export function BudgetEditor() {
-  const { budget, setMeta, renameChapter, updateItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
+  const { budget, setMeta, addChapter, renameChapter, removeChapter, addItem, updateItem, removeItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
 
   const sensors = useSensors(
@@ -199,24 +199,52 @@ export function BudgetEditor() {
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveDrag(null)}
       >
-        <div className="mt-8 space-y-8">
-          <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-            {chapters.map((ch) => (
-              <ChapterBlock
-                key={ch.id}
-                chapter={ch}
-                items={budget.items.filter((i) => i.chapterId === ch.id)}
-                allItems={budget.items}
-                onRename={renameChapter}
-                onUpdateItem={updateItem}
-                onUpdateBreakdown={updateBreakdown}
-                onAddMaterial={addMaterial}
-                onUpdateMaterial={updateMaterial}
-                onRemoveMaterial={removeMaterial}
-              />
-            ))}
-          </SortableContext>
-        </div>
+        {chapters.length === 0 ? (
+          <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center">
+            <p className="text-lg font-medium">No chapters yet</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Chapters group your items (e.g. Masonry, Plumbing) and are numbered automatically.
+            </p>
+            <button
+              type="button"
+              onClick={() => addChapter()}
+              className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+            >
+              + Create first chapter
+            </button>
+          </div>
+        ) : (
+          <div className="mt-8 space-y-8">
+            <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              {chapters.map((ch) => (
+                <ChapterBlock
+                  key={ch.id}
+                  chapter={ch}
+                  items={budget.items.filter((i) => i.chapterId === ch.id)}
+                  allItems={budget.items}
+                  onRename={renameChapter}
+                  onAddItem={addItem}
+                  onUpdateItem={updateItem}
+                  onRemoveItem={removeItem}
+                  onRemoveChapter={removeChapter}
+                  onUpdateBreakdown={updateBreakdown}
+                  onAddMaterial={addMaterial}
+                  onUpdateMaterial={updateMaterial}
+                  onRemoveMaterial={removeMaterial}
+                />
+              ))}
+            </SortableContext>
+          </div>
+        )}
+        {chapters.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => addChapter()}
+            className="mt-6 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+          >
+            + Add chapter
+          </button>
+        ) : null}
         <DragOverlay dropAnimation={null}>
           {activeDrag ? (
             <div className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium shadow-lg">

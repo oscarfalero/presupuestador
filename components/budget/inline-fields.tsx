@@ -16,6 +16,8 @@ interface InlineTextProps {
   className?: string;
   /** When true, empty commits are ignored (field is required). */
   required?: boolean;
+  /** When true, enters edit mode on mount (e.g. freshly added rows). */
+  autoEdit?: boolean;
 }
 
 /**
@@ -28,8 +30,9 @@ export function InlineText({
   placeholder,
   className,
   required,
+  autoEdit,
 }: InlineTextProps) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(!!autoEdit);
   const [draft, setDraft] = useState(value);
   // Guards against a blur-commit racing the unmount triggered by Esc.
   const cancelRef = useRef(false);

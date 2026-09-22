@@ -9,13 +9,17 @@ import type { BudgetItem, Chapter, ItemBreakdown, MaterialCost } from "@/lib/bud
 import { InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS, SortableItemRow } from "./SortableItemRow";
 import { ItemBreakdownPanel } from "./ItemBreakdownPanel";
+import { ConfirmButton } from "./ConfirmButton";
 
 interface ChapterBlockProps {
   chapter: Chapter;
   items: BudgetItem[];
   allItems: BudgetItem[];
   onRename: (id: string, title: string) => void;
+  onAddItem: (chapterId: string) => string;
   onUpdateItem: (id: string, patch: Partial<BudgetItem>) => void;
+  onRemoveItem: (id: string) => void;
+  onRemoveChapter: (id: string) => void;
   onUpdateBreakdown: (itemId: string, patch: Partial<ItemBreakdown>) => void;
   onAddMaterial: (itemId: string) => void;
   onUpdateMaterial: (itemId: string, materialId: string, patch: Partial<MaterialCost>) => void;
@@ -24,7 +28,7 @@ interface ChapterBlockProps {
 
 /** Draggable chapter section. Whole-section drag via the header grip;
  *  items are independently sortable, including across chapters. */
-export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem, onUpdateBreakdown, onAddMaterial, onUpdateMaterial, onRemoveMaterial }: ChapterBlockProps) {
+export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, onUpdateItem, onRemoveItem, onRemoveChapter, onUpdateBreakdown, onAddMaterial, onUpdateMaterial, onRemoveMaterial }: ChapterBlockProps) {
   const {
     attributes,
     listeners,
@@ -39,6 +43,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem,
 
   const sorted = [...items].sort((a, b) => a.order - b.order);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [focusTitleId, setFocusTitleId] = useState<string | null>(null);
 
   const toggle = (id: string) =>
     setOpenIds((prev) => {
@@ -81,6 +86,14 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem,
         <span className="pr-2 text-sm whitespace-nowrap text-zinc-500 tabular-nums">
           Subtotal {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
         </span>
+        <ConfirmButton
+          label="✕"
+          confirmLabel={sorted.length > 0 ? `Delete ${sorted.length} items?` : "Delete?"}
+          onConfirm={() => onRemoveChapter(chapter.id)}
+          ariaLabel={`Delete chapter ${chapter.order + 1}`}
+          className="rounded px-1.5 py-1 text-zinc-300 hover:bg-red-50 hover:text-red-600"
+          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+        />
       </div>
 
       <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400`}>
@@ -105,7 +118,9 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem,
                   chapterId={chapter.id}
                   expanded={open}
                   hasBreakdown={!!item.breakdown}
+                  autoEditTitle={focusTitleId === item.id}
                   onToggleBreakdown={() => toggle(item.id)}
+                  onRemoveItem={onRemoveItem}
                   onUpdate={onUpdateItem}
                 />
                 {open ? (
@@ -124,9 +139,16 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onUpdateItem,
         </SortableContext>
         {sorted.length === 0 ? (
           <p className="border-t border-dashed border-zinc-200 px-4 py-4 text-center text-sm text-zinc-400">
-            Drop items here
+            Drop items here, or add the first one below
           </p>
         ) : null}
+        <button
+          type="button"
+          onClick={() => setFocusTitleId(onAddItem(chapter.id))}
+          className="w-full border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+        >
+          + Add item
+        </button>
       </div>
     </section>
   );
