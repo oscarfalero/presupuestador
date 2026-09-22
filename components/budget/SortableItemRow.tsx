@@ -126,7 +126,7 @@ export function SortableItemRow({ item, chapterId, expanded, autoEditTitle, onTo
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`${t["item.delete"]} ${item.code}`}
           className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium text-white hover:bg-red-500"
+          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
       </span>
     </div>

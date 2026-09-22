@@ -135,8 +135,8 @@ export function ItemBreakdownPanel({
                         onConfirm={() => window.open(withProtocol(url), "_blank", "noopener,noreferrer")}
                         ariaLabel={`${t["breakdown.visit"]}: ${m.sourceLabel || url}`}
                         title={t["breakdown.visit"]}
-                        className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                        confirmClassName="rounded bg-zinc-900 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        className="rounded bg-zinc-900 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        confirmClassName="rounded bg-zinc-900 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
                       />
                     ) : null}
                   </span>
@@ -154,8 +154,8 @@ export function ItemBreakdownPanel({
                   onConfirm={() => onRemoveMaterial(item.id, m.id)}
                   ariaLabel={`${t["breakdown.removeMaterial"]} ${item.code}`}
                   title={t["breakdown.removeMaterial"]}
-                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-                  confirmClassName="rounded bg-red-600 px-1.5 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+                  className="inline-flex size-7 cursor-pointer items-center justify-center justify-self-end rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+                  confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500 justify-self-end"
                 />
               </div>
             );
