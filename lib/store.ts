@@ -11,7 +11,7 @@ interface BudgetState {
   budget: Budget;
   /** Single-level deleted snapshot for timed undo. Never persisted. */
   lastDeleted: DeletedSnapshot | null;
-  setMeta: (patch: Partial<Pick<Budget, "name" | "details" | "clientName" | "address" | "date" | "ivaPct" | "number" | "intro" | "terms" | "payment">>) => void;
+  setMeta: (patch: Partial<Pick<Budget, "name" | "clientName" | "address" | "date" | "ivaPct" | "number" | "intro" | "terms" | "payment">>) => void;
   addChapter: (title?: string) => string;
   renameChapter: (id: string, title: string) => void;
   moveChapter: (id: string, direction: -1 | 1) => void;
@@ -42,7 +42,6 @@ function sampleBudget(): Budget {
     createBudget({
       name: "Bathroom renovation — example",
       number: `${new Date().getFullYear()}-001`,
-      details: "Sample budget to validate the editor UX.",
       chapters: [chapter1, chapter2],
       items: [
         {

@@ -72,7 +72,6 @@ export interface Budget {
   /** Human-readable budget reference, e.g. 2026-001. User-overridable. */
   number: string;
   name: string;
-  details: string;
   clientName: string;
   /** Site/client address (multiline). */
   address: string;
@@ -98,7 +97,6 @@ export function createBudget(partial?: Partial<Budget>): Budget {
     id: crypto.randomUUID(),
     number: "",
     name: "Untitled budget",
-    details: "",
     clientName: "",
     address: "",
     date: new Date().toISOString().slice(0, 10),

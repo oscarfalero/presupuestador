@@ -21,7 +21,6 @@ export interface ClientChapter {
 export interface ClientBudget {
   name: string;
   number: string;
-  details: string;
   clientName: string;
   address: string;
   date: string;
@@ -46,7 +45,6 @@ export function toClientBudget(budget: Budget): ClientBudget {
   return {
     name: budget.name,
     number: budget.number,
-    details: budget.details,
     clientName: budget.clientName,
     address: budget.address,
     date: budget.date,

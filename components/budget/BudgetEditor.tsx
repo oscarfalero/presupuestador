@@ -159,14 +159,6 @@ export function BudgetEditor() {
             navId="meta:name"
             className="text-3xl font-semibold tracking-tight"
           />
-          <InlineText
-            value={budget.details}
-            onCommit={(details) => setMeta({ details })}
-            ariaLabel={t["budget.details"]}
-            placeholder={t["budget.detailsPlaceholder"]}
-            navId="meta:details"
-            className="mt-1 text-sm text-zinc-500 dark:text-zinc-400"
-          />
         </div>
         <div className="flex items-center gap-2">
           <LocaleToggle />

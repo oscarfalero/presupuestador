@@ -9,7 +9,6 @@ function budgetWithBreakdown(): Budget {
   const chapter = { id: "ch-1", order: 0, title: "Masonry" };
   return createBudget({
     name: "Test budget",
-    details: "Details",
     clientName: "Client",
     date: "2026-01-01",
     ivaPct: 21,

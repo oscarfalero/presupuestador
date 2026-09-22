@@ -87,11 +87,6 @@ export async function exportClientBudgetToExcel(
   ws.addRow({});
   const titleRow = ws.addRow({ title: client.name });
   titleRow.font = { bold: true, size: 16 };
-  if (client.details) {
-    const r = tallRow(ws, { title: client.details }, blockLines(client.details));
-    r.alignment = { wrapText: true };
-    r.font = { italic: true };
-  }
   if (client.intro) {
     const r = tallRow(ws, { title: client.intro }, blockLines(client.intro));
     r.alignment = { wrapText: true };

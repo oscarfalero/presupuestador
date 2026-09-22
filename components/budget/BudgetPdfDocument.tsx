@@ -83,7 +83,6 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             {t["meta.address"]}: {client.address}
           </Text>
         ) : null}
-        {client.details ? <Text style={styles.meta}>{client.details}</Text> : null}
         {client.intro ? <Text style={styles.pre}>{client.intro}</Text> : null}
         {client.chapters.map((ch) => (
           <View key={ch.number} wrap={false}>
