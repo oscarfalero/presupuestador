@@ -96,16 +96,20 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             {t["meta.address"]}: {client.address}
           </Text>
         ) : null}
-        {client.intro ? <Text style={styles.pre}>{client.intro}</Text> : null}
+        {client.intro ? (
+          <View wrap={false}>
+            <Text style={styles.pre}>{client.intro}</Text>
+          </View>
+        ) : null}
         {client.terms ? (
-          <View>
+          <View wrap={false}>
             <Text style={styles.sectionTitle}>{t["section.terms"]}</Text>
             <Text style={styles.sectionBody}>{client.terms}</Text>
           </View>
         ) : null}
         <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
         {client.chapters.map((ch) => (
-          <View key={ch.number}>
+          <View key={ch.number} wrap={false}>
             <Text style={styles.chapter}>
               {ch.number}. {ch.title}
             </Text>
@@ -145,12 +149,12 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
           {t["export.total"]}: {client.total.toFixed(2)}€
         </Text>
         {client.payment ? (
-          <View>
+          <View wrap={false}>
             <Text style={styles.sectionTitle}>{t["section.payment"]}</Text>
             <Text style={styles.sectionBody}>{client.payment}</Text>
           </View>
         ) : null}
-        <View style={styles.signBlock}>
+        <View style={styles.signBlock} wrap={false}>
           <Text style={styles.sectionTitle}>{t["export.signature"]}</Text>
           <View style={styles.signCols}>
             <View style={styles.signCol}>
