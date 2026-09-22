@@ -2,7 +2,7 @@ import { BudgetEditorLoader } from "@/components/budget/BudgetEditorLoader";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white text-zinc-900">
+    <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <BudgetEditorLoader />
     </main>
   );

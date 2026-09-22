@@ -12,7 +12,7 @@ const BudgetEditor = dynamic(
     ssr: false,
     loading: () => (
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
-        <p className="text-sm text-zinc-500">Loading editor…</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading editor…</p>
       </div>
     ),
   },

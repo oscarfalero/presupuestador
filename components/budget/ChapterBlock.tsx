@@ -61,16 +61,16 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className="overflow-hidden rounded-xl border border-zinc-200 bg-white"
+      className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2">
+      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 dark:bg-zinc-900">
         <button
           type="button"
           aria-label={`Drag chapter ${chapter.order + 1}`}
           title="Drag to reorder chapter"
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing"
+          className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
         >
           ⠿
         </button>
@@ -84,7 +84,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
             navId={`chapter:${chapter.id}:title`}
           />
         </div>
-        <span className="pr-2 text-sm whitespace-nowrap text-zinc-500 tabular-nums">
+        <span className="pr-2 text-sm whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
           Subtotal {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
         </span>
         <ConfirmButton
@@ -92,12 +92,12 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           confirmLabel={sorted.length > 0 ? `Delete ${sorted.length} items?` : "Delete?"}
           onConfirm={() => onRemoveChapter(chapter.id)}
           ariaLabel={`Delete chapter ${chapter.order + 1}`}
-          className="rounded px-1.5 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600"
+          className="rounded px-1.5 py-1 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
       </div>
 
-      <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400`}>
+      <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400 dark:text-zinc-500`}>
         <span />
         <span className="px-1 font-medium">Code</span>
         <span className="px-1 font-medium">Title</span>
@@ -139,14 +139,14 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           })}
         </SortableContext>
         {sorted.length === 0 ? (
-          <p className="border-t border-dashed border-zinc-200 px-4 py-4 text-center text-sm text-zinc-400">
+          <p className="border-t border-dashed border-zinc-200 px-4 py-4 text-center text-sm text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
             Drop items here, or add the first one below
           </p>
         ) : null}
         <button
           type="button"
           onClick={() => setFocusTitleId(onAddItem(chapter.id))}
-          className="w-full border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+          className="w-full border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
         >
           + Add item
         </button>

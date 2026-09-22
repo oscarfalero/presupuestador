@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { UNITS, type UnitOfMeasure } from "@/lib/budget-types";
 
 const displayCls =
-  "w-full rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400";
+  "w-full rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
 const inputCls =
-  "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900";
+  "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-300";
 
 /**
  * Spreadsheet-like keyboard navigation.
@@ -156,7 +156,7 @@ export function InlineText({
         {value ? (
           value
         ) : (
-          <span className="text-zinc-400 italic">{placeholder ?? "Click to edit…"}</span>
+          <span className="text-zinc-400 italic dark:text-zinc-500">{placeholder ?? "Click to edit…"}</span>
         )}
       </button>
     );
@@ -317,7 +317,7 @@ export function InlineNumber({
         className={`${inputCls} text-right tabular-nums ${error ? "border-red-500" : ""} ${className ?? ""}`}
       />
       {error ? (
-        <span role="alert" className="mt-0.5 block text-right text-xs text-red-600">
+        <span role="alert" className="mt-0.5 block text-right text-xs text-red-600 dark:text-red-400">
           {error} — Esc to cancel
         </span>
       ) : null}
@@ -348,7 +348,7 @@ export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProp
       }}
       aria-label={ariaLabel}
       title="Unit of measure"
-      className="cursor-pointer appearance-none rounded bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:bg-white focus:outline-2 focus:outline-zinc-400"
+      className="cursor-pointer appearance-none rounded bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
     >
       {UNITS.map((u) => (
         <option key={u} value={u}>
