@@ -230,17 +230,14 @@ export function BudgetEditor() {
         </label>
         <label className="flex min-w-52 flex-1 items-center gap-2">
           {t["meta.address"]}
-          <span className="min-w-0 flex-1">
-            <InlineText
-              value={budget.address}
-              onCommit={(address) => setMeta({ address })}
-              ariaLabel={t["meta.address"]}
-              placeholder={t["meta.address"]}
-              multiline
-              navId="meta:address"
-              className="text-sm"
-            />
-          </span>
+          <input
+            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={budget.address}
+            onChange={(e) => setMeta({ address: e.target.value })}
+            placeholder={t["meta.address"]}
+            aria-label={t["meta.address"]}
+            data-nav-id="meta:address"
+          />
         </label>
         <label className="flex items-center gap-2">
           {t["meta.vat"]}
