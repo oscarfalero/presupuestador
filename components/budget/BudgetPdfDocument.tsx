@@ -1,4 +1,4 @@
-import { Document, Image, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Image, Page, Path, Svg, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Budget } from "@/lib/budget-types";
 import { toClientBudget } from "@/lib/clientExport";
 import { fmt, getStrings } from "@/lib/i18n";
@@ -12,6 +12,8 @@ const styles = StyleSheet.create({
   logo: { width: 90, marginRight: 12, objectFit: "contain" },
   companyName: { fontSize: 14, fontWeight: "bold" },
   companyLine: { color: "#555", marginTop: 1 },
+  companyIconRow: { flexDirection: "row", alignItems: "center", marginTop: 1 },
+  companyIcon: { width: 12, marginRight: 3 },
   h1: { fontSize: 18, marginTop: 8, marginBottom: 4, fontWeight: "bold" },
   meta: { marginBottom: 6, color: "#555" },
   pre: { marginBottom: 10 },
@@ -55,6 +57,28 @@ const styles = StyleSheet.create({
   },
 });
 
+function PinIcon() {
+  return (
+    <Svg style={styles.companyIcon} viewBox="0 0 24 24">
+      <Path
+        d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"
+        fill="#71717a"
+      />
+    </Svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <Svg style={styles.companyIcon} viewBox="0 0 24 24">
+      <Path
+        d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"
+        fill="#71717a"
+      />
+    </Svg>
+  );
+}
+
 /**
  * Client-facing PDF. Document order: company header -> budget info ->
  * intro -> chapters/totals -> terms -> payment. Internal breakdown
@@ -77,8 +101,18 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             <View>
               {company.name ? <Text style={styles.companyName}>{company.name}</Text> : null}
               {company.taxId ? <Text style={styles.companyLine}>{t["export.nif"]} {company.taxId}</Text> : null}
-              {company.address ? <Text style={styles.companyLine}>{company.address}</Text> : null}
-              {company.phone ? <Text style={styles.companyLine}>{formatPhone(company.phone)}</Text> : null}
+              {company.address ? (
+                <View style={styles.companyIconRow}>
+                  <PinIcon />
+                  <Text style={styles.companyLine}>{company.address}</Text>
+                </View>
+              ) : null}
+              {company.phone ? (
+                <View style={styles.companyIconRow}>
+                  <PhoneIcon />
+                  <Text style={styles.companyLine}>{formatPhone(company.phone)}</Text>
+                </View>
+              ) : null}
               {company.web ? <Text style={styles.companyLine}>{company.web}</Text> : null}
             </View>
           </View>
