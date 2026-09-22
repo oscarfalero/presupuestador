@@ -318,7 +318,7 @@ export const useBudgetStore = create<BudgetState>()(
         };
         const { details, ...rest } = saved;
         const budget = { ...createBudget(), ...rest };
-        if (!budget.intro && details) budget.intro = details;
+        if (!budget.intro?.trim() && details?.trim()) budget.intro = details.trim();
         return { ...current, budget };
       },
     },
