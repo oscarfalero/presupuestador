@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import {
   DndContext,
   DragOverlay,
@@ -17,19 +16,15 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva, isUnpriced } from "@/lib/calc";
 import { IVA_PRESETS } from "@/lib/budget-types";
-import { exportBudgetToExcel } from "@/lib/exportExcel";
-import { BudgetPdfDocument } from "./BudgetPdfDocument";
+import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
+import { CompanyBlock } from "./CompanyBlock";
+import { DocSections } from "./DocSections";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
 import { useStrings } from "@/lib/locale";
-
-const PDFDownloadLink = dynamic(
-  () => import("@react-pdf/renderer").then((m) => m.PDFDownloadLink),
-  { ssr: false },
-);
 
 interface ActiveDrag {
   type: "item" | "chapter";
@@ -56,6 +51,30 @@ export function BudgetEditor() {
   const subtotal = budgetSubtotal(budget.items);
   const total = budgetTotalWithIva(subtotal, budget.ivaPct);
   const unpricedCount = budget.items.filter(isUnpriced).length;
+  const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
+
+  // Both export libraries are loaded on demand so typing never pays
+  // their cost; the PDF used to regenerate on every keystroke.
+  const handleExportPdf = async () => {
+    if (exporting) return;
+    setExporting("pdf");
+    try {
+      const [{ pdf }, { BudgetPdfDocument }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("./BudgetPdfDocument"),
+      ]);
+      const current = useBudgetStore.getState().budget;
+      const blob = await pdf(<BudgetPdfDocument budget={current} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slugify(current.number || current.name) || "budget"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const scrollToFirstUnpriced = () => {
     const first = budget.items.find(isUnpriced);
@@ -129,6 +148,7 @@ export function BudgetEditor() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
+      <CompanyBlock />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
           <InlineText
@@ -139,33 +159,54 @@ export function BudgetEditor() {
             navId="meta:name"
             className="text-3xl font-semibold tracking-tight"
           />
-          <InlineText
-            value={budget.details}
-            onCommit={(details) => setMeta({ details })}
-            ariaLabel={t["budget.details"]}
-            placeholder={t["budget.detailsPlaceholder"]}
-            navId="meta:details"
-            className="mt-1 text-sm text-zinc-500 dark:text-zinc-400"
-          />
         </div>
         <div className="flex items-center gap-2">
           <LocaleToggle />
           <ThemeToggle />
           <button
-            className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-            onClick={() => void exportBudgetToExcel(budget)}
+            className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            disabled={exporting !== null}
+            onClick={() => {
+              if (exporting) return;
+              setExporting("excel");
+              void exportBudgetToExcel(useBudgetStore.getState().budget).finally(() => setExporting(null));
+            }}
           >
-            {t["header.exportExcel"]}
+            {exporting === "excel" ? t["header.preparing"] : t["header.exportExcel"]}
           </button>
-          <PDFDownloadLink
-            document={<BudgetPdfDocument budget={budget} />}
-            fileName="budget.pdf"
-            className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          <button
+            className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            disabled={exporting !== null}
+            onClick={() => void handleExportPdf()}
           >
-            {({ loading }) => (loading ? t["header.preparingPdf"] : t["header.exportPdf"])}
-          </PDFDownloadLink>
+            {exporting === "pdf" ? t["header.preparingPdf"] : t["header.exportPdf"]}
+          </button>
         </div>
       </header>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+        <label className="flex items-center gap-2">
+          {t["meta.number"]}
+          <input
+            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={budget.number}
+            onChange={(e) => setMeta({ number: e.target.value })}
+            aria-label={t["meta.number"]}
+            data-nav-id="meta:number"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          {t["meta.date"]}
+          <input
+            type="date"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={budget.date}
+            onChange={(e) => setMeta({ date: e.target.value })}
+            aria-label={t["meta.date"]}
+            data-nav-id="meta:date"
+          />
+        </label>
+      </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
@@ -179,15 +220,15 @@ export function BudgetEditor() {
             data-nav-id="meta:client"
           />
         </label>
-        <label className="flex items-center gap-2">
-          {t["meta.date"]}
+        <label className="flex min-w-52 flex-1 items-center gap-2">
+          {t["meta.address"]}
           <input
-            type="date"
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-            value={budget.date}
-            onChange={(e) => setMeta({ date: e.target.value })}
-            aria-label={t["meta.date"]}
-            data-nav-id="meta:date"
+            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={budget.address}
+            onChange={(e) => setMeta({ address: e.target.value })}
+            placeholder={t["meta.address"]}
+            aria-label={t["meta.address"]}
+            data-nav-id="meta:address"
           />
         </label>
         <label className="flex items-center gap-2">
@@ -221,6 +262,12 @@ export function BudgetEditor() {
         ) : null}
       </div>
 
+      <DocSections />
+
+      <h2 className="mt-8 mb-2 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        {t["section.chapters"]}
+      </h2>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -229,7 +276,7 @@ export function BudgetEditor() {
         onDragCancel={() => setActiveDrag(null)}
       >
         {chapters.length === 0 ? (
-          <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
+          <div className="rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
             <p className="text-lg font-medium">{t["empty.title"]}</p>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               {t["empty.body"]}
@@ -243,7 +290,7 @@ export function BudgetEditor() {
             </button>
           </div>
         ) : (
-          <div className="mt-8 space-y-8">
+          <div className="space-y-8">
             <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
               {chapters.map((ch) => (
                 <ChapterBlock

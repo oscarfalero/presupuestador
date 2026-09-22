@@ -11,7 +11,7 @@ interface BudgetState {
   budget: Budget;
   /** Single-level deleted snapshot for timed undo. Never persisted. */
   lastDeleted: DeletedSnapshot | null;
-  setMeta: (patch: Partial<Pick<Budget, "name" | "details" | "clientName" | "date" | "ivaPct">>) => void;
+  setMeta: (patch: Partial<Pick<Budget, "name" | "clientName" | "address" | "date" | "ivaPct" | "number" | "intro" | "terms" | "payment">>) => void;
   addChapter: (title?: string) => string;
   renameChapter: (id: string, title: string) => void;
   moveChapter: (id: string, direction: -1 | 1) => void;
@@ -41,7 +41,7 @@ function sampleBudget(): Budget {
   return renumber(
     createBudget({
       name: "Bathroom renovation — example",
-      details: "Sample budget to validate the editor UX.",
+      number: `${new Date().getFullYear()}-001`,
       chapters: [chapter1, chapter2],
       items: [
         {
@@ -306,6 +306,21 @@ export const useBudgetStore = create<BudgetState>()(
         })),
       reset: () => set({ budget: sampleBudget(), lastDeleted: null }),
     }),
-    { name: "presupuestador-budget-v1", partialize: (s) => ({ budget: s.budget }) },
+    {
+      name: "presupuestador-budget-v1",
+      partialize: (s) => ({ budget: s.budget }),
+      // Fill fields added after the snapshot was saved (e.g. number,
+      // address, intro, terms, payment) with model defaults. Legacy
+      // `details` folds into `intro` once when intro is still empty.
+      merge: (persisted, current) => {
+        const saved = ((persisted as Partial<BudgetState>)?.budget ?? {}) as Partial<Budget> & {
+          details?: string;
+        };
+        const { details, ...rest } = saved;
+        const budget = { ...createBudget(), ...rest };
+        if (!budget.intro?.trim() && details?.trim()) budget.intro = details.trim();
+        return { ...current, budget };
+      },
+    },
   ),
 );

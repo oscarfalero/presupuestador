@@ -9,7 +9,6 @@ function budgetWithBreakdown(): Budget {
   const chapter = { id: "ch-1", order: 0, title: "Masonry" };
   return createBudget({
     name: "Test budget",
-    details: "Details",
     clientName: "Client",
     date: "2026-01-01",
     ivaPct: 21,
@@ -60,6 +59,25 @@ describe("toClientBudget", () => {
     expect(client.subtotal).toBe(900);
     expect(client.vatAmount).toBe(189);
     expect(client.total).toBe(1089);
+  });
+
+  it("maps header data and document sections", () => {
+    const base = budgetWithBreakdown();
+    const client = toClientBudget({
+      ...base,
+      number: "2026-007",
+      address: "Calle Falsa 123\nMadrid",
+      intro: "Intro text",
+      terms: "Terms text",
+      payment: "Cash",
+    });
+    expect(client).toMatchObject({
+      number: "2026-007",
+      address: "Calle Falsa 123\nMadrid",
+      intro: "Intro text",
+      terms: "Terms text",
+      payment: "Cash",
+    });
   });
 
   it("never leaks the internal breakdown (regression check for client exports)", () => {
