@@ -81,7 +81,7 @@ function PhoneIcon() {
 
 /**
  * Client-facing PDF. Document order: company header -> budget info ->
- * intro -> chapters/totals -> terms -> payment. Internal breakdown
+ * intro -> terms -> chapters/totals -> payment. Internal breakdown
  * excluded by design (editor-only).
  */
 export function BudgetPdfDocument({ budget }: { budget: Budget }) {

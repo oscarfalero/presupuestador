@@ -10,7 +10,7 @@ import type { Budget } from "./budget-types";
  * Client-facing Excel export, built from the client-safe model plus the
  * company profile. The internal price breakdown is NEVER included.
  * Document order: company header -> budget info -> intro ->
- * chapters/totals -> terms -> payment.
+ * terms -> chapters/totals -> payment.
  */
 export async function exportBudgetToExcel(budget: Budget): Promise<void> {
   await exportClientBudgetToExcel(

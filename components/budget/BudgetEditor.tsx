@@ -169,7 +169,7 @@ export function BudgetEditor() {
             onClick={() => {
               if (exporting) return;
               setExporting("excel");
-              void exportBudgetToExcel(budget).finally(() => setExporting(null));
+              void exportBudgetToExcel(useBudgetStore.getState().budget).finally(() => setExporting(null));
             }}
           >
             {exporting === "excel" ? t["header.preparing"] : t["header.exportExcel"]}

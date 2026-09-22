@@ -19,8 +19,11 @@ const BLOCKS: { field: "intro" | "terms" | "payment"; titleKey: StringKey; phKey
 export function DocSections() {
   const { budget, setMeta } = useBudgetStore();
   const t = useStrings();
-  const [open, setOpen] = useState(() => !(budget.intro || budget.terms || budget.payment));
-  const filled = BLOCKS.filter((b) => budget[b.field].trim() !== "").length;
+  // Tolerant reader: very old snapshots may miss these keys when the
+  // persist merge is bypassed (the merge normally backfills them).
+  const textOf = (field: "intro" | "terms" | "payment"): string => budget[field] ?? "";
+  const [open, setOpen] = useState(() => !(textOf("intro") || textOf("terms") || textOf("payment")));
+  const filled = BLOCKS.filter((b) => textOf(b.field).trim() !== "").length;
 
   return (
     <section className="mt-8 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -48,7 +51,7 @@ export function DocSections() {
                 <h3 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   {t[b.titleKey]}
                 </h3>
-                {budget[b.field] ? (
+                {textOf(b.field) ? (
                   <button
                     type="button"
                     onClick={() => setMeta({ [b.field]: "" } as Partial<typeof budget>)}
@@ -60,7 +63,7 @@ export function DocSections() {
               </div>
               <div className="rounded-xl border border-zinc-200 px-4 py-2 text-sm dark:border-zinc-800">
                 <InlineText
-                  value={budget[b.field]}
+                  value={textOf(b.field)}
                   onCommit={(next) => setMeta({ [b.field]: next } as Partial<typeof budget>)}
                   ariaLabel={t[b.titleKey]}
                   placeholder={t[b.phKey]}

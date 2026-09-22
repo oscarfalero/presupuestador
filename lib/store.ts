@@ -310,11 +310,17 @@ export const useBudgetStore = create<BudgetState>()(
       name: "presupuestador-budget-v1",
       partialize: (s) => ({ budget: s.budget }),
       // Fill fields added after the snapshot was saved (e.g. number,
-      // address, intro, terms, payment) with model defaults.
-      merge: (persisted, current) => ({
-        ...current,
-        budget: { ...createBudget(), ...((persisted as Partial<BudgetState>)?.budget ?? {}) },
-      }),
+      // address, intro, terms, payment) with model defaults. Legacy
+      // `details` folds into `intro` once when intro is still empty.
+      merge: (persisted, current) => {
+        const saved = ((persisted as Partial<BudgetState>)?.budget ?? {}) as Partial<Budget> & {
+          details?: string;
+        };
+        const { details, ...rest } = saved;
+        const budget = { ...createBudget(), ...rest };
+        if (!budget.intro && details) budget.intro = details;
+        return { ...current, budget };
+      },
     },
   ),
 );
