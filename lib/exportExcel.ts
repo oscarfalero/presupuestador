@@ -94,7 +94,7 @@ export async function exportClientBudgetToExcel(
   }
 
   if (client.terms) {
-    const label = ws.addRow({ title: t["section.terms"] });
+    const label = ws.addRow({ title: t["section.terms"].toUpperCase() });
     label.font = { bold: true };
     const r = tallRow(ws, { title: client.terms }, blockLines(client.terms));
     r.alignment = { wrapText: true };
@@ -137,14 +137,14 @@ export async function exportClientBudgetToExcel(
 
   if (client.payment) {
     ws.addRow({});
-    const label = ws.addRow({ title: t["section.payment"] });
+    const label = ws.addRow({ title: t["section.payment"].toUpperCase() });
     label.font = { bold: true };
     const r = tallRow(ws, { title: client.payment }, blockLines(client.payment));
     r.alignment = { wrapText: true };
   }
 
   ws.addRow({});
-  const signLabel = ws.addRow({ title: t["export.signature"] });
+  const signLabel = ws.addRow({ title: t["export.signature"].toUpperCase() });
   signLabel.font = { bold: true };
   ws.addRow({});
   ws.addRow({});

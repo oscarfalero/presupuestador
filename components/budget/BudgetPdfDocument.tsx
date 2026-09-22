@@ -23,10 +23,19 @@ const styles = StyleSheet.create({
   signCols: { flexDirection: "row", gap: 48, marginTop: 56 },
   signCol: { flex: 1 },
   signLine: { marginTop: 4 },
-  chapter: { marginTop: 12, marginBottom: 4, fontSize: 12, fontWeight: "bold" },
-  chapterHead: { flexDirection: "row", alignItems: "baseline", marginTop: 12, marginBottom: 4 },
+  chapterBox: { borderWidth: 0.5, borderColor: "#e4e4e7", borderRadius: 6, marginTop: 12 },
+  chapterHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e4e4e7",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+  },
   chapterTitle: { flex: 1, fontSize: 12, fontWeight: "bold" },
   chapterSubtotal: { fontSize: 10, fontWeight: "bold" },
+  chapterBody: { paddingHorizontal: 8, paddingBottom: 6 },
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -141,13 +150,13 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
         ) : null}
         {client.terms ? (
           <View wrap={false}>
-            <Text style={styles.sectionTitle}>{t["section.terms"]}</Text>
+            <Text style={styles.sectionTitle}>{t["section.terms"].toUpperCase()}</Text>
             <Text style={styles.sectionBody}>{client.terms}</Text>
           </View>
         ) : null}
         <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
         {client.chapters.map((ch) => (
-          <View key={ch.number} wrap={false}>
+          <View key={ch.number} style={styles.chapterBox} wrap={false}>
             <View style={styles.chapterHead}>
               <Text style={styles.chapterTitle}>
                 {ch.number}. {ch.title}
@@ -156,6 +165,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
                 {t["export.subtotal"]}: {ch.subtotal.toFixed(2)}€
               </Text>
             </View>
+            <View style={styles.chapterBody}>
             <View style={styles.tableHeader}>
               <Text style={styles.cellCode}>{t["col.code"]}</Text>
               <Text style={styles.cellTitle}>{t["col.title"]}</Text>
@@ -177,6 +187,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
                 <Text style={styles.cellAmount}>{item.amount.toFixed(2)}€</Text>
               </View>
             ))}
+            </View>
           </View>
         ))}
         <Text style={styles.subtotal}>
@@ -190,12 +201,12 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
         </Text>
         {client.payment ? (
           <View wrap={false}>
-            <Text style={styles.sectionTitle}>{t["section.payment"]}</Text>
+            <Text style={styles.sectionTitle}>{t["section.payment"].toUpperCase()}</Text>
             <Text style={styles.sectionBody}>{client.payment}</Text>
           </View>
         ) : null}
         <View style={styles.signBlock} wrap={false}>
-          <Text style={styles.sectionTitle}>{t["export.signature"]}</Text>
+          <Text style={styles.sectionTitle}>{t["export.signature"].toUpperCase()}</Text>
           <View style={styles.signCols}>
             <View style={styles.signCol}>
               <Text>{t["export.signClient"]}:</Text>
