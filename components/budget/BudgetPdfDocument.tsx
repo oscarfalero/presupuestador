@@ -193,11 +193,14 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
         <Text style={styles.subtotal}>
           {t["export.subtotal"]}: {client.subtotal.toFixed(2)}€
         </Text>
-        <Text style={styles.subtotal}>
-          {fmt(t["export.vat"], { n: client.ivaPct })}: {client.vatAmount.toFixed(2)}€
-        </Text>
+        {client.ivaIncluded ? (
+          <Text style={styles.subtotal}>
+            {fmt(t["export.vat"], { n: client.ivaPct })}: {client.vatAmount.toFixed(2)}€
+          </Text>
+        ) : null}
         <Text style={styles.total}>
           {t["export.total"]}: {client.total.toFixed(2)}€
+          {client.ivaIncluded ? "" : ` (${t["totals.vatExcluded"].toUpperCase()})`}
         </Text>
         {client.payment ? (
           <View wrap={false}>

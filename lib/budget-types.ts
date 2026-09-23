@@ -78,6 +78,7 @@ export interface Budget {
   date: string;
   /** Global VAT %, editable. Presets: 10 | 21. */
   ivaPct: number;
+  ivaIncluded: boolean;
   /** Free-text document sections (optional, hidden when empty). */
   intro: string;
   terms: string;
@@ -101,6 +102,7 @@ export function createBudget(partial?: Partial<Budget>): Budget {
     address: "",
     date: new Date().toISOString().slice(0, 10),
     ivaPct: 21,
+    ivaIncluded: true,
     intro: "",
     terms: "",
     payment: "",

@@ -61,6 +61,11 @@ describe("subtotals and VAT", () => {
     expect(budgetTotalWithIva(0, 21)).toBe(0);
   });
 
+  it("returns the net subtotal when VAT is excluded", () => {
+    expect(budgetTotalWithIva(1000, 21, false)).toBe(1000);
+    expect(budgetTotalWithIva(0, 21, false)).toBe(0);
+  });
+
   it("rounds half cents", () => {
     expect(round2(10.126)).toBe(10.13);
     expect(round2(0.1 + 0.2)).toBe(0.3);

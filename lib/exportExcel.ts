@@ -131,8 +131,13 @@ export async function exportClientBudgetToExcel(
 
   ws.addRow({});
   ws.addRow({ title: t["export.subtotal"], amount: client.subtotal });
-  ws.addRow({ title: fmt(t["export.vat"], { n: client.ivaPct }), amount: client.vatAmount });
-  const totalRow = ws.addRow({ title: t["export.total"], amount: client.total });
+  if (client.ivaIncluded) {
+    ws.addRow({ title: fmt(t["export.vat"], { n: client.ivaPct }), amount: client.vatAmount });
+  }
+  const totalTitle = client.ivaIncluded
+    ? t["export.total"]
+    : `${t["export.total"]} (${t["totals.vatExcluded"].toUpperCase()})`;
+  const totalRow = ws.addRow({ title: totalTitle, amount: client.total });
   totalRow.font = { bold: true };
 
   if (client.payment) {

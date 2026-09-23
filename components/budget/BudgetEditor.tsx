@@ -49,7 +49,7 @@ export function BudgetEditor() {
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const t = useStrings();
   const subtotal = budgetSubtotal(budget.items);
-  const total = budgetTotalWithIva(subtotal, budget.ivaPct);
+  const total = budgetTotalWithIva(subtotal, budget.ivaPct, budget.ivaIncluded);
   const unpricedCount = budget.items.filter(isUnpriced).length;
   const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
 
@@ -231,24 +231,38 @@ export function BudgetEditor() {
             data-nav-id="meta:address"
           />
         </label>
-        <label className="flex items-center gap-2">
-          {t["meta.vat"]}
-          <select
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900"
-            value={budget.ivaPct}
-            onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
-            aria-label={t["meta.vat"]}
-            data-nav-id="meta:vat"
-          >
-            {IVA_PRESETS.map((v) => (
-              <option key={v} value={v}>
-                {v}%
-              </option>
-            ))}
-          </select>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={budget.ivaIncluded}
+            onChange={(e) => setMeta({ ivaIncluded: e.target.checked })}
+            aria-label={t["meta.vatIncluded"]}
+            data-nav-id="meta:vatIncluded"
+            className="size-4 cursor-pointer accent-zinc-800 dark:accent-zinc-100"
+          />
+          {t["meta.vatIncluded"]}
         </label>
+        {budget.ivaIncluded ? (
+          <label className="flex items-center gap-2">
+            {t["meta.vat"]}
+            <select
+              className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900"
+              value={budget.ivaPct}
+              onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
+              aria-label={t["meta.vat"]}
+              data-nav-id="meta:vat"
+            >
+              {IVA_PRESETS.map((v) => (
+                <option key={v} value={v}>
+                  {v}%
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <span className="ml-auto font-semibold tabular-nums">
           {t["meta.subtotal"]} {subtotal.toFixed(2)}€ · {t["meta.total"]} {total.toFixed(2)}€
+          {budget.ivaIncluded ? null : ` · ${t["totals.vatExcluded"].toUpperCase()}`}
         </span>
         {unpricedCount > 0 ? (
           <button
