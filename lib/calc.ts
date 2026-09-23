@@ -19,8 +19,8 @@ export function budgetSubtotal(items: BudgetItem[]): number {
   return round2(items.reduce((acc, i) => acc + itemAmount(i), 0));
 }
 
-export function budgetTotalWithIva(subtotal: number, ivaPct: number): number {
-  return round2(subtotal * (1 + ivaPct / 100));
+export function budgetTotalWithIva(subtotal: number, ivaPct: number, ivaIncluded = true): number {
+  return ivaIncluded ? round2(subtotal * (1 + ivaPct / 100)) : round2(subtotal);
 }
 
 export function round2(n: number): number {

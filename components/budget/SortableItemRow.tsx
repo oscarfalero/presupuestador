@@ -102,7 +102,7 @@ export function SortableItemRow({ item, chapterId, expanded, autoEditTitle, onTo
         title={priceMissing ? t["item.missingPrice"] : undefined}
         className={priceMissing ? warnCls : undefined}
       />
-      <span className="cursor-default px-1 py-1 text-right font-medium tabular-nums">
+      <span className="cursor-default px-1 py-1 text-right font-bold tabular-nums">
         {itemAmount(item).toFixed(2)}€
       </span>
       <span className="flex items-start justify-end">

@@ -25,6 +25,7 @@ export interface ClientBudget {
   address: string;
   date: string;
   ivaPct: number;
+  ivaIncluded: boolean;
   intro: string;
   terms: string;
   payment: string;
@@ -49,12 +50,13 @@ export function toClientBudget(budget: Budget): ClientBudget {
     address: budget.address,
     date: budget.date,
     ivaPct: budget.ivaPct,
+    ivaIncluded: budget.ivaIncluded ?? true,
     intro: budget.intro,
     terms: budget.terms,
     payment: budget.payment,
     subtotal,
-    vatAmount: round2(subtotal * (budget.ivaPct / 100)),
-    total: budgetTotalWithIva(subtotal, budget.ivaPct),
+    vatAmount: (budget.ivaIncluded ?? true) ? round2(subtotal * (budget.ivaPct / 100)) : 0,
+    total: budgetTotalWithIva(subtotal, budget.ivaPct, budget.ivaIncluded ?? true),
     chapters: chapters.map((ch, idx) => ({
       number: idx + 1,
       title: ch.title,

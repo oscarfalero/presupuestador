@@ -1,7 +1,7 @@
 import { Document, Image, Page, Path, Svg, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Budget } from "@/lib/budget-types";
 import { toClientBudget } from "@/lib/clientExport";
-import { fmt, getStrings } from "@/lib/i18n";
+import { getStrings } from "@/lib/i18n";
 import { useLocaleStore } from "@/lib/locale";
 import { useCompanyStore } from "@/lib/company";
 import { formatPhone } from "@/lib/phone";
@@ -18,11 +18,14 @@ const styles = StyleSheet.create({
   meta: { marginBottom: 6, color: "#555" },
   pre: { marginBottom: 10 },
   sectionTitle: { fontSize: 12, fontWeight: "bold", marginTop: 10, marginBottom: 3 },
+  sectionHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: 10, marginBottom: 3 },
   sectionBody: { marginBottom: 6 },
+  summaryRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 2 },
+  summaryTotal: { flexDirection: "row", justifyContent: "space-between", marginTop: 4, fontSize: 14, fontWeight: "bold" },
+  summaryExcluded: { fontSize: 8, color: "#71717a" },
   signBlock: { marginTop: 24 },
   signCols: { flexDirection: "row", gap: 48, marginTop: 56 },
   signCol: { flex: 1 },
-  signLine: { marginTop: 4 },
   chapterBox: { borderWidth: 0.5, borderColor: "#e4e4e7", borderRadius: 6, marginTop: 12 },
   chapterHead: {
     flexDirection: "row",
@@ -53,8 +56,6 @@ const styles = StyleSheet.create({
   cellPrice: { width: 52, textAlign: "right" },
   cellAmount: { width: 60, textAlign: "right" },
   itemDesc: { fontSize: 8, color: "#555", marginTop: 1 },
-  total: { marginTop: 12, textAlign: "right", fontSize: 12, fontWeight: "bold" },
-  subtotal: { textAlign: "right", marginTop: 4 },
   footer: {
     position: "absolute",
     bottom: 20,
@@ -89,8 +90,9 @@ function PhoneIcon() {
 }
 
 /**
- * Client-facing PDF. Document order: company header -> budget info ->
- * intro -> terms -> chapters/totals -> payment. Internal breakdown
+ * Client-facing PDF. Page 1: company header -> budget info ->
+ * title/intro -> executive summary (totals, terms, payment) ->
+ * signature. Page 2+: chapters and items. Internal breakdown
  * excluded by design (editor-only).
  */
 export function BudgetPdfDocument({ budget }: { budget: Budget }) {
@@ -148,13 +150,58 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             <Text style={styles.pre}>{client.intro}</Text>
           </View>
         ) : null}
+        <Text style={styles.sectionTitle}>{t["section.summary"].toUpperCase()}</Text>
+        <View style={styles.summaryRow}>
+          <Text>{t["export.subtotal"]}:</Text>
+          <Text>{client.subtotal.toFixed(2)}€</Text>
+        </View>
+        {client.ivaIncluded ? (
+          <View style={styles.summaryRow}>
+            <Text>
+              {t["meta.vat"]} {client.ivaPct}%:
+            </Text>
+            <Text>{client.vatAmount.toFixed(2)}€</Text>
+          </View>
+        ) : null}
+        <View style={styles.summaryTotal}>
+          <Text>{t["export.total"]}:</Text>
+          <Text>{client.total.toFixed(2)}€</Text>
+        </View>
+        {client.ivaIncluded ? null : (
+          <View style={{ ...styles.summaryRow, justifyContent: "flex-end" }}>
+            <Text style={styles.summaryExcluded}>{t["totals.vatExcluded"].toUpperCase()}</Text>
+          </View>
+        )}
         {client.terms ? (
           <View wrap={false}>
             <Text style={styles.sectionTitle}>{t["section.terms"].toUpperCase()}</Text>
             <Text style={styles.sectionBody}>{client.terms}</Text>
           </View>
         ) : null}
-        <Text style={styles.sectionTitle}>{t["section.chapters"].toUpperCase()}</Text>
+        {client.payment ? (
+          <View wrap={false}>
+            <Text style={styles.sectionTitle}>{t["section.payment"].toUpperCase()}</Text>
+            <Text style={styles.sectionBody}>{client.payment}</Text>
+          </View>
+        ) : null}
+        <View style={styles.signBlock} wrap={false}>
+          <Text style={styles.sectionTitle}>{t["export.signature"].toUpperCase()}</Text>
+          <View style={styles.signCols}>
+            <View style={styles.signCol}>
+              <Text>{t["export.signClient"]}</Text>
+            </View>
+            <View style={styles.signCol}>
+              <Text>{t["export.signCompany"]}</Text>
+            </View>
+          </View>
+        </View>
+        <View break />
+        <View style={styles.sectionHead}>
+          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>{t["section.chapters"].toUpperCase()}</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>
+            {t["export.total"]}: {client.total.toFixed(2)}€
+          </Text>
+        </View>
         {client.chapters.map((ch) => (
           <View key={ch.number} style={styles.chapterBox} wrap={false}>
             <View style={styles.chapterHead}>
@@ -190,35 +237,6 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             </View>
           </View>
         ))}
-        <Text style={styles.subtotal}>
-          {t["export.subtotal"]}: {client.subtotal.toFixed(2)}€
-        </Text>
-        <Text style={styles.subtotal}>
-          {fmt(t["export.vat"], { n: client.ivaPct })}: {client.vatAmount.toFixed(2)}€
-        </Text>
-        <Text style={styles.total}>
-          {t["export.total"]}: {client.total.toFixed(2)}€
-        </Text>
-        {client.payment ? (
-          <View wrap={false}>
-            <Text style={styles.sectionTitle}>{t["section.payment"].toUpperCase()}</Text>
-            <Text style={styles.sectionBody}>{client.payment}</Text>
-          </View>
-        ) : null}
-        <View style={styles.signBlock} wrap={false}>
-          <Text style={styles.sectionTitle}>{t["export.signature"].toUpperCase()}</Text>
-          <View style={styles.signCols}>
-            <View style={styles.signCol}>
-              <Text>{t["export.signClient"]}:</Text>
-              <Text style={styles.signLine}>{t["export.sign"]} ________________________</Text>
-              <Text style={styles.signLine}>{t["export.signDate"]} ____________</Text>
-            </View>
-            <View style={styles.signCol}>
-              <Text>{t["export.signCompany"]}:</Text>
-              <Text style={styles.signLine}>{t["export.sign"]} ________________________</Text>
-            </View>
-          </View>
-        </View>
         {footerBits.length > 0 ? (
           <Text style={styles.footer} fixed>
             {[company.name, ...footerBits].filter((s) => s && s.trim() !== "").join(" · ")}

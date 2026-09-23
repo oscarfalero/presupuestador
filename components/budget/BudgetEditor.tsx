@@ -15,12 +15,11 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva, isUnpriced } from "@/lib/calc";
-import { IVA_PRESETS } from "@/lib/budget-types";
 import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
 import { CompanyBlock } from "./CompanyBlock";
-import { DocSections } from "./DocSections";
+import { SummaryBlock } from "./SummaryBlock";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
@@ -48,9 +47,12 @@ export function BudgetEditor() {
 
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const t = useStrings();
-  const subtotal = budgetSubtotal(budget.items);
-  const total = budgetTotalWithIva(subtotal, budget.ivaPct);
   const unpricedCount = budget.items.filter(isUnpriced).length;
+  const chaptersTotal = budgetTotalWithIva(
+    budgetSubtotal(budget.items),
+    budget.ivaPct,
+    budget.ivaIncluded,
+  );
   const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
 
   // Both export libraries are loaded on demand so typing never pays
@@ -231,25 +233,6 @@ export function BudgetEditor() {
             data-nav-id="meta:address"
           />
         </label>
-        <label className="flex items-center gap-2">
-          {t["meta.vat"]}
-          <select
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900"
-            value={budget.ivaPct}
-            onChange={(e) => setMeta({ ivaPct: Number(e.target.value) })}
-            aria-label={t["meta.vat"]}
-            data-nav-id="meta:vat"
-          >
-            {IVA_PRESETS.map((v) => (
-              <option key={v} value={v}>
-                {v}%
-              </option>
-            ))}
-          </select>
-        </label>
-        <span className="ml-auto font-semibold tabular-nums">
-          {t["meta.subtotal"]} {subtotal.toFixed(2)}€ · {t["meta.total"]} {total.toFixed(2)}€
-        </span>
         {unpricedCount > 0 ? (
           <button
             type="button"
@@ -262,10 +245,32 @@ export function BudgetEditor() {
         ) : null}
       </div>
 
-      <DocSections />
+      <div className="mt-8">
+        <h3 className="mb-1 text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          {t["section.intro"]}
+        </h3>
+        <div className="rounded-xl border border-zinc-200 px-4 py-2 text-sm dark:border-zinc-800">
+          <InlineText
+            value={budget.intro ?? ""}
+            onCommit={(intro) => setMeta({ intro })}
+            ariaLabel={t["section.intro"]}
+            placeholder={t["section.introPh"]}
+            multiline
+            navId="meta:intro"
+          />
+        </div>
+      </div>
 
       <h2 className="mt-8 mb-2 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-        {t["section.chapters"]}
+        {t["section.summary"]}
+      </h2>
+      <SummaryBlock />
+
+      <h2 className="mt-8 mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <span>{t["section.chapters"]}</span>
+        <span className="pr-2 text-base normal-case tabular-nums text-zinc-900 dark:text-zinc-100">
+          {t["meta.total"]} {chaptersTotal.toFixed(2)}€
+        </span>
       </h2>
 
       <DndContext
