@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   DndContext,
   DragOverlay,
@@ -13,7 +14,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useBudgetStore } from "@/lib/store";
+import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
 import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
 import { ChapterBlock } from "./ChapterBlock";
@@ -36,9 +37,15 @@ interface ActiveDrag {
  * board. Section bodies live in their own components (EditorHeader,
  * MetaFields, IntroSection, SummaryBlock, ChapterBlock).
  */
-export function BudgetEditor() {
-  const { budget, addChapter, renameChapter, removeChapter, addItem, updateItem, removeItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
+export function BudgetEditor({ budgetId }: { budgetId: string }) {
+  const { addChapter, renameChapter, removeChapter, addItem, updateItem, removeItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
+  const setActiveBudget = useBudgetStore((s) => s.setActiveBudget);
+  const budget = useBudgetStore((s) => s.budgets[budgetId]);
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+
+  useEffect(() => {
+    setActiveBudget(budgetId);
+  }, [budgetId, setActiveBudget]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -54,6 +61,17 @@ export function BudgetEditor() {
   );
   const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
 
+  if (!budget) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-6 py-10">
+        <p className="text-lg font-medium">{t["budgets.notFound"]}</p>
+        <Link href="/" className="mt-2 inline-block text-sm text-zinc-500 underline dark:text-zinc-400">
+          {t["budgets.backToList"]}
+        </Link>
+      </div>
+    );
+  }
+
   // Both export libraries are loaded on demand so typing never pays
   // their cost; the PDF used to regenerate on every keystroke.
   const handleExportPdf = async () => {
@@ -64,7 +82,8 @@ export function BudgetEditor() {
         import("@react-pdf/renderer"),
         import("./BudgetPdfDocument"),
       ]);
-      const current = useBudgetStore.getState().budget;
+      const current = selectActiveBudget(useBudgetStore.getState());
+      if (!current) return;
       const blob = await pdf(<BudgetPdfDocument budget={current} />).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -79,8 +98,10 @@ export function BudgetEditor() {
 
   const handleExportExcel = () => {
     if (exporting) return;
+    const current = selectActiveBudget(useBudgetStore.getState());
+    if (!current) return;
     setExporting("excel");
-    void exportBudgetToExcel(useBudgetStore.getState().budget).finally(() => setExporting(null));
+    void exportBudgetToExcel(current).finally(() => setExporting(null));
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -149,6 +170,9 @@ export function BudgetEditor() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
+      <Link href="/" className="mb-4 inline-block text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100">
+        ← {t["budgets.title"]}
+      </Link>
       <CompanyBlock />
       <EditorHeader
         exporting={exporting}

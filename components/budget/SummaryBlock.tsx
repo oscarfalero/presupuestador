@@ -2,7 +2,7 @@
 
 import { IVA_PRESETS } from "@/lib/budget-types";
 import { budgetSubtotal, budgetTotalWithIva, round2 } from "@/lib/calc";
-import { useBudgetStore } from "@/lib/store";
+import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { useStrings } from "@/lib/locale";
 import { InlineText } from "./inline-fields";
 
@@ -12,8 +12,10 @@ import { InlineText } from "./inline-fields";
  * The header contact/address block no longer carries pricing.
  */
 export function SummaryBlock() {
-  const { budget, setMeta } = useBudgetStore();
+  const { setMeta } = useBudgetStore();
+  const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
+  if (!budget) return null;
   const subtotal = budgetSubtotal(budget.items);
   const vatAmount = round2(subtotal * (budget.ivaPct / 100));
   const total = budgetTotalWithIva(subtotal, budget.ivaPct, budget.ivaIncluded);

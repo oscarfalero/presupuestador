@@ -1,6 +1,6 @@
 "use client";
 
-import { useBudgetStore } from "@/lib/store";
+import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { useStrings } from "@/lib/locale";
 import { InlineText } from "./inline-fields";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,8 +14,10 @@ interface EditorHeaderProps {
 
 /** Title, locale/theme toggles and the Excel/PDF export actions. */
 export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHeaderProps) {
-  const { budget, setMeta } = useBudgetStore();
+  const { setMeta } = useBudgetStore();
+  const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
+  if (!budget) return null;
 
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">

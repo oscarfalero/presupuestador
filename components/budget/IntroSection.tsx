@@ -1,13 +1,15 @@
 "use client";
 
-import { useBudgetStore } from "@/lib/store";
+import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { useStrings } from "@/lib/locale";
 import { InlineText } from "./inline-fields";
 
 /** Free-text presentation shown unlabeled in the exports. */
 export function IntroSection() {
-  const { budget, setMeta } = useBudgetStore();
+  const { setMeta } = useBudgetStore();
+  const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
+  if (!budget) return null;
 
   return (
     <div className="mt-8">

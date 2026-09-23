@@ -24,6 +24,6 @@ function LoadingFallback() {
   );
 }
 
-export function BudgetEditorLoader() {
-  return <BudgetEditor />;
+export function BudgetEditorLoader({ budgetId }: { budgetId: string }) {
+  return <BudgetEditor budgetId={budgetId} />;
 }
