@@ -1,3 +1,21 @@
+minimumReleaseAge: 10080
+# Transitive-only, too fresh for the age gate (re-check after they mature;
+# minimumReleaseAgeExcludePrune drops entries the lockfile stops resolving).
+minimumReleaseAgeExclude:
+  - '@babel/parser'
+  - baseline-browser-mapping
+  - electron-to-chromium
+  - is-core-module
+  - node-releases
+  - typed-array-byte-offset
+  - which-typed-array
+minimumReleaseAgeExcludePrune: true
+# Legacy packages with no provenance history that never regain trust signals.
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - eslint-import-resolver-typescript
+  - semver
+  - undici-types
 allowBuilds:
   sharp: false
   unrs-resolver: false

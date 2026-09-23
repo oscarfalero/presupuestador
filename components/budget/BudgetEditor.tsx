@@ -14,14 +14,14 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBudgetStore } from "@/lib/store";
-import { budgetSubtotal, budgetTotalWithIva, isUnpriced } from "@/lib/calc";
+import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
 import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
-import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
 import { CompanyBlock } from "./CompanyBlock";
+import { EditorHeader } from "./EditorHeader";
+import { MetaFields } from "./MetaFields";
+import { IntroSection } from "./IntroSection";
 import { SummaryBlock } from "./SummaryBlock";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LocaleToggle } from "@/components/LocaleToggle";
 import { UndoToast } from "./UndoToast";
 import { useStrings } from "@/lib/locale";
 
@@ -32,12 +32,12 @@ interface ActiveDrag {
 }
 
 /**
- * Budget editor (issues #1-#4): inline editing, drag & drop,
- * internal breakdown panel, and full chapter/item CRUD.
- * Unit-test suite (#5) comes next.
+ * Budget editor shell: document sections plus the chapters drag & drop
+ * board. Section bodies live in their own components (EditorHeader,
+ * MetaFields, IntroSection, SummaryBlock, ChapterBlock).
  */
 export function BudgetEditor() {
-  const { budget, setMeta, addChapter, renameChapter, removeChapter, addItem, updateItem, removeItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
+  const { budget, addChapter, renameChapter, removeChapter, addItem, updateItem, removeItem, moveItem, moveChapterTo, updateBreakdown, addMaterial, updateMaterial, removeMaterial } = useBudgetStore();
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
 
   const sensors = useSensors(
@@ -47,7 +47,6 @@ export function BudgetEditor() {
 
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const t = useStrings();
-  const unpricedCount = budget.items.filter(isUnpriced).length;
   const chaptersTotal = budgetTotalWithIva(
     budgetSubtotal(budget.items),
     budget.ivaPct,
@@ -78,10 +77,10 @@ export function BudgetEditor() {
     }
   };
 
-  const scrollToFirstUnpriced = () => {
-    const first = budget.items.find(isUnpriced);
-    if (first)
-      document.getElementById(`item-row-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const handleExportExcel = () => {
+    if (exporting) return;
+    setExporting("excel");
+    void exportBudgetToExcel(useBudgetStore.getState().budget).finally(() => setExporting(null));
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -151,115 +150,13 @@ export function BudgetEditor() {
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <CompanyBlock />
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <InlineText
-            value={budget.name}
-            onCommit={(name) => setMeta({ name })}
-            ariaLabel={t["budget.name"]}
-            required
-            navId="meta:name"
-            className="text-3xl font-semibold tracking-tight"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <LocaleToggle />
-          <ThemeToggle />
-          <button
-            className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-            disabled={exporting !== null}
-            onClick={() => {
-              if (exporting) return;
-              setExporting("excel");
-              void exportBudgetToExcel(useBudgetStore.getState().budget).finally(() => setExporting(null));
-            }}
-          >
-            {exporting === "excel" ? t["header.preparing"] : t["header.exportExcel"]}
-          </button>
-          <button
-            className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            disabled={exporting !== null}
-            onClick={() => void handleExportPdf()}
-          >
-            {exporting === "pdf" ? t["header.preparingPdf"] : t["header.exportPdf"]}
-          </button>
-        </div>
-      </header>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          {t["meta.number"]}
-          <input
-            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-            value={budget.number}
-            onChange={(e) => setMeta({ number: e.target.value })}
-            aria-label={t["meta.number"]}
-            data-nav-id="meta:number"
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          {t["meta.date"]}
-          <input
-            type="date"
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-            value={budget.date}
-            onChange={(e) => setMeta({ date: e.target.value })}
-            aria-label={t["meta.date"]}
-            data-nav-id="meta:date"
-          />
-        </label>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          {t["meta.client"]}
-          <input
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-            value={budget.clientName}
-            onChange={(e) => setMeta({ clientName: e.target.value })}
-            placeholder={t["meta.clientPlaceholder"]}
-            aria-label={t["meta.client"]}
-            data-nav-id="meta:client"
-          />
-        </label>
-        <label className="flex min-w-52 flex-1 items-center gap-2">
-          {t["meta.address"]}
-          <input
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-            value={budget.address}
-            onChange={(e) => setMeta({ address: e.target.value })}
-            placeholder={t["meta.address"]}
-            aria-label={t["meta.address"]}
-            data-nav-id="meta:address"
-          />
-        </label>
-        {unpricedCount > 0 ? (
-          <button
-            type="button"
-            onClick={scrollToFirstUnpriced}
-            title={t["unpriced.scrollHint"]}
-            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
-          >
-            ⚠ {unpricedCount} {unpricedCount === 1 ? t["unpriced.pill.one"] : t["unpriced.pill.other"]}
-          </button>
-        ) : null}
-      </div>
-
-      <div className="mt-8">
-        <h3 className="mb-1 text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-          {t["section.intro"]}
-        </h3>
-        <div className="rounded-xl border border-zinc-200 px-4 py-2 text-sm dark:border-zinc-800">
-          <InlineText
-            value={budget.intro ?? ""}
-            onCommit={(intro) => setMeta({ intro })}
-            ariaLabel={t["section.intro"]}
-            placeholder={t["section.introPh"]}
-            multiline
-            navId="meta:intro"
-          />
-        </div>
-      </div>
+      <EditorHeader
+        exporting={exporting}
+        onExportExcel={handleExportExcel}
+        onExportPdf={() => void handleExportPdf()}
+      />
+      <MetaFields />
+      <IntroSection />
 
       <h2 className="mt-8 mb-2 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
         {t["section.summary"]}

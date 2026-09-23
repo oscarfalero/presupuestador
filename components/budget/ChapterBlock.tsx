@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -11,6 +11,7 @@ import { ITEM_GRID_CLS, SortableItemRow } from "./SortableItemRow";
 import { ItemBreakdownPanel } from "./ItemBreakdownPanel";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { useStrings } from "@/lib/locale";
+import { requestEditFocus } from "@/lib/edit-focus";
 
 interface ChapterBlockProps {
   chapter: Chapter;
@@ -45,7 +46,17 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
   const sorted = [...items].sort((a, b) => a.order - b.order);
   const t = useStrings();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-  const [focusTitleId, setFocusTitleId] = useState<string | null>(null);
+  // Nav id of a row added this commit; focused via layout effect so the
+  // fresh row opens in edit mode before paint (no prop drilling, no
+  // prop-derived state).
+  const pendingFocus = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    if (pendingFocus.current) {
+      const navId = pendingFocus.current;
+      pendingFocus.current = null;
+      requestEditFocus(navId);
+    }
+  });
 
   const toggle = (id: string) =>
     setOpenIds((prev) => {
@@ -124,7 +135,6 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
                   item={item}
                   chapterId={chapter.id}
                   expanded={open}
-                  autoEditTitle={focusTitleId === item.id}
                   onToggleBreakdown={() => toggle(item.id)}
                   onRemoveItem={onRemoveItem}
                   onUpdate={onUpdateItem}
@@ -150,7 +160,9 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         ) : null}
         <button
           type="button"
-          onClick={() => setFocusTitleId(onAddItem(chapter.id, t["item.newTitle"]))}
+          onClick={() => {
+            pendingFocus.current = `item:${onAddItem(chapter.id, t["item.newTitle"])}:title`;
+          }}
           className="w-full cursor-pointer border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
         >
           {t["item.add"]}

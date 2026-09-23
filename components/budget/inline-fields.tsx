@@ -1,57 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { UNITS, type UnitOfMeasure } from "@/lib/budget-types";
 import { fmt } from "@/lib/i18n";
 import { useStrings } from "@/lib/locale";
+import { moveEditFocus, useEnterEditSignal } from "@/lib/edit-focus";
 
 const displayCls =
   "w-full cursor-text rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
 const inputCls =
   "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-300";
-
-/**
- * Spreadsheet-like keyboard navigation.
- *
- * Every editable field carries a `data-nav-id` in DOM order. Tab commits
- * the current cell and opens the next one already in edit mode
- * (Shift+Tab goes backwards). Display buttons also enter edit mode when
- * they receive keyboard focus, so plain Tab walks the grid editing.
- */
-const ENTER_EDIT_EVENT = "presupuestador:enter-edit";
-
-export function moveEditFocus(currentNavId: string, direction: 1 | -1): boolean {
-  if (typeof document === "undefined" || !currentNavId) return false;
-  const els = Array.from(document.querySelectorAll<HTMLElement>("[data-nav-id]"));
-  const idx = els.findIndex((el) => el.dataset.navId === currentNavId);
-  const target = idx >= 0 ? els[idx + direction] : undefined;
-  const id = target?.dataset.navId;
-  if (!target || !id) return false;
-  window.dispatchEvent(new CustomEvent<string>(ENTER_EDIT_EVENT, { detail: id }));
-  if (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLSelectElement ||
-    target instanceof HTMLTextAreaElement
-  ) {
-    target.focus();
-  }
-  return true;
-}
-
-function useEnterEditSignal(navId: string | undefined, editing: boolean, onEnter: () => void) {
-  const onEnterRef = useRef<() => void>(() => {});
-  useEffect(() => {
-    onEnterRef.current = onEnter;
-  });
-  useEffect(() => {
-    if (!navId || editing) return;
-    const handler = (e: Event) => {
-      if ((e as CustomEvent<string>).detail === navId) onEnterRef.current();
-    };
-    window.addEventListener(ENTER_EDIT_EVENT, handler);
-    return () => window.removeEventListener(ENTER_EDIT_EVENT, handler);
-  }, [navId, editing]);
-}
 
 interface NavProps {
   /** Unique id locating this field in the Tab order. */
@@ -89,8 +47,6 @@ interface InlineTextProps extends NavProps {
   multiline?: boolean;
   /** When true, empty commits are ignored (field is required). */
   required?: boolean;
-  /** When true, enters edit mode on mount (e.g. freshly added rows). */
-  autoEdit?: boolean;
 }
 
 /**
@@ -105,16 +61,20 @@ export function InlineText({
   className,
   title,
   required,
-  autoEdit,
   navId,
   multiline,
 }: InlineTextProps) {
   const t = useStrings();
   const safeValue = value ?? "";
-  const [editing, setEditing] = useState(!!autoEdit);
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(safeValue);
   // Guards against a blur-commit racing the unmount triggered by Esc.
   const cancelRef = useRef(false);
+  // Focus a freshly mounted edit control (replaces the static autoFocus
+  // attribute so keyboard users land inside the field they just opened).
+  const focusOnMount = useCallback((el: HTMLElement | null) => {
+    el?.focus();
+  }, []);
 
   const startEdit = () => {
     setDraft(safeValue);
@@ -175,7 +135,7 @@ export function InlineText({
   if (multiline) {
     return (
       <textarea
-        autoFocus
+        ref={focusOnMount}
         value={draft}
         data-nav-id={navId}
         rows={Math.min(2 + draft.split("\n").length, 8)}
@@ -197,7 +157,7 @@ export function InlineText({
 
   return (
     <input
-      autoFocus
+      ref={focusOnMount}
       value={draft}
       data-nav-id={navId}
       onChange={(e) => setDraft(e.target.value)}
@@ -249,6 +209,12 @@ export function InlineNumber({
   const [draft, setDraft] = useState(String(value));
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Focus a freshly mounted edit control (replaces the static autoFocus
+  // attribute so keyboard users land inside the field they just opened).
+  const focusOnMount = useCallback((el: HTMLInputElement | null) => {
+    inputRef.current = el;
+    el?.focus();
+  }, []);
   // Guards against a blur-commit racing the unmount triggered by Esc.
   const cancelRef = useRef(false);
 
@@ -325,8 +291,7 @@ export function InlineNumber({
   return (
     <span className="block">
       <input
-        ref={inputRef}
-        autoFocus
+        ref={focusOnMount}
         value={draft}
         data-nav-id={navId}
         inputMode="decimal"

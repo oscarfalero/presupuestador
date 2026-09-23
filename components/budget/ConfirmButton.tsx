@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 interface ConfirmButtonProps {
   label: React.ReactNode;
@@ -48,6 +48,11 @@ export function ConfirmButton({
   confirmClassName,
 }: ConfirmButtonProps) {
   const [armed, setArmed] = useState(false);
+  // Move focus onto the freshly mounted confirm button (replaces the
+  // static autoFocus attribute; keyboard users confirm from where they are).
+  const focusOnMount = useCallback((el: HTMLButtonElement | null) => {
+    el?.focus();
+  }, []);
 
   if (!armed) {
     return (
@@ -66,7 +71,7 @@ export function ConfirmButton({
   return (
     <button
       type="button"
-      autoFocus
+      ref={focusOnMount}
       onClick={() => {
         setArmed(false);
         onConfirm();
