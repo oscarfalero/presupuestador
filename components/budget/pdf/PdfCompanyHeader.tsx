@@ -2,10 +2,7 @@ import type { StringKey } from "@/lib/i18n";
 import type { CompanyProfile } from "@/lib/company";
 import { formatPhone } from "@/lib/phone";
 import { pdfBase } from "./base";
-
-// See base.ts: top-level await keeps the heavy renderer out of static imports.
-const R = await import("@react-pdf/renderer");
-const { Image, Path, Svg, Text, View } = R;
+import { Image, Path, Svg, Text, View } from "./runtime";
 
 type T = Record<StringKey, string>;
 

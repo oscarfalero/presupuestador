@@ -9,11 +9,7 @@ import { PdfCompanyHeader } from "./pdf/PdfCompanyHeader";
 import { PdfSummary } from "./pdf/PdfSummary";
 import { PdfChapter } from "./pdf/PdfChapter";
 import { PdfSignature } from "./pdf/PdfSignature";
-
-// See pdf/base.ts: top-level await keeps the heavy renderer out of static
-// imports (this module is itself loaded on demand by the editor).
-const R = await import("@react-pdf/renderer");
-const { Document, Page, StyleSheet, Text, View } = R;
+import { Document, Page, StyleSheet, Text, View } from "./pdf/runtime";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },

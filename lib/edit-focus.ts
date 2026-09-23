@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 /**
  * Spreadsheet-like keyboard navigation (single focus mechanism for the
@@ -44,10 +44,13 @@ export function useEnterEditSignal(
   onEnter: () => void,
 ): void {
   const onEnterRef = useRef<() => void>(() => {});
-  useEffect(() => {
+  // Layout effects: the child subscribes (and syncs the handler) before
+  // the parent's layout effect can dispatch on the same commit — a passive
+  // effect here would miss same-commit signals (new-row auto-edit).
+  useLayoutEffect(() => {
     onEnterRef.current = onEnter;
   });
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!navId || editing) return;
     const handler = (e: Event) => {
       if ((e as CustomEvent<string>).detail === navId) onEnterRef.current();

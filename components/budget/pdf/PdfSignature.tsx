@@ -1,9 +1,6 @@
 import type { StringKey } from "@/lib/i18n";
 import { pdfBase } from "./base";
-
-// See base.ts: top-level await keeps the heavy renderer out of static imports.
-const R = await import("@react-pdf/renderer");
-const { StyleSheet, Text, View } = R;
+import { StyleSheet, Text, View } from "./runtime";
 
 const styles = StyleSheet.create({
   signBlock: { marginTop: 24 },

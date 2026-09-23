@@ -1,9 +1,6 @@
 import type { StringKey } from "@/lib/i18n";
 import type { ClientChapter } from "@/lib/clientExport";
-
-// See base.ts: top-level await keeps the heavy renderer out of static imports.
-const R = await import("@react-pdf/renderer");
-const { StyleSheet, Text, View } = R;
+import { StyleSheet, Text, View } from "./runtime";
 
 const styles = StyleSheet.create({
   chapterBox: { borderWidth: 0.5, borderColor: "#e4e4e7", borderRadius: 6, marginTop: 12 },

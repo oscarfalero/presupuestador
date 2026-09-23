@@ -1,8 +1,4 @@
-// @react-pdf/renderer arrives via top-level await so this module — itself
-// loaded on demand by the editor — never pulls the heavy renderer into the
-// initial bundle through a static import.
-const R = await import("@react-pdf/renderer");
-const { StyleSheet } = R;
+import { StyleSheet } from "./runtime";
 
 /**
  * Shared PDF styles. Every file under pdf/ is loaded only through the
