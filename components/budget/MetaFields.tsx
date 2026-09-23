@@ -1,13 +1,15 @@
 "use client";
 
-import { useBudgetStore } from "@/lib/store";
+import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { isUnpriced } from "@/lib/calc";
 import { useStrings } from "@/lib/locale";
 
 /** Number/date/client/address fields plus the unpriced-items pill. */
 export function MetaFields() {
-  const { budget, setMeta } = useBudgetStore();
+  const { setMeta } = useBudgetStore();
+  const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
+  if (!budget) return null;
   const unpricedCount = budget.items.filter(isUnpriced).length;
 
   const scrollToFirstUnpriced = () => {
