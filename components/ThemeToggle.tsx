@@ -1,26 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { useStrings } from "@/lib/locale";
 
-/** Sun/moon toggle. Renders a placeholder until mounted to avoid hydration mismatch. */
+function subscribeTheme(onChange: () => void): () => void {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onMedia = () => onChange();
+  mq.addEventListener("change", onMedia);
+  // next-themes applies the theme as a class on <html>; watching it covers
+  // manual toggles, forced themes and OS changes alike.
+  const obs = new MutationObserver(onChange);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => {
+    mq.removeEventListener("change", onMedia);
+    obs.disconnect();
+  };
+}
+
+function getThemeSnapshot(): "dark" | "light" {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+function getServerSnapshot(): "dark" | "light" {
+  return "light";
+}
+
+/**
+ * Sun/moon toggle. Reads the applied theme through useSyncExternalStore so
+ * server and client render the same snapshot — no mount gate, no
+ * after-paint swap (next-themes sets the class before hydration).
+ */
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
   const t = useStrings();
-  const [mounted, setMounted] = useState(false);
+  const resolved = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerSnapshot);
 
-  useEffect(() => {
-    // Mounted guard avoids hydration mismatch (next-themes recommended pattern).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <span className="inline-block h-9 w-9 rounded-full border border-zinc-300" aria-hidden />;
-  }
-
-  const dark = resolvedTheme === "dark";
+  const dark = resolved === "dark";
   return (
     <button
       type="button"

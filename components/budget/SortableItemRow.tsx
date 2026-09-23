@@ -15,7 +15,6 @@ interface SortableItemRowProps {
   item: BudgetItem;
   chapterId: string;
   expanded: boolean;
-  autoEditTitle?: boolean;
   onToggleBreakdown: () => void;
   onRemoveItem: (id: string) => void;
   onUpdate: (id: string, patch: Partial<BudgetItem>) => void;
@@ -23,7 +22,7 @@ interface SortableItemRowProps {
 
 /** Draggable item row. The drag listeners live only on the grip handle,
  *  so click-to-edit keeps working everywhere else. */
-export function SortableItemRow({ item, chapterId, expanded, autoEditTitle, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
+export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", chapterId },
@@ -63,7 +62,6 @@ export function SortableItemRow({ item, chapterId, expanded, autoEditTitle, onTo
           onCommit={(title) => onUpdate(item.id, { title })}
           ariaLabel={`${t["item.titleField"]} ${item.code}`}
           required
-          autoEdit={autoEditTitle}
           navId={`item:${item.id}:title`}
           className="font-medium"
         />

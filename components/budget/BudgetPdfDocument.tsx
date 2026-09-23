@@ -1,61 +1,22 @@
-import { Document, Image, Page, Path, Svg, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Budget } from "@/lib/budget-types";
 import { toClientBudget } from "@/lib/clientExport";
 import { getStrings } from "@/lib/i18n";
 import { useLocaleStore } from "@/lib/locale";
 import { useCompanyStore } from "@/lib/company";
 import { formatPhone } from "@/lib/phone";
+import { pdfBase } from "./pdf/base";
+import { PdfCompanyHeader } from "./pdf/PdfCompanyHeader";
+import { PdfSummary } from "./pdf/PdfSummary";
+import { PdfChapter } from "./pdf/PdfChapter";
+import { PdfSignature } from "./pdf/PdfSignature";
+
+// See pdf/base.ts: top-level await keeps the heavy renderer out of static
+// imports (this module is itself loaded on demand by the editor).
+const R = await import("@react-pdf/renderer");
+const { Document, Page, StyleSheet, Text, View } = R;
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
-  companyRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  logo: { width: 90, marginRight: 12, objectFit: "contain" },
-  companyName: { fontSize: 14, fontWeight: "bold" },
-  companyLine: { color: "#555", marginTop: 1 },
-  companyIconRow: { flexDirection: "row", alignItems: "center", marginTop: 1 },
-  companyIcon: { width: 12, marginRight: 3 },
-  h1: { fontSize: 18, marginTop: 8, marginBottom: 4, fontWeight: "bold" },
-  meta: { marginBottom: 6, color: "#555" },
-  pre: { marginBottom: 10 },
-  sectionTitle: { fontSize: 12, fontWeight: "bold", marginTop: 10, marginBottom: 3 },
-  sectionHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: 10, marginBottom: 3 },
-  sectionBody: { marginBottom: 6 },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 2 },
-  summaryTotal: { flexDirection: "row", justifyContent: "space-between", marginTop: 4, fontSize: 14, fontWeight: "bold" },
-  summaryExcluded: { fontSize: 8, color: "#71717a" },
-  signBlock: { marginTop: 24 },
-  signCols: { flexDirection: "row", gap: 48, marginTop: 56 },
-  signCol: { flex: 1 },
-  chapterBox: { borderWidth: 0.5, borderColor: "#e4e4e7", borderRadius: 6, marginTop: 12 },
-  chapterHead: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#e4e4e7",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-  },
-  chapterTitle: { flex: 1, fontSize: 12, fontWeight: "bold" },
-  chapterSubtotal: { fontSize: 10, fontWeight: "bold" },
-  chapterBody: { paddingHorizontal: 8, paddingBottom: 6 },
-  tableHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#999",
-    paddingVertical: 4,
-    fontSize: 8,
-    fontWeight: "bold",
-    color: "#555",
-  },
-  tableRow: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#ddd", paddingVertical: 4 },
-  cellCode: { width: 30 },
-  cellTitle: { flex: 1, paddingRight: 6 },
-  cellUm: { width: 28, textAlign: "center" },
-  cellQty: { width: 36, textAlign: "right" },
-  cellPrice: { width: 52, textAlign: "right" },
-  cellAmount: { width: 60, textAlign: "right" },
-  itemDesc: { fontSize: 8, color: "#555", marginTop: 1 },
   footer: {
     position: "absolute",
     bottom: 20,
@@ -67,30 +28,8 @@ const styles = StyleSheet.create({
   },
 });
 
-function PinIcon() {
-  return (
-    <Svg style={styles.companyIcon} viewBox="0 0 24 24">
-      <Path
-        d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"
-        fill="#71717a"
-      />
-    </Svg>
-  );
-}
-
-function PhoneIcon() {
-  return (
-    <Svg style={styles.companyIcon} viewBox="0 0 24 24">
-      <Path
-        d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"
-        fill="#71717a"
-      />
-    </Svg>
-  );
-}
-
 /**
- * Client-facing PDF. Page 1: company header -> budget info ->
+ * Client-facing PDF shell. Page 1: company header -> budget info ->
  * title/intro -> executive summary (totals, terms, payment) ->
  * signature. Page 2+: chapters and items. Internal breakdown
  * excluded by design (editor-only).
@@ -104,138 +43,41 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {(company.name || company.logoDataUrl) && (
-          <View style={styles.companyRow}>
-            {/* Logo is decorative in the PDF context (company name follows as text) */}
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            {company.logoDataUrl ? <Image style={styles.logo} src={company.logoDataUrl} /> : null}
-            <View>
-              {company.name ? <Text style={styles.companyName}>{company.name}</Text> : null}
-              {company.taxId ? <Text style={styles.companyLine}>{t["export.nif"]} {company.taxId}</Text> : null}
-              {company.address ? (
-                <View style={styles.companyIconRow}>
-                  <PinIcon />
-                  <Text style={styles.companyLine}>{company.address}</Text>
-                </View>
-              ) : null}
-              {company.phone ? (
-                <View style={styles.companyIconRow}>
-                  <PhoneIcon />
-                  <Text style={styles.companyLine}>{formatPhone(company.phone)}</Text>
-                </View>
-              ) : null}
-              {company.web ? <Text style={styles.companyLine}>{company.web}</Text> : null}
-            </View>
-          </View>
-        )}
-        <Text style={styles.h1}>{client.name}</Text>
+        <PdfCompanyHeader company={company} t={t} />
+        <Text style={pdfBase.h1}>{client.name}</Text>
         {client.number ? (
-          <Text style={styles.meta}>
+          <Text style={pdfBase.meta}>
             {t["export.number"]} {client.number}
           </Text>
         ) : null}
-        {client.date ? <Text style={styles.meta}>{client.date}</Text> : null}
+        {client.date ? <Text style={pdfBase.meta}>{client.date}</Text> : null}
         {client.clientName ? (
-          <Text style={styles.meta}>
+          <Text style={pdfBase.meta}>
             {t["export.client"]} {client.clientName}
           </Text>
         ) : null}
         {client.address ? (
-          <Text style={styles.meta}>
+          <Text style={pdfBase.meta}>
             {t["meta.address"]}: {client.address}
           </Text>
         ) : null}
         {client.intro ? (
           <View wrap={false}>
-            <Text style={styles.pre}>{client.intro}</Text>
+            <Text style={pdfBase.pre}>{client.intro}</Text>
           </View>
         ) : null}
-        <Text style={styles.sectionTitle}>{t["section.summary"].toUpperCase()}</Text>
-        <View style={styles.summaryRow}>
-          <Text>{t["export.subtotal"]}:</Text>
-          <Text>{client.subtotal.toFixed(2)}€</Text>
-        </View>
-        {client.ivaIncluded ? (
-          <View style={styles.summaryRow}>
-            <Text>
-              {t["meta.vat"]} {client.ivaPct}%:
-            </Text>
-            <Text>{client.vatAmount.toFixed(2)}€</Text>
-          </View>
-        ) : null}
-        <View style={styles.summaryTotal}>
-          <Text>{t["export.total"]}:</Text>
-          <Text>{client.total.toFixed(2)}€</Text>
-        </View>
-        {client.ivaIncluded ? null : (
-          <View style={{ ...styles.summaryRow, justifyContent: "flex-end" }}>
-            <Text style={styles.summaryExcluded}>{t["totals.vatExcluded"].toUpperCase()}</Text>
-          </View>
-        )}
-        {client.terms ? (
-          <View wrap={false}>
-            <Text style={styles.sectionTitle}>{t["section.terms"].toUpperCase()}</Text>
-            <Text style={styles.sectionBody}>{client.terms}</Text>
-          </View>
-        ) : null}
-        {client.payment ? (
-          <View wrap={false}>
-            <Text style={styles.sectionTitle}>{t["section.payment"].toUpperCase()}</Text>
-            <Text style={styles.sectionBody}>{client.payment}</Text>
-          </View>
-        ) : null}
-        <View style={styles.signBlock} wrap={false}>
-          <Text style={styles.sectionTitle}>{t["export.signature"].toUpperCase()}</Text>
-          <View style={styles.signCols}>
-            <View style={styles.signCol}>
-              <Text>{t["export.signClient"]}</Text>
-            </View>
-            <View style={styles.signCol}>
-              <Text>{t["export.signCompany"]}</Text>
-            </View>
-          </View>
-        </View>
+        <Text style={pdfBase.sectionTitle}>{t["section.summary"].toUpperCase()}</Text>
+        <PdfSummary client={client} t={t} />
+        <PdfSignature t={t} />
         <View break />
-        <View style={styles.sectionHead}>
-          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>{t["section.chapters"].toUpperCase()}</Text>
-          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>
+        <View style={pdfBase.sectionHead}>
+          <Text style={pdfBase.sectionHeadText}>{t["section.chapters"].toUpperCase()}</Text>
+          <Text style={pdfBase.sectionHeadText}>
             {t["export.total"]}: {client.total.toFixed(2)}€
           </Text>
         </View>
         {client.chapters.map((ch) => (
-          <View key={ch.number} style={styles.chapterBox} wrap={false}>
-            <View style={styles.chapterHead}>
-              <Text style={styles.chapterTitle}>
-                {ch.number}. {ch.title}
-              </Text>
-              <Text style={styles.chapterSubtotal}>
-                {t["export.subtotal"]}: {ch.subtotal.toFixed(2)}€
-              </Text>
-            </View>
-            <View style={styles.chapterBody}>
-            <View style={styles.tableHeader}>
-              <Text style={styles.cellCode}>{t["col.code"]}</Text>
-              <Text style={styles.cellTitle}>{t["col.title"]}</Text>
-              <Text style={styles.cellUm}>{t["col.um"]}</Text>
-              <Text style={styles.cellQty}>{t["col.qty"]}</Text>
-              <Text style={styles.cellPrice}>{t["col.price"]}</Text>
-              <Text style={styles.cellAmount}>{t["col.amount"]}</Text>
-            </View>
-            {ch.items.map((item) => (
-              <View key={item.code} style={styles.tableRow} wrap={false}>
-                <Text style={styles.cellCode}>{item.code}</Text>
-                <View style={styles.cellTitle}>
-                  <Text>{item.title}</Text>
-                  {item.description ? <Text style={styles.itemDesc}>{item.description}</Text> : null}
-                </View>
-                <Text style={styles.cellUm}>{item.um}</Text>
-                <Text style={styles.cellQty}>{item.quantity}</Text>
-                <Text style={styles.cellPrice}>{item.price.toFixed(2)}€</Text>
-                <Text style={styles.cellAmount}>{item.amount.toFixed(2)}€</Text>
-              </View>
-            ))}
-            </View>
-          </View>
+          <PdfChapter key={ch.number} ch={ch} t={t} />
         ))}
         {footerBits.length > 0 ? (
           <Text style={styles.footer} fixed>
