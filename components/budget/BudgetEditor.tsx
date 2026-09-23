@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBudgetStore } from "@/lib/store";
-import { isUnpriced } from "@/lib/calc";
+import { budgetSubtotal, budgetTotalWithIva, isUnpriced } from "@/lib/calc";
 import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
 import { InlineText } from "./inline-fields";
 import { ChapterBlock } from "./ChapterBlock";
@@ -48,6 +48,11 @@ export function BudgetEditor() {
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const t = useStrings();
   const unpricedCount = budget.items.filter(isUnpriced).length;
+  const chaptersTotal = budgetTotalWithIva(
+    budgetSubtotal(budget.items),
+    budget.ivaPct,
+    budget.ivaIncluded,
+  );
   const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
 
   // Both export libraries are loaded on demand so typing never pays
@@ -261,8 +266,11 @@ export function BudgetEditor() {
       </h2>
       <SummaryBlock />
 
-      <h2 className="mt-8 mb-2 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-        {t["section.chapters"]}
+      <h2 className="mt-8 mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <span>{t["section.chapters"]}</span>
+        <span className="normal-case tabular-nums">
+          {t["meta.total"]} {chaptersTotal.toFixed(2)}€
+        </span>
       </h2>
 
       <DndContext
