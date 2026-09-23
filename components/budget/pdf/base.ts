@@ -2,8 +2,8 @@ import { StyleSheet } from "./runtime";
 
 /**
  * Shared PDF styles. Every file under pdf/ is loaded only through the
- * on-demand BudgetPdfDocument chunk (never in the initial bundle), so the
- * static @react-pdf/renderer imports here cost nothing up front.
+ * on-demand BudgetPdfDocument chunk (never in the initial bundle); the
+ * renderer itself arrives via the single dynamic import in runtime.ts.
  */
 export const pdfBase = StyleSheet.create({
   companyRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
