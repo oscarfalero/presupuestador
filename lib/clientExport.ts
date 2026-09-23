@@ -55,7 +55,7 @@ export function toClientBudget(budget: Budget): ClientBudget {
     terms: budget.terms,
     payment: budget.payment,
     subtotal,
-    vatAmount: budget.ivaIncluded ?? true ? round2(subtotal * (budget.ivaPct / 100)) : 0,
+    vatAmount: (budget.ivaIncluded ?? true) ? round2(subtotal * (budget.ivaPct / 100)) : 0,
     total: budgetTotalWithIva(subtotal, budget.ivaPct, budget.ivaIncluded ?? true),
     chapters: chapters.map((ch, idx) => ({
       number: idx + 1,
