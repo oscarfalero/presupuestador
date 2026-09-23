@@ -86,7 +86,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
             navId={`chapter:${chapter.id}:title`}
           />
         </div>
-        <span className="pr-2 text-sm font-bold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100">
+        <span className="pr-2 font-bold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100">
           {t["chapter.subtotal"]} {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
         </span>
         <ConfirmButton

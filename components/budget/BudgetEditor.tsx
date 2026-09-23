@@ -268,7 +268,7 @@ export function BudgetEditor() {
 
       <h2 className="mt-8 mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
         <span>{t["section.chapters"]}</span>
-        <span className="normal-case tabular-nums">
+        <span className="pr-2 text-base normal-case tabular-nums text-zinc-900 dark:text-zinc-100">
           {t["meta.total"]} {chaptersTotal.toFixed(2)}€
         </span>
       </h2>

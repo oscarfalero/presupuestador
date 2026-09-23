@@ -106,7 +106,7 @@ export async function exportClientBudgetToExcel(
     ? t["export.total"]
     : `${t["export.total"]} (${t["totals.vatExcluded"].toUpperCase()})`;
   const totalRow = ws.addRow({ title: totalTitle, amount: client.total });
-  totalRow.font = { bold: true };
+  totalRow.font = { bold: true, size: 14 };
 
   if (client.terms) {
     ws.addRow({});
@@ -125,15 +125,9 @@ export async function exportClientBudgetToExcel(
   }
 
   ws.addRow({});
-  const signLabel = ws.addRow({ title: t["export.signature"].toUpperCase() });
-  signLabel.font = { bold: true };
   ws.addRow({});
   ws.addRow({});
-  ws.addRow({ title: `${t["export.signClient"]}:` });
-  ws.addRow({ title: `${t["export.sign"]} ________________________      ${t["export.signDate"]} ____________` });
-  ws.addRow({});
-  ws.addRow({ title: `${t["export.signCompany"]}:` });
-  ws.addRow({ title: `${t["export.sign"]} ________________________` });
+  ws.addRow({ title: `${t["export.signClient"]}                                             ${t["export.signCompany"]}` });
 
   // ---- Sheet 2: chapters and items -------------------------------------
   const detail = wb.addWorksheet(t["export.sheetChapters"]);
@@ -146,7 +140,7 @@ export async function exportClientBudgetToExcel(
     { key: "price", width: 14 },
     { key: "amount", width: 16 },
   ];
-  const chaptersTitle = detail.addRow({ title: t["section.chapters"].toUpperCase() });
+  const chaptersTitle = detail.addRow({ title: t["section.chapters"].toUpperCase(), amount: client.total });
   chaptersTitle.font = { bold: true, size: 12 };
   const headerRow = detail.addRow({
     code: t["col.code"],
