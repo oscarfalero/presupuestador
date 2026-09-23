@@ -9,8 +9,9 @@ import type { Budget } from "./budget-types";
 /**
  * Client-facing Excel export, built from the client-safe model plus the
  * company profile. The internal price breakdown is NEVER included.
- * Document order: company header -> budget info -> intro ->
- * terms -> chapters/totals -> payment.
+ * Sheet 1 ("Presupuesto"): company header -> budget info -> title/intro ->
+ * executive summary (totals, terms, payment) -> signature.
+ * Sheet 2: chapters and items table.
  */
 export async function exportBudgetToExcel(budget: Budget): Promise<void> {
   await exportClientBudgetToExcel(
@@ -38,6 +39,7 @@ export async function exportClientBudgetToExcel(
   const t = getStrings(useLocaleStore.getState().locale);
   const wb = new ExcelJS.Workbook();
   wb.creator = "Presupuestador";
+  // ---- Sheet 1: executive summary ------------------------------------
   const ws = wb.addWorksheet(t["export.sheet"]);
 
   ws.columns = [
@@ -93,43 +95,9 @@ export async function exportClientBudgetToExcel(
     r.alignment = { wrapText: true };
   }
 
-  if (client.terms) {
-    const label = ws.addRow({ title: t["section.terms"].toUpperCase() });
-    label.font = { bold: true };
-    const r = tallRow(ws, { title: client.terms }, blockLines(client.terms));
-    r.alignment = { wrapText: true };
-    ws.addRow({});
-  }
-  const chaptersTitle = ws.addRow({ title: t["section.chapters"].toUpperCase() });
-  chaptersTitle.font = { bold: true, size: 12 };
-  const headerRow = ws.addRow({
-    code: t["col.code"],
-    title: t["col.title"],
-    description: t["col.description"],
-    um: t["col.um"],
-    qty: t["col.qty"],
-    price: t["col.price"],
-    amount: t["col.amount"],
-  });
-  headerRow.font = { bold: true };
-
-  for (const ch of client.chapters) {
-    const titleRow = ws.addRow({ title: `${ch.number}. ${ch.title}`, amount: ch.subtotal });
-    titleRow.font = { bold: true };
-    for (const item of ch.items) {
-      ws.addRow({
-        code: item.code,
-        title: item.title,
-        description: item.description,
-        um: item.um,
-        qty: item.quantity,
-        price: item.price,
-        amount: item.amount,
-      });
-    }
-  }
-
-  ws.addRow({});
+  // Executive summary: totals first, then terms and payment.
+  const summaryTitle = ws.addRow({ title: t["section.summary"].toUpperCase() });
+  summaryTitle.font = { bold: true, size: 12 };
   ws.addRow({ title: t["export.subtotal"], amount: client.subtotal });
   if (client.ivaIncluded) {
     ws.addRow({ title: fmt(t["export.vat"], { n: client.ivaPct }), amount: client.vatAmount });
@@ -139,6 +107,14 @@ export async function exportClientBudgetToExcel(
     : `${t["export.total"]} (${t["totals.vatExcluded"].toUpperCase()})`;
   const totalRow = ws.addRow({ title: totalTitle, amount: client.total });
   totalRow.font = { bold: true };
+
+  if (client.terms) {
+    ws.addRow({});
+    const label = ws.addRow({ title: t["section.terms"].toUpperCase() });
+    label.font = { bold: true };
+    const r = tallRow(ws, { title: client.terms }, blockLines(client.terms));
+    r.alignment = { wrapText: true };
+  }
 
   if (client.payment) {
     ws.addRow({});
@@ -158,6 +134,46 @@ export async function exportClientBudgetToExcel(
   ws.addRow({});
   ws.addRow({ title: `${t["export.signCompany"]}:` });
   ws.addRow({ title: `${t["export.sign"]} ________________________` });
+
+  // ---- Sheet 2: chapters and items -------------------------------------
+  const detail = wb.addWorksheet(t["export.sheetChapters"]);
+  detail.columns = [
+    { key: "code", width: 10 },
+    { key: "title", width: 42 },
+    { key: "description", width: 50 },
+    { key: "um", width: 8 },
+    { key: "qty", width: 10 },
+    { key: "price", width: 14 },
+    { key: "amount", width: 16 },
+  ];
+  const chaptersTitle = detail.addRow({ title: t["section.chapters"].toUpperCase() });
+  chaptersTitle.font = { bold: true, size: 12 };
+  const headerRow = detail.addRow({
+    code: t["col.code"],
+    title: t["col.title"],
+    description: t["col.description"],
+    um: t["col.um"],
+    qty: t["col.qty"],
+    price: t["col.price"],
+    amount: t["col.amount"],
+  });
+  headerRow.font = { bold: true };
+
+  for (const ch of client.chapters) {
+    const titleRow = detail.addRow({ title: `${ch.number}. ${ch.title}`, amount: ch.subtotal });
+    titleRow.font = { bold: true };
+    for (const item of ch.items) {
+      detail.addRow({
+        code: item.code,
+        title: item.title,
+        description: item.description,
+        um: item.um,
+        qty: item.quantity,
+        price: item.price,
+        amount: item.amount,
+      });
+    }
+  }
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf as ArrayBuffer], {
