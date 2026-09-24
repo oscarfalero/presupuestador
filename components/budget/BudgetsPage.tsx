@@ -22,7 +22,7 @@ export function BudgetsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
+    <div className="mx-auto w-full max-w-5xl px-6 py-10 max-md:px-4">
       <CompanyBlock />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-3xl font-semibold tracking-tight">{t["budgets.title"]}</h1>
@@ -65,9 +65,9 @@ export function BudgetsPage() {
             return (
               <li
                 key={id}
-                className="flex items-center gap-3 rounded-xl border border-zinc-200 px-4 py-3 dark:border-zinc-800"
+                className="flex items-center gap-3 rounded-xl border border-zinc-200 px-4 py-3 max-md:flex-wrap dark:border-zinc-800"
               >
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 max-md:basis-full">
                   <Link
                     href={`/budgets/${id}`}
                     className="block truncate font-semibold hover:underline"
@@ -78,7 +78,7 @@ export function BudgetsPage() {
                     <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">{meta}</p>
                   ) : null}
                 </div>
-                <span className="font-semibold whitespace-nowrap tabular-nums">
+                <span className="font-semibold whitespace-nowrap tabular-nums max-md:flex-1">
                   {t["meta.total"]} {total.toFixed(2)}€
                 </span>
                 <button
@@ -86,7 +86,7 @@ export function BudgetsPage() {
                   onClick={() => duplicateBudget(id, t["budgets.copySuffix"])}
                   title={t["budgets.duplicate"]}
                   aria-label={`${t["budgets.duplicate"]}: ${b.name}`}
-                  className="cursor-pointer rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  className="cursor-pointer rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 max-md:min-h-[44px] max-md:px-4 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                 >
                   {t["budgets.duplicate"]}
                 </button>
@@ -99,8 +99,8 @@ export function BudgetsPage() {
                   }
                   onConfirm={() => removeBudget(id)}
                   ariaLabel={`${t["budgets.delete"]}: ${b.name}`}
-                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-                  confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 max-md:size-11 dark:hover:bg-red-950 dark:hover:text-red-400"
+                  confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500 max-md:px-4 max-md:py-3 max-md:text-sm"
                 />
               </li>
             );

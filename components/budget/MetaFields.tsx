@@ -24,7 +24,7 @@ export function MetaFields() {
         <label className="flex items-center gap-2">
           {t["meta.number"]}
           <input
-            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 max-md:min-h-[44px] max-md:text-base dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.number}
             onChange={(e) => setMeta({ number: e.target.value })}
             aria-label={t["meta.number"]}
@@ -35,7 +35,7 @@ export function MetaFields() {
           {t["meta.date"]}
           <input
             type="date"
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 max-md:min-h-[44px] max-md:text-base dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.date}
             onChange={(e) => setMeta({ date: e.target.value })}
             aria-label={t["meta.date"]}
@@ -48,7 +48,7 @@ export function MetaFields() {
         <label className="flex items-center gap-2">
           {t["meta.client"]}
           <input
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 max-md:min-h-[44px] max-md:text-base dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.clientName}
             onChange={(e) => setMeta({ clientName: e.target.value })}
             placeholder={t["meta.clientPlaceholder"]}
@@ -59,7 +59,7 @@ export function MetaFields() {
         <label className="flex min-w-52 flex-1 items-center gap-2">
           {t["meta.address"]}
           <input
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 max-md:min-h-[44px] max-md:text-base dark:border-zinc-700 dark:bg-zinc-900"
             value={budget.address}
             onChange={(e) => setMeta({ address: e.target.value })}
             placeholder={t["meta.address"]}

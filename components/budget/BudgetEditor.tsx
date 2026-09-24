@@ -7,6 +7,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -49,6 +50,9 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    // Touch needs a press-and-hold before the drag starts so vertical
+    // scrolling still works; the grip handles stay `touch-none`.
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -169,8 +173,8 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <Link href="/" className="mb-4 inline-block text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100">
+    <div className="mx-auto w-full max-w-5xl px-6 py-10 max-md:px-4">
+      <Link href="/" className="mb-4 inline-block min-h-[44px] text-sm leading-[44px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100">
         ← {t["budgets.title"]}
       </Link>
       <CompanyBlock />

@@ -58,9 +58,9 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
   return (
     <div
       role="status"
-      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg dark:bg-white dark:text-zinc-900"
+      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg max-md:right-4 max-md:left-4 max-md:translate-x-0 max-md:flex-wrap max-md:justify-center max-md:rounded-2xl max-md:px-4 max-md:py-3 dark:bg-white dark:text-zinc-900"
     >
-      <span className="whitespace-nowrap">{label}</span>
+      <span className="whitespace-nowrap max-md:whitespace-normal max-md:text-center">{label}</span>
       <button
         type="button"
         onClick={() => undoDelete()}

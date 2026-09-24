@@ -9,7 +9,7 @@ import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { useStrings } from "@/lib/locale";
 
 export const ITEM_GRID_CLS =
-  "grid grid-cols-[1.75rem_3rem_minmax(0,1fr)_3.5rem_5.5rem_6.5rem_6rem_3.25rem] items-start gap-1";
+  "grid grid-cols-[1.75rem_3rem_minmax(0,1fr)_3.5rem_5.5rem_6.5rem_6rem_3.25rem] items-start gap-1 max-md:grid-cols-[auto_minmax(0,1fr)_auto_auto] max-md:gap-x-3 max-md:gap-y-2";
 
 interface SortableItemRowProps {
   item: BudgetItem;
@@ -43,7 +43,7 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}`}
+      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 max-md:mb-2 max-md:rounded-xl max-md:border max-md:border-zinc-200 max-md:p-3 max-md:dark:border-zinc-800 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}`}
     >
       <button
         type="button"
@@ -51,12 +51,12 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         title={t["item.reorderHint"]}
         {...attributes}
         {...listeners}
-        className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 active:cursor-grabbing max-md:inline-flex max-md:size-11 max-md:items-center max-md:justify-center max-md:self-center max-md:col-start-1 max-md:row-start-1 max-md:row-span-2 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
       >
         ⠿
       </button>
-      <span className="px-1 py-1 text-zinc-500 tabular-nums dark:text-zinc-400">{item.code}</span>
-      <span className="min-w-0">
+      <span className="px-1 py-1 text-zinc-500 tabular-nums max-md:col-start-2 max-md:row-start-1 max-md:px-0 max-md:py-0 max-md:text-xs dark:text-zinc-400">{item.code}</span>
+      <span className="min-w-0 max-md:col-start-2 max-md:col-span-2 max-md:row-start-2">
         <InlineText
           value={item.title}
           onCommit={(title) => onUpdate(item.id, { title })}
@@ -75,7 +75,8 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
           className="text-zinc-500 dark:text-zinc-400"
         />
       </span>
-      <span className="py-1 text-center">
+      <span className="py-1 text-center max-md:col-start-1 max-md:row-start-3 max-md:py-0 max-md:text-left">
+        <span className="hidden max-md:block max-md:text-[11px] max-md:font-medium max-md:uppercase max-md:text-zinc-400 max-md:dark:text-zinc-500">{t["col.um"]}</span>
         <InlineUnit
           value={item.um}
           onCommit={(um) => onUpdate(item.id, { um })}
@@ -83,6 +84,8 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
           navId={`item:${item.id}:um`}
         />
       </span>
+      <span className="md:contents max-md:col-start-2 max-md:row-start-3 max-md:flex max-md:flex-col">
+        <span className="hidden max-md:block max-md:text-[11px] max-md:font-medium max-md:uppercase max-md:text-zinc-400 max-md:dark:text-zinc-500">{t["col.qty"]}</span>
       <InlineNumber
         value={item.quantity}
         onCommit={(quantity) => onUpdate(item.id, { quantity })}
@@ -91,6 +94,9 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         title={qtyMissing ? t["item.missingQty"] : undefined}
         className={qtyMissing ? warnCls : undefined}
       />
+      </span>
+      <span className="md:contents max-md:col-start-3 max-md:row-start-3 max-md:flex max-md:flex-col">
+        <span className="hidden max-md:block max-md:text-[11px] max-md:font-medium max-md:uppercase max-md:text-zinc-400 max-md:dark:text-zinc-500">{t["col.price"]}</span>
       <InlineNumber
         value={item.price}
         onCommit={(price) => onUpdate(item.id, { price })}
@@ -100,17 +106,19 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         title={priceMissing ? t["item.missingPrice"] : undefined}
         className={priceMissing ? warnCls : undefined}
       />
-      <span className="cursor-default px-1 py-1 text-right font-bold tabular-nums">
+      </span>
+      <span className="cursor-default px-1 py-1 text-right font-bold tabular-nums max-md:col-start-4 max-md:row-start-3 max-md:flex max-md:flex-col max-md:px-0 max-md:py-0">
+        <span className="hidden max-md:block max-md:text-[11px] max-md:font-medium max-md:uppercase max-md:text-zinc-400 max-md:dark:text-zinc-500">{t["col.amount"]}</span>
         {itemAmount(item).toFixed(2)}€
       </span>
-      <span className="flex items-start justify-end">
+      <span className="flex items-start justify-end max-md:col-start-4 max-md:row-start-1 max-md:row-span-2 max-md:flex-col max-md:self-start max-md:justify-self-end">
         <button
           type="button"
           onClick={onToggleBreakdown}
           aria-expanded={expanded}
           aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
           title={t["detail.toggle"]}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 max-md:size-11 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {expanded ? "▾" : "▸"}
         </button>
@@ -123,8 +131,8 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
           }
           onConfirm={() => onRemoveItem(item.id)}
           ariaLabel={`${t["item.delete"]} ${item.code}`}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 max-md:size-11 dark:hover:bg-red-950 dark:hover:text-red-400"
+          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500 max-md:px-4 max-md:py-3 max-md:text-sm"
         />
       </span>
     </div>

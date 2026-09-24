@@ -76,14 +76,14 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
       }}
       className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 dark:bg-zinc-900">
+      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 max-md:flex-wrap dark:bg-zinc-900">
         <button
           type="button"
           aria-label={`${t["chapter.drag"]} ${chapter.order + 1}`}
           title={t["chapter.reorderHint"]}
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+          className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing max-md:inline-flex max-md:size-11 max-md:items-center max-md:justify-center dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
         >
           ⠿
         </button>
@@ -97,7 +97,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
             navId={`chapter:${chapter.id}:title`}
           />
         </div>
-        <span className="pr-2 font-bold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100">
+        <span className="pr-2 font-bold whitespace-nowrap text-zinc-900 tabular-nums max-md:basis-full max-md:pr-0 max-md:text-right dark:text-zinc-100">
           {t["chapter.subtotal"]} {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
         </span>
         <ConfirmButton
@@ -109,12 +109,12 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           }
           onConfirm={() => onRemoveChapter(chapter.id)}
           ariaLabel={`${t["chapter.delete"]} ${chapter.order + 1}`}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 max-md:size-11 dark:hover:bg-red-950 dark:hover:text-red-400"
+          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500 max-md:px-4 max-md:py-3 max-md:text-sm"
         />
       </div>
 
-      <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400 dark:text-zinc-500`}>
+      <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400 max-md:hidden dark:text-zinc-500`}>
         <span />
         <span className="px-1 font-medium">{t["col.code"]}</span>
         <span className="px-1 font-medium">{t["col.title"]}</span>
