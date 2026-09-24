@@ -42,7 +42,7 @@ export function CompanyBlock() {
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium max-md:min-h-[44px] max-md:px-4 max-md:text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
         >
           {open ? t["company.done"] : t["company.edit"]}
         </button>
@@ -88,7 +88,7 @@ export function CompanyBlock() {
                 <button
                   type="button"
                   onClick={() => clearLogo()}
-                  className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium max-md:min-h-[44px] max-md:px-4 max-md:text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
                 >
                   {t["company.removeLogo"]}
                 </button>
@@ -97,7 +97,7 @@ export function CompanyBlock() {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="cursor-pointer rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                className="cursor-pointer rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs font-medium max-md:min-h-[44px] max-md:px-4 max-md:text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
               >
                 {t["company.uploadLogo"]}
               </button>

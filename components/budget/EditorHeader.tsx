@@ -35,14 +35,14 @@ export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHe
         <LocaleToggle />
         <ThemeToggle />
         <button
-          className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium max-md:min-h-[44px] text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
           disabled={exporting !== null}
           onClick={onExportExcel}
         >
           {exporting === "excel" ? t["header.preparing"] : t["header.exportExcel"]}
         </button>
         <button
-          className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium max-md:min-h-[44px] hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
           disabled={exporting !== null}
           onClick={onExportPdf}
         >
