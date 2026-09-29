@@ -18,13 +18,13 @@ import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
 import { exportBudgetToExcel, slugify } from "@/lib/exportExcel";
 import { ChapterBlock } from "./ChapterBlock";
-import { CompanyBlock } from "./CompanyBlock";
 import { EditorHeader } from "./EditorHeader";
 import { MetaFields } from "./MetaFields";
 import { IntroSection } from "./IntroSection";
 import { SummaryBlock } from "./SummaryBlock";
 import { UndoToast } from "./UndoToast";
-import { useStrings } from "@/lib/locale";
+import { useLocale, useStrings } from "@/lib/locale";
+import { formatMoney } from "@/lib/format";
 
 interface ActiveDrag {
   type: "item" | "chapter";
@@ -54,6 +54,7 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
 
   const chapters = [...budget.chapters].sort((a, b) => a.order - b.order);
   const t = useStrings();
+  const locale = useLocale();
   const chaptersTotal = budgetTotalWithIva(
     budgetSubtotal(budget.items),
     budget.ivaPct,
@@ -173,7 +174,6 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
       <Link href="/" className="mb-4 inline-block text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100">
         ← {t["budgets.title"]}
       </Link>
-      <CompanyBlock />
       <EditorHeader
         exporting={exporting}
         onExportExcel={handleExportExcel}
@@ -190,7 +190,7 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
       <h2 className="mt-8 mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
         <span>{t["section.chapters"]}</span>
         <span className="pr-2 text-base normal-case tabular-nums text-zinc-900 dark:text-zinc-100">
-          {t["meta.total"]} {chaptersTotal.toFixed(2)}€
+          {t["meta.total"]} {formatMoney(chaptersTotal, locale)}
         </span>
       </h2>
 

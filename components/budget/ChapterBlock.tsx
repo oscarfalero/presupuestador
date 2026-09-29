@@ -10,7 +10,8 @@ import { InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS, SortableItemRow } from "./SortableItemRow";
 import { ItemBreakdownPanel } from "./ItemBreakdownPanel";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
-import { useStrings } from "@/lib/locale";
+import { useStrings, useLocale } from "@/lib/locale";
+import { formatMoney } from "@/lib/format";
 import { requestEditFocus } from "@/lib/edit-focus";
 
 interface ChapterBlockProps {
@@ -45,6 +46,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
 
   const sorted = [...items].sort((a, b) => a.order - b.order);
   const t = useStrings();
+  const locale = useLocale();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   // Nav id of a row added this commit; focused via layout effect so the
   // fresh row opens in edit mode before paint (no prop drilling, no
@@ -98,7 +100,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
           />
         </div>
         <span className="pr-2 font-bold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100">
-          {t["chapter.subtotal"]} {chapterSubtotal(allItems, chapter.id).toFixed(2)}€
+          {t["chapter.subtotal"]} {formatMoney(chapterSubtotal(allItems, chapter.id), locale)}
         </span>
         <ConfirmButton
           label={<TrashIcon />}

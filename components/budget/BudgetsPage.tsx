@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
-import { useStrings } from "@/lib/locale";
+import { useLocale, useStrings } from "@/lib/locale";
+import { formatMoney } from "@/lib/format";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
-import { CompanyBlock } from "./CompanyBlock";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LocaleToggle } from "@/components/LocaleToggle";
+import { AccountMenu } from "./AccountMenu";
 
 /** Budgets index: create, open, duplicate and delete persisted budgets. */
 export function BudgetsPage() {
   const { budgets, order, newBudget, duplicateBudget, removeBudget } = useBudgetStore();
   const t = useStrings();
+  const locale = useLocale();
   const router = useRouter();
 
   const create = () => {
@@ -23,12 +23,10 @@ export function BudgetsPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <CompanyBlock />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-3xl font-semibold tracking-tight">{t["budgets.title"]}</h1>
         <div className="flex items-center gap-2">
-          <LocaleToggle />
-          <ThemeToggle />
+          <AccountMenu />
           <button
             type="button"
             onClick={create}
@@ -79,7 +77,7 @@ export function BudgetsPage() {
                   ) : null}
                 </div>
                 <span className="font-semibold whitespace-nowrap tabular-nums">
-                  {t["meta.total"]} {total.toFixed(2)}€
+                  {t["meta.total"]} {formatMoney(total, locale)}
                 </span>
                 <button
                   type="button"
