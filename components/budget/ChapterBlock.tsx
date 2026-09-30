@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -18,6 +18,10 @@ interface ChapterBlockProps {
   chapter: Chapter;
   items: BudgetItem[];
   allItems: BudgetItem[];
+  /** Freshly created section: plays the enter animation once. */
+  fresh?: boolean;
+  /** Removed section, kept mounted ~180ms for the exit animation. */
+  leaving?: boolean;
   onRename: (id: string, title: string) => void;
   onAddItem: (chapterId: string, title: string) => string;
   onUpdateItem: (id: string, patch: Partial<BudgetItem>) => void;
@@ -31,7 +35,7 @@ interface ChapterBlockProps {
 
 /** Draggable chapter section. Whole-section drag via the header grip;
  *  items are independently sortable, including across chapters. */
-export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, onUpdateItem, onRemoveItem, onRemoveChapter, onUpdateBreakdown, onAddMaterial, onUpdateMaterial, onRemoveMaterial }: ChapterBlockProps) {
+export function ChapterBlock({ chapter, items, allItems, fresh, leaving, onRename, onAddItem, onUpdateItem, onRemoveItem, onRemoveChapter, onUpdateBreakdown, onAddMaterial, onUpdateMaterial, onRemoveMaterial }: ChapterBlockProps) {
   const {
     attributes,
     listeners,
@@ -48,6 +52,33 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
   const t = useStrings();
   const locale = useLocale();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  // Row entering (created this commit) and rows leaving (removed, kept
+  // mounted ~180ms for the exit animation before the store removal).
+  const [freshId, setFreshId] = useState<string | null>(null);
+  const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
+  const freshTimer = useRef<number | null>(null);
+  const pendingRemovals = useRef(new Map<string, number>());
+
+  // Leaving rows flush their real removal on unmount so a navigation
+  // mid-animation never drops the delete. Store actions are stable,
+  // so this runs once.
+  useEffect(() => {
+    const pending = pendingRemovals.current;
+    return () => {
+      for (const [id, timer] of pending) {
+        window.clearTimeout(timer);
+        onRemoveItem(id);
+      }
+      pending.clear();
+    };
+  }, [onRemoveItem]);
+
+  useEffect(() => {
+    const timer = freshTimer.current;
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, []);
   // Nav id of a row added this commit; focused via layout effect so the
   // fresh row opens in edit mode before paint (no prop drilling, no
   // prop-derived state).
@@ -68,6 +99,31 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
       return next;
     });
 
+  const handleAddItem = () => {
+    const id = onAddItem(chapter.id, t["item.newTitle"]);
+    pendingFocus.current = `item:${id}:title`;
+    if (freshTimer.current !== null) window.clearTimeout(freshTimer.current);
+    setFreshId(id);
+    freshTimer.current = window.setTimeout(() => setFreshId(null), 250);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    if (pendingRemovals.current.has(id)) return;
+    setLeavingIds((prev) => new Set(prev).add(id));
+    pendingRemovals.current.set(
+      id,
+      window.setTimeout(() => {
+        pendingRemovals.current.delete(id);
+        setLeavingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        onRemoveItem(id);
+      }, 180),
+    );
+  };
+
   return (
     <section
       ref={setSortRef}
@@ -76,7 +132,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+      className={`overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950${fresh ? " anim-enter" : ""}${leaving ? " anim-leave" : ""}`}
     >
       <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 dark:bg-zinc-900">
         <button
@@ -137,20 +193,28 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
                   item={item}
                   chapterId={chapter.id}
                   expanded={open}
+                  fresh={freshId === item.id}
+                  leaving={leavingIds.has(item.id)}
                   onToggleBreakdown={() => toggle(item.id)}
-                  onRemoveItem={onRemoveItem}
+                  onRemoveItem={handleRemoveItem}
                   onUpdate={onUpdateItem}
                 />
-                {open ? (
-                  <ItemBreakdownPanel
-                    item={item}
-                    onUpdateBreakdown={onUpdateBreakdown}
-                    onAddMaterial={onAddMaterial}
-                    onUpdateMaterial={onUpdateMaterial}
-                    onRemoveMaterial={onRemoveMaterial}
-                    onSyncPrice={(id, price) => onUpdateItem(id, { price })}
-                  />
-                ) : null}
+                <div
+                  className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+                    open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 invisible"
+                  }`}
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    <ItemBreakdownPanel
+                      item={item}
+                      onUpdateBreakdown={onUpdateBreakdown}
+                      onAddMaterial={onAddMaterial}
+                      onUpdateMaterial={onUpdateMaterial}
+                      onRemoveMaterial={onRemoveMaterial}
+                      onSyncPrice={(id, price) => onUpdateItem(id, { price })}
+                    />
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -162,9 +226,7 @@ export function ChapterBlock({ chapter, items, allItems, onRename, onAddItem, on
         ) : null}
         <button
           type="button"
-          onClick={() => {
-            pendingFocus.current = `item:${onAddItem(chapter.id, t["item.newTitle"])}:title`;
-          }}
+          onClick={handleAddItem}
           className="w-full cursor-pointer border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
         >
           {t["item.add"]}

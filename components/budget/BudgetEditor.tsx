@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -61,6 +61,56 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
     budget.ivaIncluded,
   );
   const [exporting, setExporting] = useState<null | "excel" | "pdf">(null);
+
+  // Chapter enter/exit animations (same pattern as item rows in
+  // ChapterBlock: leaving sections stay mounted ~180ms before the
+  // real store removal).
+  const [freshChapterId, setFreshChapterId] = useState<string | null>(null);
+  const [leavingChapterIds, setLeavingChapterIds] = useState<Set<string>>(new Set());
+  const freshChapterTimer = useRef<number | null>(null);
+  const pendingChapterRemovals = useRef(new Map<string, number>());
+
+  useEffect(() => {
+    const pending = pendingChapterRemovals.current;
+    return () => {
+      for (const [id, timer] of pending) {
+        window.clearTimeout(timer);
+        removeChapter(id);
+      }
+      pending.clear();
+    };
+  }, [removeChapter]);
+
+  useEffect(() => {
+    const timer = freshChapterTimer.current;
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, []);
+
+  const handleAddChapter = () => {
+    const id = addChapter(t["chapter.newTitle"]);
+    if (freshChapterTimer.current !== null) window.clearTimeout(freshChapterTimer.current);
+    setFreshChapterId(id);
+    freshChapterTimer.current = window.setTimeout(() => setFreshChapterId(null), 250);
+  };
+
+  const handleRemoveChapter = (id: string) => {
+    if (pendingChapterRemovals.current.has(id)) return;
+    setLeavingChapterIds((prev) => new Set(prev).add(id));
+    pendingChapterRemovals.current.set(
+      id,
+      window.setTimeout(() => {
+        pendingChapterRemovals.current.delete(id);
+        setLeavingChapterIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        removeChapter(id);
+      }, 180),
+    );
+  };
 
   if (!budget) {
     return (
@@ -209,7 +259,7 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
             </p>
             <button
               type="button"
-              onClick={() => addChapter(t["chapter.newTitle"])}
+              onClick={handleAddChapter}
               className="mt-4 cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               {t["empty.cta"]}
@@ -224,11 +274,13 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
                   chapter={ch}
                   items={budget.items.filter((i) => i.chapterId === ch.id)}
                   allItems={budget.items}
+                  fresh={freshChapterId === ch.id}
+                  leaving={leavingChapterIds.has(ch.id)}
                   onRename={renameChapter}
                   onAddItem={addItem}
                   onUpdateItem={updateItem}
                   onRemoveItem={removeItem}
-                  onRemoveChapter={removeChapter}
+                  onRemoveChapter={handleRemoveChapter}
                   onUpdateBreakdown={updateBreakdown}
                   onAddMaterial={addMaterial}
                   onUpdateMaterial={updateMaterial}
@@ -241,7 +293,7 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
         {chapters.length > 0 ? (
           <button
             type="button"
-            onClick={() => addChapter(t["chapter.newTitle"])}
+            onClick={handleAddChapter}
             className="mt-6 cursor-pointer rounded-full border border-dashed border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             {t["chapter.add"]}

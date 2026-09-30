@@ -25,3 +25,33 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Micro-animations: pure CSS, GPU-friendly, off under reduced motion. */
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes row-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+.anim-enter {
+  animation: row-in 200ms ease-out;
+}
+.anim-leave {
+  animation: row-out 180ms ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-enter,
+  .anim-leave {
+    animation: none;
+  }
+}

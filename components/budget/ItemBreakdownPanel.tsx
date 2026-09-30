@@ -45,7 +45,7 @@ export function ItemBreakdownPanel({
       <div className={`${ITEM_GRID_CLS} mb-2 px-2`}>
         <span />
         <span />
-        <div className={`col-span-5 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
+        <div className={`col-span-6 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
           <p className="text-zinc-500 dark:text-zinc-400">{t["breakdown.empty"]}</p>
           <button
             type="button"
@@ -55,7 +55,6 @@ export function ItemBreakdownPanel({
             {t["breakdown.add"]}
           </button>
         </div>
-        <span />
       </div>
     );
   }
@@ -68,7 +67,7 @@ export function ItemBreakdownPanel({
     <div className={`${ITEM_GRID_CLS} mb-2 px-2`}>
       <span />
       <span />
-      <div className={`col-span-5 space-y-3 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
+      <div className={`col-span-6 space-y-3 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
         <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
           {t["breakdown.title"]}
         </p>
@@ -250,7 +249,6 @@ export function ItemBreakdownPanel({
           </div>
         ) : null}
       </div>
-      <span />
     </div>
   );
 }

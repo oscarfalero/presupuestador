@@ -26,6 +26,10 @@ interface SortableItemRowProps {
   item: BudgetItem;
   chapterId: string;
   expanded: boolean;
+  /** Freshly created row: plays the enter animation once. */
+  fresh?: boolean;
+  /** Removed row, kept mounted ~180ms for the exit animation. */
+  leaving?: boolean;
   onToggleBreakdown: () => void;
   onRemoveItem: (id: string) => void;
   onUpdate: (id: string, patch: Partial<BudgetItem>) => void;
@@ -33,7 +37,7 @@ interface SortableItemRowProps {
 
 /** Draggable item row. The drag listeners live only on the grip handle,
  *  so click-to-edit keeps working everywhere else. */
-export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
+export function SortableItemRow({ item, chapterId, expanded, fresh, leaving, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", chapterId },
@@ -55,7 +59,7 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}`}
+      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}${fresh ? " anim-enter" : ""}${leaving ? " anim-leave" : ""}`}
     >
       <button
         type="button"
@@ -116,21 +120,7 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
       <span className="cursor-default px-1 py-0.5 text-right font-bold tabular-nums">
         {formatMoney(itemAmount(item), locale)}
       </span>
-      <span className="flex items-start justify-end">
-        <button
-          type="button"
-          onClick={onToggleBreakdown}
-          aria-expanded={expanded}
-          aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
-          title={t["detail.toggle"]}
-          className={`inline-flex size-7 cursor-pointer items-center justify-center rounded px-1 py-1 ${
-            expanded
-              ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-              : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-          }`}
-        >
-          <ReceiptIcon />
-        </button>
+      <span className="flex flex-col items-end justify-between self-stretch">
         <ConfirmButton
           label={<TrashIcon />}
           confirmLabel={
@@ -143,6 +133,20 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
           className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
+        <button
+          type="button"
+          onClick={onToggleBreakdown}
+          aria-expanded={expanded}
+          aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
+          title={t["detail.toggle"]}
+          className={`inline-flex size-7 cursor-pointer items-center justify-center px-1 py-1 ${
+            expanded
+              ? "rounded-t bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300"
+              : "rounded text-zinc-400 hover:bg-cyan-50 hover:text-cyan-700 dark:text-zinc-500 dark:hover:bg-cyan-950/40 dark:hover:text-cyan-300"
+          }`}
+        >
+          <ReceiptIcon />
+        </button>
       </span>
     </div>
   );
