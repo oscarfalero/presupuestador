@@ -74,9 +74,12 @@ export function ChapterBlock({ chapter, items, allItems, fresh, leaving, onRenam
   }, [onRemoveItem]);
 
   useEffect(() => {
-    const timer = freshTimer.current;
+    const ref = freshTimer;
     return () => {
-      if (timer !== null) window.clearTimeout(timer);
+      if (ref.current !== null) {
+        window.clearTimeout(ref.current);
+        ref.current = null;
+      }
     };
   }, []);
   // Nav id of a row added this commit; focused via layout effect so the

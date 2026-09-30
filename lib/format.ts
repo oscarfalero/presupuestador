@@ -19,7 +19,9 @@ function groupInt(int: string, thousands: string): string {
 export function formatMoney(n: number, locale: Locale): string {
   const { thousands, decimal } = SEPS[locale];
   const sign = n < 0 ? "-" : "";
-  const [int, frac] = Math.abs(n).toFixed(2).split(".");
+  // frac defaults for exponential notation (1e21), where toFixed
+  // returns no decimal point.
+  const [int, frac = "00"] = Math.abs(n).toFixed(2).split(".");
   return `${sign}${groupInt(int, thousands)}${decimal}${frac}€`;
 }
 

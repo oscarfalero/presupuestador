@@ -59,12 +59,14 @@ export function sanitizeCompanyProfile(saved: Partial<CompanyProfile> | undefine
   const legacyLists = [legacy?.preferredSuppliers, legacy?.preferredSources]
     .filter((v): v is string => typeof v === "string" && v.trim() !== "")
     .join("\n\n");
+  const stored = typeof legacy?.instructions === "string" ? legacy.instructions : "";
+  // Never drop data: legacy lists append when instructions already exist.
+  const instructions = [stored, legacyLists].filter((s) => s !== "").join("\n\n");
   const profile: CompanyProfile = {
     ...emptyCompany(),
     ...legacy,
-    hourlyRate: typeof hourlyRate === "number" ? String(hourlyRate) : (hourlyRate ?? ""),
-    instructions:
-      typeof legacy?.instructions === "string" && legacy.instructions ? legacy.instructions : legacyLists,
+    hourlyRate: typeof hourlyRate === "string" ? hourlyRate : typeof hourlyRate === "number" ? String(hourlyRate) : "",
+    instructions,
   };
   delete (profile as unknown as Record<string, unknown>).preferredSuppliers;
   delete (profile as unknown as Record<string, unknown>).preferredSources;

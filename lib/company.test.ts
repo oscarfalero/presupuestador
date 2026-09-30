@@ -56,11 +56,11 @@ describe("migrateCompanyState", () => {
     expect("preferredSources" in migrated.profile).toBe(false);
   });
 
-  it("keeps stored instructions over legacy lists", () => {
+  it("appends legacy lists when instructions already exist", () => {
     const migrated = migrateCompanyState({
       profile: { instructions: "Priorizar X", preferredSuppliers: "Leroy" },
     });
-    expect(migrated.profile.instructions).toBe("Priorizar X");
+    expect(migrated.profile.instructions).toBe("Priorizar X\n\nLeroy");
   });
 
   it("sanitizeCompanyProfile coerces numbers on every load", () => {
@@ -69,6 +69,7 @@ describe("migrateCompanyState", () => {
     const clean = sanitizeCompanyProfile({ name: "ACME", hourlyRate: 35 } as never);
     expect(clean.hourlyRate).toBe("35");
     expect(clean.name).toBe("ACME");
+    expect(sanitizeCompanyProfile({ hourlyRate: true } as never).hourlyRate).toBe("");
     expect(sanitizeCompanyProfile(undefined)).toEqual(emptyCompany());
   });
 

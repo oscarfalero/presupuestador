@@ -82,9 +82,12 @@ export function BudgetEditor({ budgetId }: { budgetId: string }) {
   }, [removeChapter]);
 
   useEffect(() => {
-    const timer = freshChapterTimer.current;
+    const ref = freshChapterTimer;
     return () => {
-      if (timer !== null) window.clearTimeout(timer);
+      if (ref.current !== null) {
+        window.clearTimeout(ref.current);
+        ref.current = null;
+      }
     };
   }, []);
 
