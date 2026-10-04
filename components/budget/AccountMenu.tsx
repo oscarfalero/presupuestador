@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCompanyStore } from "@/lib/company";
+import { getBrowserClient, isCloudEnabled } from "@/lib/supabase";
 import { useStrings } from "@/lib/locale";
 import { useAppliedTheme } from "@/components/ThemeToggle";
 
@@ -48,9 +50,21 @@ function MoonIcon() {
  * with an account dropdown: Account, Preferences and an in-place theme
  * toggle. Future home of multi-account switching.
  */
+function LogoutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
 export function AccountMenu() {
   const name = useCompanyStore((s) => s.profile.name);
   const t = useStrings();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
   const { dark, toggle } = useAppliedTheme();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -114,6 +128,28 @@ export function AccountMenu() {
             {dark ? <SunIcon /> : <MoonIcon />}
             {dark ? t["theme.light"] : t["theme.dark"]}
           </button>
+          {isCloudEnabled() ? (
+            <>
+              <div className="my-1 border-t border-zinc-200 dark:border-zinc-700" />
+              <button
+                role="menuitem"
+                type="button"
+                disabled={signingOut}
+                onClick={async () => {
+                  const client = getBrowserClient();
+                  if (!client) return;
+                  setSigningOut(true);
+                  await client.auth.signOut();
+                  setOpen(false);
+                  router.replace("/login");
+                }}
+                className={itemCls}
+              >
+                <LogoutIcon />
+                {signingOut ? t["auth.signingOut"] : t["auth.logout"]}
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>

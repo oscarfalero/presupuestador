@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { CloudSync } from "./CloudSync";
 import { useStrings } from "@/lib/locale";
 
 // Same client-only rationale as the editor: the list renders persisted
@@ -20,5 +21,10 @@ function LoadingFallback() {
 }
 
 export function BudgetsLoader() {
-  return <BudgetsPage />;
+  return (
+    <>
+      <CloudSync />
+      <BudgetsPage />
+    </>
+  );
 }

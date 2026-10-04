@@ -5,6 +5,8 @@ import { LocaleToggle } from "@/components/LocaleToggle";
 import { useStrings } from "@/lib/locale";
 import { BudgetingSettingsBlock } from "./BudgetingSettingsBlock";
 import { CompanyBlock } from "./CompanyBlock";
+import { PasswordForm } from "./PasswordForm";
+import { isCloudEnabled } from "@/lib/supabase";
 
 export type AccountSection = "account" | "preferences";
 
@@ -57,6 +59,7 @@ export function AccountPage({ section }: { section: AccountSection }) {
                 <h2 className="mb-2 text-sm font-semibold">{t["locale.label"]}</h2>
                 <LocaleToggle />
               </section>
+              {isCloudEnabled() ? <PasswordForm /> : null}
             </>
           ) : (
             <BudgetingSettingsBlock />

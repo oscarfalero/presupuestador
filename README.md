@@ -37,6 +37,29 @@ pnpm build
 pnpm lint
 ```
 
+Without Supabase credentials the app runs local-only (exactly as
+before). To enable the closed-beta cloud backend:
+
+1. Create a free project at https://supabase.com, then run
+   `supabase/migrations/0001_beta.sql` in its SQL editor.
+2. Authentication → Sign In / Sign Ups → turn OFF "Allow new users
+   to sign up".
+3. Invite beta users via Authentication → Users → Invite user. The
+   invite link lands on `/auth/confirm` and drops them at `/account`,
+   where they set their password.
+4. Copy the project URL + anon key into `.env.local` (never commit
+   secrets; the service role key is not needed anywhere):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xyzcompany.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+```
+
+First login reconciles once: cloud data wins when present, otherwise a
+pre-cloud local snapshot uploads; a foreign account's cache is never
+uploaded. Afterwards every edit syncs with a short debounce (last
+write wins, single writer per account).
+
 ## Project layout
 
 ```
