@@ -6,15 +6,30 @@ import { itemAmount, isUnpriced } from "@/lib/calc";
 import type { BudgetItem } from "@/lib/budget-types";
 import { InlineNumber, InlineText, InlineUnit } from "./inline-fields";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
-import { useStrings } from "@/lib/locale";
+import { useLocale, useStrings } from "@/lib/locale";
+import { formatMoney, formatQty } from "@/lib/format";
 
 export const ITEM_GRID_CLS =
   "grid grid-cols-[1.75rem_3rem_minmax(0,1fr)_3.5rem_5.5rem_6.5rem_6rem_3.25rem] items-start gap-1";
+
+/** Itemized-receipt icon for the internal breakdown toggle. */
+function ReceiptIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 3h14v18l-2.3-1.4-2.4 1.4-2.3-1.4-2.3 1.4-2.4-1.4L5 21z" />
+      <path d="M9 8h6M9 12h6M9 16h4" />
+    </svg>
+  );
+}
 
 interface SortableItemRowProps {
   item: BudgetItem;
   chapterId: string;
   expanded: boolean;
+  /** Freshly created row: plays the enter animation once. */
+  fresh?: boolean;
+  /** Removed row, kept mounted ~180ms for the exit animation. */
+  leaving?: boolean;
   onToggleBreakdown: () => void;
   onRemoveItem: (id: string) => void;
   onUpdate: (id: string, patch: Partial<BudgetItem>) => void;
@@ -22,13 +37,14 @@ interface SortableItemRowProps {
 
 /** Draggable item row. The drag listeners live only on the grip handle,
  *  so click-to-edit keeps working everywhere else. */
-export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
+export function SortableItemRow({ item, chapterId, expanded, fresh, leaving, onToggleBreakdown, onRemoveItem, onUpdate }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { type: "item", chapterId },
   });
   const unpriced = isUnpriced(item);
   const t = useStrings();
+  const locale = useLocale();
   const priceMissing = item.price === 0;
   const qtyMissing = item.quantity === 0;
   const warnCls =
@@ -43,7 +59,7 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}`}
+      className={`${ITEM_GRID_CLS} border-t border-zinc-100 px-2 py-1 dark:border-zinc-800 ${unpriced ? "bg-amber-50/70 dark:bg-amber-950/40" : "bg-white dark:bg-zinc-950"}${fresh ? " anim-enter" : ""}${leaving ? " anim-leave" : ""}`}
     >
       <button
         type="button"
@@ -75,7 +91,7 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
           className="text-zinc-500 dark:text-zinc-400"
         />
       </span>
-      <span className="py-1 text-center">
+      <span className="text-center">
         <InlineUnit
           value={item.um}
           onCommit={(um) => onUpdate(item.id, { um })}
@@ -87,6 +103,7 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         value={item.quantity}
         onCommit={(quantity) => onUpdate(item.id, { quantity })}
         ariaLabel={`${t["item.qtyField"]} ${item.code}`}
+        format={(n) => formatQty(n, locale)}
         navId={`item:${item.id}:qty`}
         title={qtyMissing ? t["item.missingQty"] : undefined}
         className={qtyMissing ? warnCls : undefined}
@@ -95,25 +112,15 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
         value={item.price}
         onCommit={(price) => onUpdate(item.id, { price })}
         ariaLabel={`${t["item.priceField"]} ${item.code}`}
-        format={(n) => `${n.toFixed(2)}€`}
+        format={(n) => formatMoney(n, locale)}
         navId={`item:${item.id}:price`}
         title={priceMissing ? t["item.missingPrice"] : undefined}
         className={priceMissing ? warnCls : undefined}
       />
-      <span className="cursor-default px-1 py-1 text-right font-bold tabular-nums">
-        {itemAmount(item).toFixed(2)}€
+      <span className="cursor-default px-1 py-0.5 text-right font-bold tabular-nums">
+        {formatMoney(itemAmount(item), locale)}
       </span>
-      <span className="flex items-start justify-end">
-        <button
-          type="button"
-          onClick={onToggleBreakdown}
-          aria-expanded={expanded}
-          aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
-          title={t["detail.toggle"]}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded px-1 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-        >
-          {expanded ? "▾" : "▸"}
-        </button>
+      <span className="flex flex-col items-end justify-between self-stretch">
         <ConfirmButton
           label={<TrashIcon />}
           confirmLabel={
@@ -126,6 +133,20 @@ export function SortableItemRow({ item, chapterId, expanded, onToggleBreakdown, 
           className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
         />
+        <button
+          type="button"
+          onClick={onToggleBreakdown}
+          aria-expanded={expanded}
+          aria-label={expanded ? `${t["detail.collapse"]} ${item.code}` : `${t["detail.expand"]} ${item.code}`}
+          title={t["detail.toggle"]}
+          className={`inline-flex size-7 cursor-pointer items-center justify-center px-1 py-1 ${
+            expanded
+              ? "rounded-t bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300"
+              : "rounded text-zinc-400 hover:bg-cyan-50 hover:text-cyan-700 dark:text-zinc-500 dark:hover:bg-cyan-950/40 dark:hover:text-cyan-300"
+          }`}
+        >
+          <ReceiptIcon />
+        </button>
       </span>
     </div>
   );

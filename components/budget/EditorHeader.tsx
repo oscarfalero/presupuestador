@@ -3,8 +3,7 @@
 import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { useStrings } from "@/lib/locale";
 import { InlineText } from "./inline-fields";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LocaleToggle } from "@/components/LocaleToggle";
+import { AccountMenu } from "./AccountMenu";
 
 interface EditorHeaderProps {
   exporting: null | "excel" | "pdf";
@@ -12,7 +11,7 @@ interface EditorHeaderProps {
   onExportPdf: () => void;
 }
 
-/** Title, locale/theme toggles and the Excel/PDF export actions. */
+/** Title, account menu and the Excel/PDF export actions. */
 export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHeaderProps) {
   const { setMeta } = useBudgetStore();
   const budget = useBudgetStore(selectActiveBudget);
@@ -32,8 +31,7 @@ export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHe
         />
       </div>
       <div className="flex items-center gap-2">
-        <LocaleToggle />
-        <ThemeToggle />
+        <AccountMenu />
         <button
           className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
           disabled={exporting !== null}

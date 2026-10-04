@@ -30,6 +30,17 @@ function blockLines(text: string): number {
   return text.split("\n").length;
 }
 
+/**
+ * Numeric display for money columns: grouped thousands, 2 decimals, €
+ * suffix. Excel localizes the separators per viewer; values stay
+ * numeric so client totals keep working as formulas inputs.
+ */
+function applyMoneyFormats(ws: ExcelJS.Worksheet): void {
+  ws.getColumn("qty").numFmt = "#,##0.##";
+  ws.getColumn("price").numFmt = "#,##0.00 €";
+  ws.getColumn("amount").numFmt = "#,##0.00 €";
+}
+
 export async function exportClientBudgetToExcel(
   client: ClientBudget,
   company: CompanyProfile,
@@ -51,6 +62,7 @@ export async function exportClientBudgetToExcel(
     { key: "price", width: 14 },
     { key: "amount", width: 16 },
   ];
+  applyMoneyFormats(ws);
 
   // Company header: logo, name, NIF, phone, web.
   if (company.logoDataUrl && company.logoExt) {
@@ -140,6 +152,7 @@ export async function exportClientBudgetToExcel(
     { key: "price", width: 14 },
     { key: "amount", width: 16 },
   ];
+  applyMoneyFormats(detail);
   const chaptersTitle = detail.addRow({ title: t["section.chapters"].toUpperCase(), amount: client.total });
   chaptersTitle.font = { bold: true, size: 12 };
   const headerRow = detail.addRow({

@@ -1,6 +1,7 @@
 import { create, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
 import { renumber } from "./calc";
+import { useCompanyStore } from "./company";
 import { createBudget, emptyBreakdown, type Budget, type BudgetItem, type Chapter, type ItemBreakdown, type MaterialCost } from "./budget-types";
 
 export type DeletedSnapshot =
@@ -377,7 +378,10 @@ export const useBudgetStore = create<BudgetState>()(
       },
       newBudget: (name) => {
         const s = get();
-        const budget = createBudget({ name, number: suggestBudgetNumber(s.budgets) });
+        // Commercial texts default from the company profile; the
+        // budget keeps its own copy so per-budget edits stay local.
+        const { terms, payment } = useCompanyStore.getState().profile;
+        const budget = createBudget({ name, number: suggestBudgetNumber(s.budgets), terms, payment });
         set({
           budgets: { ...s.budgets, [budget.id]: budget },
           order: [budget.id, ...s.order],

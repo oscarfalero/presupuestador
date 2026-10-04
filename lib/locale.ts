@@ -23,6 +23,11 @@ export const useLocaleStore = create<LocaleState>()(
   ),
 );
 
+/** Current UI locale (reactive: re-renders on language switch). */
+export function useLocale(): Locale {
+  return useLocaleStore((s) => s.locale);
+}
+
 /** Typed UI dictionary for the current locale. */
 export function useStrings(): Record<StringKey, string> {
   return getStrings(useLocaleStore((s) => s.locale));

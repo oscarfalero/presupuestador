@@ -1,5 +1,7 @@
 import type { StringKey } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 import type { ClientChapter } from "@/lib/clientExport";
+import { formatMoney, formatQty } from "@/lib/format";
 import { StyleSheet, Text, View } from "./runtime";
 
 const styles = StyleSheet.create({
@@ -38,7 +40,7 @@ const styles = StyleSheet.create({
 type T = Record<StringKey, string>;
 
 /** One chapter box: gray header with subtotal plus the items table. */
-export function PdfChapter({ ch, t }: { ch: ClientChapter; t: T }) {
+export function PdfChapter({ ch, t, locale }: { ch: ClientChapter; t: T; locale: Locale }) {
   return (
     <View style={styles.chapterBox} wrap={false}>
       <View style={styles.chapterHead}>
@@ -46,7 +48,7 @@ export function PdfChapter({ ch, t }: { ch: ClientChapter; t: T }) {
           {ch.number}. {ch.title}
         </Text>
         <Text style={styles.chapterSubtotal}>
-          {t["export.subtotal"]}: {ch.subtotal.toFixed(2)}€
+          {t["export.subtotal"]}: {formatMoney(ch.subtotal, locale)}
         </Text>
       </View>
       <View style={styles.chapterBody}>
@@ -66,9 +68,9 @@ export function PdfChapter({ ch, t }: { ch: ClientChapter; t: T }) {
               {item.description ? <Text style={styles.itemDesc}>{item.description}</Text> : null}
             </View>
             <Text style={styles.cellUm}>{item.um}</Text>
-            <Text style={styles.cellQty}>{item.quantity}</Text>
-            <Text style={styles.cellPrice}>{item.price.toFixed(2)}€</Text>
-            <Text style={styles.cellAmount}>{item.amount.toFixed(2)}€</Text>
+            <Text style={styles.cellQty}>{formatQty(item.quantity, locale)}</Text>
+            <Text style={styles.cellPrice}>{formatMoney(item.price, locale)}</Text>
+            <Text style={styles.cellAmount}>{formatMoney(item.amount, locale)}</Text>
           </View>
         ))}
       </View>

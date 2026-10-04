@@ -4,6 +4,7 @@ import { getStrings } from "@/lib/i18n";
 import { useLocaleStore } from "@/lib/locale";
 import { useCompanyStore } from "@/lib/company";
 import { formatPhone } from "@/lib/phone";
+import { formatMoney } from "@/lib/format";
 import { pdfBase } from "./pdf/base";
 import { PdfCompanyHeader } from "./pdf/PdfCompanyHeader";
 import { PdfSummary } from "./pdf/PdfSummary";
@@ -31,7 +32,8 @@ const styles = StyleSheet.create({
  * excluded by design (editor-only).
  */
 export function BudgetPdfDocument({ budget }: { budget: Budget }) {
-  const t = getStrings(useLocaleStore.getState().locale);
+  const locale = useLocaleStore.getState().locale;
+  const t = getStrings(locale);
   const company = useCompanyStore.getState().profile;
   const client = toClientBudget(budget);
   const footerBits = [company.phone ? formatPhone(company.phone) : "", company.email, company.web].filter((s) => s && s.trim() !== "");
@@ -63,17 +65,17 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
           </View>
         ) : null}
         <Text style={pdfBase.sectionTitle}>{t["section.summary"].toUpperCase()}</Text>
-        <PdfSummary client={client} t={t} />
+        <PdfSummary client={client} t={t} locale={locale} />
         <PdfSignature t={t} />
         <View break />
         <View style={pdfBase.sectionHead}>
           <Text style={pdfBase.sectionHeadText}>{t["section.chapters"].toUpperCase()}</Text>
           <Text style={pdfBase.sectionHeadText}>
-            {t["export.total"]}: {client.total.toFixed(2)}€
+            {t["export.total"]}: {formatMoney(client.total, locale)}
           </Text>
         </View>
         {client.chapters.map((ch) => (
-          <PdfChapter key={ch.number} ch={ch} t={t} />
+          <PdfChapter key={ch.number} ch={ch} t={t} locale={locale} />
         ))}
         {footerBits.length > 0 ? (
           <Text style={styles.footer} fixed>

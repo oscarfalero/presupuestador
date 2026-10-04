@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { mergePersistedState, selectActiveBudget, useBudgetStore } from "./store";
+import { emptyCompany, useCompanyStore } from "./company";
 import { renumber } from "./calc";
 import { createBudget, type Budget, type BudgetItem } from "./budget-types";
 
@@ -48,6 +49,7 @@ function codes(): [string, string][] {
 
 beforeEach(() => {
   localStorage.clear();
+  useCompanyStore.setState({ profile: emptyCompany() });
   useBudgetStore.setState({
     budgets: { "b-test": fixture() },
     order: ["b-test"],
@@ -239,6 +241,22 @@ describe("budgets", () => {
     expect(state.order[0]).toBe(id);
     expect(state.budgets[id]).toMatchObject({ name: "Kitchen" });
     expect(state.budgets[id].number).toMatch(/^\d{4}-\d{3}$/);
+  });
+
+  it("newBudget inherits company terms/payment defaults", () => {
+    useCompanyStore.setState({
+      profile: { ...emptyCompany(), terms: "Net 30", payment: "Transfer" },
+    });
+    const id = useBudgetStore.getState().newBudget("Inherited");
+    expect(useBudgetStore.getState().budgets[id]).toMatchObject({
+      terms: "Net 30",
+      payment: "Transfer",
+    });
+  });
+
+  it("newBudget leaves terms/payment blank without company defaults", () => {
+    const id = useBudgetStore.getState().newBudget("Blank");
+    expect(useBudgetStore.getState().budgets[id]).toMatchObject({ terms: "", payment: "" });
   });
 
   it("duplicateBudget deep-copies with fresh ids after the original", () => {

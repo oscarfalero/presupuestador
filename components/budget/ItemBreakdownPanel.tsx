@@ -7,7 +7,8 @@ import { InlineNumber, InlineText } from "./inline-fields";
 import { ITEM_GRID_CLS } from "./SortableItemRow";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { fmt } from "@/lib/i18n";
-import { useStrings } from "@/lib/locale";
+import { useLocale, useStrings } from "@/lib/locale";
+import { formatMoney, formatQty } from "@/lib/format";
 
 interface ItemBreakdownPanelProps {
   item: BudgetItem;
@@ -37,13 +38,14 @@ export function ItemBreakdownPanel({
 }: ItemBreakdownPanelProps) {
   const breakdown = item.breakdown;
   const t = useStrings();
+  const locale = useLocale();
 
   if (!breakdown) {
     return (
       <div className={`${ITEM_GRID_CLS} mb-2 px-2`}>
         <span />
         <span />
-        <div className={`col-span-5 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
+        <div className={`col-span-6 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
           <p className="text-zinc-500 dark:text-zinc-400">{t["breakdown.empty"]}</p>
           <button
             type="button"
@@ -53,7 +55,6 @@ export function ItemBreakdownPanel({
             {t["breakdown.add"]}
           </button>
         </div>
-        <span />
       </div>
     );
   }
@@ -66,7 +67,7 @@ export function ItemBreakdownPanel({
     <div className={`${ITEM_GRID_CLS} mb-2 px-2`}>
       <span />
       <span />
-      <div className={`col-span-5 space-y-3 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
+      <div className={`col-span-6 space-y-3 px-4 py-3 text-sm ${TAB_BOX_CLS}`}>
         <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
           {t["breakdown.title"]}
         </p>
@@ -98,13 +99,14 @@ export function ItemBreakdownPanel({
                   value={m.quantity}
                   onCommit={(quantity) => onUpdateMaterial(item.id, m.id, { quantity })}
                   ariaLabel={`${t["breakdown.matQty"]} ${item.code}`}
+                  format={(n) => formatQty(n, locale)}
                   navId={`item:${item.id}:mat:${m.id}:qty`}
                 />
                 <InlineNumber
                   value={m.price}
                   onCommit={(price) => onUpdateMaterial(item.id, m.id, { price })}
                   ariaLabel={`${t["breakdown.matPrice"]} ${item.code}`}
-                  format={(n) => `${n.toFixed(2)}€`}
+                  format={(n) => formatMoney(n, locale)}
                   navId={`item:${item.id}:mat:${m.id}:price`}
                 />
                 <span className="min-w-0">
@@ -142,7 +144,7 @@ export function ItemBreakdownPanel({
                   </span>
                 </span>
                 <span className="px-1 py-1 text-right tabular-nums">
-                  {(m.quantity * m.price).toFixed(2)}€
+                  {formatMoney(m.quantity * m.price, locale)}
                 </span>
                 <ConfirmButton
                   label={<TrashIcon />}
@@ -180,6 +182,7 @@ export function ItemBreakdownPanel({
                     onUpdateBreakdown(item.id, { labor: { ...breakdown.labor, hours } })
                   }
                   ariaLabel={`${t["breakdown.laborHours"]} ${item.code}`}
+                  format={(n) => formatQty(n, locale)}
                   navId={`item:${item.id}:labor:hours`}
                 />
               </span>
@@ -191,13 +194,13 @@ export function ItemBreakdownPanel({
                     onUpdateBreakdown(item.id, { labor: { ...breakdown.labor, ratePerHour } })
                   }
                   ariaLabel={`${t["breakdown.laborRate"]} ${item.code}`}
-                  format={(n) => `${n.toFixed(2)}€`}
+                  format={(n) => formatMoney(n, locale)}
                   navId={`item:${item.id}:labor:rate`}
                 />
               </span>
               /h =
               <strong className="tabular-nums">
-                {(breakdown.labor.hours * breakdown.labor.ratePerHour).toFixed(2)}€
+                {formatMoney(breakdown.labor.hours * breakdown.labor.ratePerHour, locale)}
               </strong>
             </span>
           </span>
@@ -208,7 +211,7 @@ export function ItemBreakdownPanel({
                 value={breakdown.otherCost}
                 onCommit={(otherCost) => onUpdateBreakdown(item.id, { otherCost })}
                 ariaLabel={`${t["breakdown.otherCosts"]} ${item.code}`}
-                format={(n) => `${n.toFixed(2)}€`}
+                format={(n) => formatMoney(n, locale)}
                 navId={`item:${item.id}:other`}
               />
             </span>
@@ -230,23 +233,22 @@ export function ItemBreakdownPanel({
         {!matches ? (
           <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-700">
             <span className="tabular-nums">
-              {t["breakdown.totalLabel"]} <strong>{total.toFixed(2)}€</strong> · {t["breakdown.priceLabel"]}{" "}
-              <strong>{item.price.toFixed(2)}€</strong>
+              {t["breakdown.totalLabel"]} <strong>{formatMoney(total, locale)}</strong> · {t["breakdown.priceLabel"]}{" "}
+              <strong>{formatMoney(item.price, locale)}</strong>
             </span>
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-100">
-              {t["breakdown.differs"]} {diff.toFixed(2)}€
+              {t["breakdown.differs"]} {formatMoney(diff, locale)}
             </span>
             <button
               type="button"
               onClick={() => onSyncPrice(item.id, total)}
               className="cursor-pointer rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              {fmt(t["breakdown.useTotal"], { n: `${total.toFixed(2)}€` })}
+              {fmt(t["breakdown.useTotal"], { n: formatMoney(total, locale) })}
             </button>
           </div>
         ) : null}
       </div>
-      <span />
     </div>
   );
 }

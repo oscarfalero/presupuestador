@@ -3,7 +3,8 @@
 import { IVA_PRESETS } from "@/lib/budget-types";
 import { budgetSubtotal, budgetTotalWithIva, round2 } from "@/lib/calc";
 import { selectActiveBudget, useBudgetStore } from "@/lib/store";
-import { useStrings } from "@/lib/locale";
+import { useLocale, useStrings } from "@/lib/locale";
+import { formatMoney } from "@/lib/format";
 import { InlineText } from "./inline-fields";
 
 /**
@@ -15,6 +16,7 @@ export function SummaryBlock() {
   const { setMeta } = useBudgetStore();
   const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
+  const locale = useLocale();
   if (!budget) return null;
   const subtotal = budgetSubtotal(budget.items);
   const vatAmount = round2(subtotal * (budget.ivaPct / 100));
@@ -25,7 +27,7 @@ export function SummaryBlock() {
       <div className="space-y-1 text-sm">
         <div className="flex items-baseline justify-between gap-3">
           <span>{t["meta.subtotal"]}:</span>
-          <span className="tabular-nums">{subtotal.toFixed(2)}€</span>
+          <span className="tabular-nums">{formatMoney(subtotal, locale)}</span>
         </div>
         <div className="flex items-baseline justify-between gap-3">
           <label className="flex items-center gap-2">
@@ -51,7 +53,7 @@ export function SummaryBlock() {
             :
           </label>
           {budget.ivaIncluded ? (
-            <span className="tabular-nums">{vatAmount.toFixed(2)}€</span>
+            <span className="tabular-nums">{formatMoney(vatAmount, locale)}</span>
           ) : (
             <span className="text-xs font-normal text-zinc-500 uppercase dark:text-zinc-400">
               {t["totals.vatExcluded"].toUpperCase()}
@@ -60,7 +62,7 @@ export function SummaryBlock() {
         </div>
         <div className="flex items-baseline justify-between gap-3 text-xl font-bold">
           <span>{t["meta.total"]}:</span>
-          <span className="tabular-nums">{total.toFixed(2)}€</span>
+          <span className="tabular-nums">{formatMoney(total, locale)}</span>
         </div>
       </div>
       <div>
