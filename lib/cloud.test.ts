@@ -11,10 +11,16 @@ import {
   type StoreIo,
 } from "./cloud";
 import { emptyCompany } from "./company";
+import { resolveNextParam } from "./redirect";
 
 function memStorage(entries: Record<string, string> = {}): StorageLike & { map: Map<string, string> } {
   const map = new Map(Object.entries(entries));
-  return { map, getItem: (k) => map.get(k) ?? null, setItem: (k, v) => void map.set(k, v) };
+  return {
+    map,
+    getItem: (k) => map.get(k) ?? null,
+    setItem: (k, v) => void map.set(k, v),
+    removeItem: (k) => void map.delete(k),
+  };
 }
 
 function memIo<T>(initial: T | null = null): StoreIo<T> & { saved: { value: T | null } } {
@@ -77,6 +83,9 @@ describe("marker + snapshot helpers", () => {
       setItem: () => {
         throw new Error("denied");
       },
+      removeItem: () => {
+        throw new Error("denied");
+      },
     };
     expect(readMarker(broken)).toBeNull();
     expect(hasLocalSnapshot("k", broken)).toBe(false);
@@ -89,6 +98,18 @@ describe("marker + snapshot helpers", () => {
   });
 });
 
+describe("resolveNextParam", () => {
+  it("keeps same-origin paths and falls back otherwise", () => {
+    expect(resolveNextParam("/account")).toBe("/account");
+    expect(resolveNextParam("/budgets/abc")).toBe("/budgets/abc");
+    expect(resolveNextParam(null)).toBe("/account");
+    expect(resolveNextParam("")).toBe("/account");
+    expect(resolveNextParam("https://evil.example/account")).toBe("/account");
+    expect(resolveNextParam("//evil.example/account")).toBe("/account");
+    expect(resolveNextParam("/\\evil")).toBe("/account");
+  });
+});
+
 describe("initialSync", () => {
   function deps(over: Partial<Parameters<typeof initialSync>[0]> = {}) {
     const budgets = memIo<BudgetDoc>();
@@ -97,6 +118,7 @@ describe("initialSync", () => {
       budgets: null,
       profile: null,
     };
+    const cleared = { budgets: 0, profile: 0 };
     return {
       budgets,
       company,
@@ -113,6 +135,12 @@ describe("initialSync", () => {
         },
         applyProfile: (p: ReturnType<typeof emptyCompany>) => {
           applied.profile = p;
+        },
+        clearBudgets: () => {
+          cleared.budgets += 1;
+        },
+        clearProfile: () => {
+          cleared.profile += 1;
         },
         ...over,
       } as Parameters<typeof initialSync>[0],
@@ -146,16 +174,25 @@ describe("initialSync", () => {
   });
 
   it("starts empty and never pushes a foreign cache", async () => {
-    const { budgets, applied, args } = deps({
-      storage: memStorage({
-        "presupuestador-budgets-v1": "{}",
-        [CLOUD_USER_MARKER_KEY]: "u2",
-      }),
+    const storage = memStorage({
+      "presupuestador-budgets-v1": "{}",
+      "presupuestador-company-v1": "{}",
+      [CLOUD_USER_MARKER_KEY]: "u2",
     });
-    const decision = await initialSync(args);
+    const first = deps({ storage });
+    const decision = await initialSync(first.args);
     expect(decision).toBe("empty");
-    expect(budgets.saved.value).toBeNull();
-    expect(applied.budgets).toBeNull();
-    expect(readMarker(args.storage)).toBe("u1");
+    expect(first.budgets.saved.value).toBeNull();
+    expect(first.applied.budgets).toBeNull();
+    // Regression: the foreign cache is dropped BEFORE the marker flips,
+    // so a reload can never promote it into a push.
+    expect(storage.map.has("presupuestador-budgets-v1")).toBe(false);
+    expect(storage.map.has("presupuestador-company-v1")).toBe(false);
+    expect(readMarker(storage)).toBe("u1");
+    // Reload with the same storage: still empty, still no push.
+    const second = deps({ storage });
+    expect(await initialSync(second.args)).toBe("empty");
+    expect(second.budgets.saved.value).toBeNull();
+    expect(second.company.saved.value).toBeNull();
   });
 });

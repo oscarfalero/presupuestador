@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { CloudSync } from "./CloudSync";
 import { useStrings } from "@/lib/locale";
 
 // The editor is fully interactive and client-state driven (zustand +
@@ -26,10 +25,5 @@ function LoadingFallback() {
 }
 
 export function BudgetEditorLoader({ budgetId }: { budgetId: string }) {
-  return (
-    <>
-      <CloudSync />
-      <BudgetEditor budgetId={budgetId} />
-    </>
-  );
+  return <BudgetEditor budgetId={budgetId} />;
 }

@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCompanyStore } from "@/lib/company";
+import { emptyCompany, useCompanyStore } from "@/lib/company";
+import { useBudgetStore } from "@/lib/store";
+import { clearLocalCache } from "@/lib/cloud";
 import { getBrowserClient, isCloudEnabled } from "@/lib/supabase";
 import { useStrings } from "@/lib/locale";
 import { useAppliedTheme } from "@/components/ThemeToggle";
@@ -140,6 +142,11 @@ export function AccountMenu() {
                   if (!client) return;
                   setSigningOut(true);
                   await client.auth.signOut();
+                  // Drop the account's cache: the next login re-pulls
+                  // from the cloud, never pushing stale residue.
+                  useBudgetStore.setState({ budgets: {}, order: [], activeId: null });
+                  useCompanyStore.setState({ profile: emptyCompany() });
+                  clearLocalCache();
                   setOpen(false);
                   router.replace("/login");
                 }}

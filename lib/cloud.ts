@@ -19,6 +19,7 @@ export type SyncDecision = "pull" | "push" | "empty";
 export interface StorageLike {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
 }
 
 function getStorage(): StorageLike | undefined {
@@ -123,6 +124,16 @@ export function supabaseCompanyIo(client: SupabaseClient): StoreIo<CompanyProfil
   };
 }
 
+/** Drops the on-device snapshots (both persist keys). Cache only. */
+export function clearLocalCache(storage: StorageLike | undefined = getStorage()): void {
+  try {
+    storage?.removeItem(BUDGETS_STORAGE_KEY);
+    storage?.removeItem(COMPANY_STORAGE_KEY);
+  } catch {
+    // Best effort: a stale cache is harmless once the stores are reset.
+  }
+}
+
 export interface SyncDeps {
   budgets: StoreIo<BudgetDoc>;
   company: StoreIo<CompanyProfile>;
@@ -132,6 +143,8 @@ export interface SyncDeps {
   storage?: StorageLike | undefined;
   applyBudgets: (doc: BudgetDoc) => void;
   applyProfile: (profile: CompanyProfile) => void;
+  clearBudgets: () => void;
+  clearProfile: () => void;
 }
 
 /**
@@ -159,8 +172,27 @@ export async function initialSync(deps: SyncDeps): Promise<SyncDecision> {
   });
   if (budgetDecision === "pull" && cloudBudgets) deps.applyBudgets(cloudBudgets);
   if (budgetDecision === "push") await deps.budgets.save(deps.userId, deps.localBudgets);
+  // Empty means "nothing of ours here": reset the stores AND drop the
+  // snapshots before recording the marker, so a reload can never promote
+  // a foreign cache into a push (marker == current + snapshot present).
+  if (budgetDecision === "empty") {
+    deps.clearBudgets();
+    try {
+      storage?.removeItem(BUDGETS_STORAGE_KEY);
+    } catch {
+      // Stores are already reset; the marker below still protects us.
+    }
+  }
   if (companyDecision === "pull" && cloudCompany) deps.applyProfile(cloudCompany);
   if (companyDecision === "push") await deps.company.save(deps.userId, deps.localProfile);
+  if (companyDecision === "empty") {
+    deps.clearProfile();
+    try {
+      storage?.removeItem(COMPANY_STORAGE_KEY);
+    } catch {
+      // Same as above.
+    }
+  }
   writeMarker(deps.userId, storage);
   return budgetDecision === "pull" || companyDecision === "pull" ? "pull"
     : budgetDecision === "push" || companyDecision === "push" ? "push"

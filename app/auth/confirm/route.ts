@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { cloudConfig } from "@/lib/supabase";
+import { resolveNextParam } from "@/lib/redirect";
 
 /**
  * Completes invite/magic-link verification: exchanges the token for a
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   const cfg = cloudConfig();
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type") as EmailOtpType | null;
-  const next = url.searchParams.get("next") ?? "/account";
+  const next = resolveNextParam(url.searchParams.get("next"));
   const login = new URL("/login", url);
   if (!cfg || !tokenHash || !type) return NextResponse.redirect(login);
   const response = NextResponse.redirect(new URL(next, url));

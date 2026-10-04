@@ -55,10 +55,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://xyzcompany.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ```
 
-First login reconciles once: cloud data wins when present, otherwise a
-pre-cloud local snapshot uploads; a foreign account's cache is never
-uploaded. Afterwards every edit syncs with a short debounce (last
-write wins, single writer per account).
+First login reconciles once: cloud data wins when present (edits made
+while offline on a fresh device are discarded — single writer per
+account), otherwise a pre-cloud local snapshot uploads; a foreign
+account's cache is dropped locally and never uploaded. Signing out
+clears the on-device cache. Afterwards every edit syncs with a short
+debounce (last write wins).
 
 ## Project layout
 
