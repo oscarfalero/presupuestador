@@ -62,6 +62,28 @@ account's cache is dropped locally and never uploaded. Signing out
 clears the on-device cache. Afterwards every edit syncs with a short
 debounce (last write wins).
 
+## Deploy (Vercel, issue #47)
+
+1. https://vercel.com → Add New → Project → import
+   `oscarfalero/presupuestador` (production branch `main`).
+2. Environment Variables (Production **and** Preview, so PR previews
+   can log in too):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xyzcompany.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+```
+
+3. Deploy. With the env vars set, the whole app sits behind the
+   Supabase login (`proxy.ts` redirects everything to `/login`) —
+   that gate IS the beta protection and works on every Vercel plan.
+   Optionally enable Vercel Deployment Protection as a second layer
+   if your plan includes it.
+4. Without env vars a deployment runs local-only and ungated — never
+   use that for the public beta URL.
+
+Custom domain: out of scope for now.
+
 ## Project layout
 
 ```
