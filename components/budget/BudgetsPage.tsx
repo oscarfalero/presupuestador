@@ -8,6 +8,7 @@ import { useLocale, useStrings } from "@/lib/locale";
 import { formatMoney } from "@/lib/format";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { AccountMenu } from "./AccountMenu";
+import { SyncBadge } from "./SyncBadge";
 
 /** Budgets index: create, open, duplicate and delete persisted budgets. */
 export function BudgetsPage() {
@@ -26,6 +27,7 @@ export function BudgetsPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-3xl font-semibold tracking-tight">{t["budgets.title"]}</h1>
         <div className="flex items-center gap-2">
+          <SyncBadge />
           <AccountMenu />
           <button
             type="button"

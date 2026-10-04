@@ -4,6 +4,7 @@ import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { useStrings } from "@/lib/locale";
 import { InlineText } from "./inline-fields";
 import { AccountMenu } from "./AccountMenu";
+import { SyncBadge } from "./SyncBadge";
 
 interface EditorHeaderProps {
   exporting: null | "excel" | "pdf";
@@ -31,6 +32,7 @@ export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHe
         />
       </div>
       <div className="flex items-center gap-2">
+        <SyncBadge />
         <AccountMenu />
         <button
           className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
