@@ -24,6 +24,11 @@ create table if not exists public.company_store (
 alter table public.budget_store enable row level security;
 alter table public.company_store enable row level security;
 
+-- RLS alone is not enough: authenticated users need table grants.
+-- (anon gets nothing; every access requires a session.)
+grant all on public.budget_store to authenticated;
+grant all on public.company_store to authenticated;
+
 -- Users only ever touch their own rows (closed beta: no shared data).
 drop policy if exists "own budget store" on public.budget_store;
 create policy "own budget store" on public.budget_store
