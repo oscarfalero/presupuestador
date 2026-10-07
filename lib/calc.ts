@@ -9,6 +9,18 @@ export function isUnpriced(item: Pick<BudgetItem, "quantity" | "price">): boolea
   return item.price === 0 || item.quantity === 0;
 }
 
+export type DocTextKey = "intro" | "terms" | "payment";
+
+/**
+ * Presentation texts still blank (issue #51). Pure and tested; the
+ * MetaFields pill names them and scrolls to the first empty field.
+ */
+export function missingDocTexts(budget: Pick<Budget, "intro" | "terms" | "payment">): DocTextKey[] {
+  return (["intro", "terms", "payment"] as const).filter(
+    (key) => !(budget[key] ?? "").trim(),
+  );
+}
+
 export function chapterSubtotal(items: BudgetItem[], chapterId: string): number {
   return round2(
     items.filter((i) => i.chapterId === chapterId).reduce((acc, i) => acc + itemAmount(i), 0),

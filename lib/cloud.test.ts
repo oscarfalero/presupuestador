@@ -4,9 +4,12 @@ import {
   CLOUD_USER_MARKER_KEY,
   decideInitialSync,
   deletedSince,
+  docsEqual,
   hasLocalSnapshot,
   initialSync,
   mergeBudgetDocs,
+  planPush,
+  profilesEqual,
   readMarker,
   supabaseBudgetIo,
   unseenBudgets,
@@ -252,7 +255,7 @@ describe("mergeBudgetDocs", () => {
   });
 });
 
-describe("unseenBudgets", () => {
+describe("deletedSince", () => {
   const doc = (ids: string[]): BudgetDoc => ({
     budgets: Object.fromEntries(ids.map((id) => [id, createBudget({ name: id, number: id })])),
     order: ids,
@@ -295,6 +298,82 @@ describe("deletedSince", () => {
 
   it("reports only ids the baseline had and current lacks", () => {
     expect(deletedSince(doc(["a", "b", "c"]), doc(["a", "c", "d"]))).toEqual(["b"]);
+  });
+});
+
+describe("docsEqual + profilesEqual + planPush (issue #57)", () => {
+  const doc57 = (ids: string[], active?: string | null): BudgetDoc => ({
+    budgets: Object.fromEntries(ids.map((id) => [id, createBudget({ name: id, number: id })])),
+    order: ids,
+    activeId: active === undefined ? (ids[0] ?? null) : active,
+  });
+  const profile57 = { ...emptyCompany(), name: "DC Reformas" };
+
+  it("treats identical docs as equal regardless of key insertion order", () => {
+    const a = doc57(["a", "b"]);
+    const reordered: BudgetDoc = {
+      activeId: a.activeId,
+      order: [...a.order],
+      budgets: { b: a.budgets["b"], a: a.budgets["a"] },
+    };
+    expect(docsEqual(a, reordered)).toBe(true);
+  });
+
+  it("detects order, content and activeId differences", () => {
+    const a = doc57(["a", "b"]);
+    expect(docsEqual(a, doc57(["b", "a"]))).toBe(false);
+    expect(docsEqual(a, doc57(["a"]))).toBe(false);
+    expect(docsEqual(a, doc57(["a", "b"], "b"))).toBe(false);
+    const renamed = doc57(["a", "b"]);
+    (renamed.budgets["a"] as Budget).name = "changed";
+    expect(docsEqual(a, renamed)).toBe(false);
+  });
+
+  it("compares profiles by value", () => {
+    expect(profilesEqual(profile57, { ...profile57 })).toBe(true);
+    expect(profilesEqual(profile57, { ...profile57, name: "Other" })).toBe(false);
+  });
+
+  it("plans saves for unknown baselines, silence for identical state", () => {
+    expect(planPush(null, doc57(["a"]), null, profile57)).toEqual({ saveBudgets: true, saveProfile: true });
+    // NB: two independently built docs carry fresh random item/chapter
+    // ids, so "identical" always means a deep copy of the same doc.
+    const a = doc57(["a"]);
+    const copy: BudgetDoc = JSON.parse(JSON.stringify(a));
+    expect(planPush(a, copy, profile57, { ...profile57 })).toEqual({
+      saveBudgets: false,
+      saveProfile: false,
+    });
+  });
+
+  it("saves each store independently", () => {
+    const a = doc57(["a"]);
+    const grown: BudgetDoc = JSON.parse(JSON.stringify(a));
+    grown.budgets["b"] = createBudget({ name: "b", number: "b" });
+    grown.order.push("b");
+    expect(planPush(a, grown, profile57, { ...profile57 })).toEqual({
+      saveBudgets: true,
+      saveProfile: false,
+    });
+    const copy: BudgetDoc = JSON.parse(JSON.stringify(a));
+    expect(planPush(a, copy, profile57, { ...profile57, phone: "600" })).toEqual({
+      saveBudgets: false,
+      saveProfile: true,
+    });
+  });
+
+  it("a post-load hydration echo with identical content plans zero writes", () => {
+    // Boot pulled this doc; persist rehydration lands afterwards with a
+    // deep copy of the same content. pushNow must stay quiet: this is
+    // the exact phantom-save scenario from issue #57.
+    const pulled = doc57(["a", "b"], "b");
+    const hydrated: BudgetDoc = JSON.parse(JSON.stringify(pulled));
+    const pulledProfile = { ...profile57 };
+    const hydratedProfile = JSON.parse(JSON.stringify(pulledProfile));
+    expect(planPush(pulled, hydrated, pulledProfile, hydratedProfile)).toEqual({
+      saveBudgets: false,
+      saveProfile: false,
+    });
   });
 });
 

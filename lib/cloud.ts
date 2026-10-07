@@ -90,6 +90,53 @@ export function deletedSince(lastSynced: BudgetDoc | null, current: BudgetDoc): 
   );
 }
 
+/** Key-order-insensitive serialization: semantically equal docs compare equal. */
+function stableStringify(value: unknown): string {
+  const canon = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(canon);
+    if (v && typeof v === "object")
+      return Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon((v as Record<string, unknown>)[k])]));
+    return v;
+  };
+  return JSON.stringify(canon(value));
+}
+
+/**
+ * True when both docs hold the same budgets in the same order with the
+ * same active budget. Used to skip no-op pushes (issue #57): a load or a
+ * hydration echo must never upload. Fail-safe direction — anything
+ * unexpected compares unequal and still saves.
+ */
+export function docsEqual(a: BudgetDoc, b: BudgetDoc): boolean {
+  return stableStringify(a) === stableStringify(b);
+}
+
+/** Same no-op guard for the company profile (issue #57). */
+export function profilesEqual(a: CompanyProfile, b: CompanyProfile): boolean {
+  return stableStringify(a) === stableStringify(b);
+}
+
+export interface PushPlan {
+  saveBudgets: boolean;
+  saveProfile: boolean;
+}
+
+/**
+ * Which stores actually hold unsynced changes (issue #57). Null baselines
+ * (never synced this session) always save. Pure, tested; pushNow obeys it.
+ */
+export function planPush(
+  lastSynced: BudgetDoc | null,
+  current: BudgetDoc,
+  lastProfile: CompanyProfile | null,
+  profile: CompanyProfile,
+): PushPlan {
+  return {
+    saveBudgets: !lastSynced || !docsEqual(lastSynced, current),
+    saveProfile: !lastProfile || !profilesEqual(lastProfile, profile),
+  };
+}
+
 export interface StorageLike {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
