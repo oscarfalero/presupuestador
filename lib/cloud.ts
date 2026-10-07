@@ -31,7 +31,9 @@ export type SyncDecision = "pull" | "push" | "empty";
  * synced and now lacks.
  */
 export function mergeBudgetDocs(cloud: BudgetDoc | null, local: BudgetDoc): BudgetDoc {
-  if (!cloud) return local;
+  // Always a fresh object: callers (saveMerged) mutate the result and
+  // must never touch the live store references hidden inside `local`.
+  if (!cloud) return { budgets: { ...local.budgets }, order: [...local.order], activeId: local.activeId };
   const budgets = { ...cloud.budgets, ...local.budgets };
   const seen = new Set<string>();
   const order = [...cloud.order, ...local.order].filter((id) => {
@@ -46,6 +48,21 @@ export function mergeBudgetDocs(cloud: BudgetDoc | null, local: BudgetDoc): Budg
         ? cloud.activeId
         : (order[0] ?? null);
   return { budgets, order, activeId };
+}
+
+/**
+ * Budgets the last push pulled in from the cloud that this tab still
+ * lacks. Push callers should apply the result back to the local store:
+ * without it, the NEXT push would mistake those unseen budgets for
+ * local deletes and wipe them (the exact #52 data loss, one push later).
+ * Returns null when there is nothing new to apply. Pure, tested.
+ */
+export function unseenBudgets(current: BudgetDoc, written: BudgetDoc): BudgetDoc | null {
+  const missing = written.order.filter((id) => !current.budgets[id]);
+  if (missing.length === 0) return null;
+  const budgets = { ...current.budgets };
+  for (const id of missing) budgets[id] = written.budgets[id];
+  return { budgets, order: [...current.order, ...missing], activeId: current.activeId };
 }
 
 /**
@@ -150,6 +167,12 @@ export function supabaseBudgetIo(client: SupabaseClient): BudgetStoreIo {
      * pusher's genuine deletes. Returns the doc actually written so
      * callers can track it as the new sync baseline. Concurrent edits
      * to the SAME budget still resolve last-writer-wins per budget.
+     *
+     * Residual race (known limitation): two pushes interleaving their
+     * load/merge/save windows can still drop one side's union — true
+     * safety needs an atomic server-side merge (Postgres function).
+     * The window is milliseconds wide and budgets are never deleted by
+     * it, only concurrent additions may need a re-push.
      */
     saveMerged: async (userId, doc, deletedIds) => {
       const loaded = await io.load(userId);

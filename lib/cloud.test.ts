@@ -9,6 +9,7 @@ import {
   mergeBudgetDocs,
   readMarker,
   supabaseBudgetIo,
+  unseenBudgets,
   writeMarker,
   type BudgetDoc,
   type StorageLike,
@@ -212,9 +213,11 @@ describe("mergeBudgetDocs", () => {
   });
   const names = (d: BudgetDoc) => d.order.map((id) => (d.budgets[id] as Budget).name);
 
-  it("returns local untouched when the cloud is empty", () => {
+  it("returns an equal but fresh doc when the cloud is empty", () => {
     const local = doc(["a"], "a");
-    expect(mergeBudgetDocs(null, local)).toBe(local);
+    const merged = mergeBudgetDocs(null, local);
+    expect(merged).toEqual(local);
+    expect(merged).not.toBe(local);
   });
 
   it("unions both sides with local winning per budget", () => {
@@ -237,6 +240,34 @@ describe("mergeBudgetDocs", () => {
   it("falls back to cloud activeId only when local has none", () => {
     const merged = mergeBudgetDocs(doc(["a"], "a"), doc(["a", "b"], null));
     expect(merged.activeId).toBe("a");
+  });
+
+  it("never returns the local doc by reference (callers mutate the result)", () => {
+    const local = doc(["a"], "a");
+    const merged = mergeBudgetDocs(null, local);
+    expect(merged).not.toBe(local);
+    expect(merged).toEqual(local);
+    delete merged.budgets["a"];
+    expect(local.budgets["a"]).toBeDefined();
+  });
+});
+
+describe("unseenBudgets", () => {
+  const doc = (ids: string[]): BudgetDoc => ({
+    budgets: Object.fromEntries(ids.map((id) => [id, createBudget({ name: id, number: id })])),
+    order: ids,
+    activeId: ids[0] ?? null,
+  });
+
+  it("returns null when the tab already holds everything", () => {
+    expect(unseenBudgets(doc(["a"]), doc(["a"]))).toBeNull();
+  });
+
+  it("returns the missing budgets appended, keeping the local active budget", () => {
+    const applied = unseenBudgets(doc(["a"]), { ...doc(["a", "c"]), activeId: "c" });
+    expect(applied?.order).toEqual(["a", "c"]);
+    expect(Object.keys(applied?.budgets ?? {}).sort()).toEqual(["a", "c"]);
+    expect(applied?.activeId).toBe("a");
   });
 });
 
@@ -309,5 +340,28 @@ describe("saveMerged (issue #52)", () => {
     expect(written.budgets).toEqual({});
     expect(written.order).toEqual([]);
     expect(written.activeId).toBeNull();
+  });
+
+  it("two successive stale pushes keep the unseen budget (pushNow cycle)", async () => {
+    // D1 synced {a, b}; D2 added {c}; D1 edits "a" twice in a row.
+    // Mirrors pushNow: saveMerged -> track baseline -> apply unseen back.
+    const cloud = { row: doc([["a", "A"], ["b", "B"], ["c", "C"]], "c") };
+    const io = supabaseBudgetIo(fakeClient(cloud));
+    let lastSynced: BudgetDoc = doc([["a", "A"], ["b", "B"]], "a");
+    let current = doc([["a", "A1"], ["b", "B"]], "a");
+    for (const name of ["A1", "A2"]) {
+      current = doc(
+        [["a", name], ...current.order.filter((id) => id !== "a").map((id) => [id, (current.budgets[id] as Budget).name] as [string, string])],
+        "a",
+      );
+      const written = await io.saveMerged("u1", current, deletedSince(lastSynced, current));
+      lastSynced = written;
+      const back = unseenBudgets(current, written);
+      if (back) current = back;
+    }
+    expect(Object.keys(cloud.row.budgets).sort()).toEqual(["a", "b", "c"]);
+    expect((cloud.row.budgets["a"] as Budget).name).toBe("A2");
+    expect((cloud.row.budgets["c"] as Budget).name).toBe("C");
+    expect(current.order).toContain("c");
   });
 });

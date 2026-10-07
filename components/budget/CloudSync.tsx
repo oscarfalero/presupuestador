@@ -3,7 +3,14 @@
 import { useEffect } from "react";
 import { getBrowserClient, isCloudEnabled } from "@/lib/supabase";
 import { useSyncStore } from "@/lib/sync-status";
-import { deletedSince, initialSync, supabaseBudgetIo, supabaseCompanyIo, type BudgetDoc } from "@/lib/cloud";
+import {
+  deletedSince,
+  initialSync,
+  supabaseBudgetIo,
+  supabaseCompanyIo,
+  unseenBudgets,
+  type BudgetDoc,
+} from "@/lib/cloud";
 import { useBudgetStore } from "@/lib/store";
 import { emptyCompany, useCompanyStore } from "@/lib/company";
 
@@ -45,11 +52,23 @@ export function CloudSync() {
         const b = useBudgetStore.getState();
         const c = useCompanyStore.getState();
         const current: BudgetDoc = { budgets: b.budgets, order: b.order, activeId: b.activeId };
-        lastSynced = await supabaseBudgetIo(client!).saveMerged(
+        const written = await supabaseBudgetIo(client!).saveMerged(
           userId,
           current,
           deletedSince(lastSynced, current),
         );
+        lastSynced = written;
+        // Pull cloud-only budgets into the store: without this, the next
+        // push would read them as local deletes and wipe them (issue #52).
+        // Converges: the follow-up push finds nothing new and stops.
+        const unseen = unseenBudgets(current, written);
+        if (unseen && !cancelled) {
+          useBudgetStore.setState({
+            budgets: unseen.budgets,
+            order: unseen.order,
+            activeId: unseen.activeId,
+          });
+        }
         await supabaseCompanyIo(client!).save(userId, c.profile);
         if (!cancelled) setStatus("synced");
       } catch {
