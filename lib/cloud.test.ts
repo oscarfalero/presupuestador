@@ -269,6 +269,17 @@ describe("unseenBudgets", () => {
     expect(Object.keys(applied?.budgets ?? {}).sort()).toEqual(["a", "c"]);
     expect(applied?.activeId).toBe("a");
   });
+
+  it("falls back to the written active budget when local has none", () => {
+    const applied = unseenBudgets(doc([]), doc(["a"]));
+    expect(applied?.order).toEqual(["a"]);
+    expect(applied?.activeId).toBe("a");
+  });
+
+  it("never re-adds ids removed while the save was in flight", () => {
+    const applied = unseenBudgets(doc(["a"]), doc(["a", "b"]), new Set(["b"]));
+    expect(applied).toBeNull();
+  });
 });
 
 describe("deletedSince", () => {
@@ -363,5 +374,29 @@ describe("saveMerged (issue #52)", () => {
     expect((cloud.row.budgets["a"] as Budget).name).toBe("A2");
     expect((cloud.row.budgets["c"] as Budget).name).toBe("C");
     expect(current.order).toContain("c");
+  });
+
+  it("in-flight local edits survive the apply-back, in-flight deletes stick", async () => {
+    // Cloud {a, b, c} ("c" from another device); tab snapshots {a, b} for
+    // the push; meanwhile the user adds "d" and deletes "b". The
+    // apply-back must keep "d", pull in "c" and not resurrect "b";
+    // the next push then propagates the delete.
+    const cloud = { row: doc([["a", "A"], ["b", "B"], ["c", "C"]], "a") };
+    const io = supabaseBudgetIo(fakeClient(cloud));
+    const lastSynced: BudgetDoc = doc([["a", "A"], ["b", "B"]], "a");
+    const prePush = doc([["a", "A"], ["b", "B"]], "a");
+    const written = await io.saveMerged("u1", prePush, deletedSince(lastSynced, prePush));
+    const fresh: BudgetDoc = doc([["a", "A"], ["d", "D"]], "d");
+    const removed = new Set(
+      [...prePush.order, ...Object.keys(prePush.budgets)].filter(
+        (id) => !fresh.budgets[id] && !fresh.order.includes(id),
+      ),
+    );
+    expect(removed).toEqual(new Set(["b"]));
+    const back = unseenBudgets(fresh, written, removed);
+    expect(back?.order).toEqual(["a", "d", "c"]);
+    expect(back?.activeId).toBe("d");
+    const written2 = await io.saveMerged("u1", back ?? fresh, deletedSince(written, back ?? fresh));
+    expect(Object.keys(written2.budgets).sort()).toEqual(["a", "c", "d"]);
   });
 });

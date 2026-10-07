@@ -55,14 +55,27 @@ export function mergeBudgetDocs(cloud: BudgetDoc | null, local: BudgetDoc): Budg
  * lacks. Push callers should apply the result back to the local store:
  * without it, the NEXT push would mistake those unseen budgets for
  * local deletes and wipe them (the exact #52 data loss, one push later).
- * Returns null when there is nothing new to apply. Pure, tested.
+ * `exclude` holds ids removed locally while the save was in flight —
+ * re-adding those would resurrect genuine deletes. Returns null when
+ * there is nothing new to apply. Pure, tested.
  */
-export function unseenBudgets(current: BudgetDoc, written: BudgetDoc): BudgetDoc | null {
-  const missing = written.order.filter((id) => !current.budgets[id]);
+export function unseenBudgets(
+  current: BudgetDoc,
+  written: BudgetDoc,
+  exclude: ReadonlySet<string> = new Set(),
+): BudgetDoc | null {
+  const missing = written.order.filter((id) => !current.budgets[id] && !exclude.has(id));
   if (missing.length === 0) return null;
   const budgets = { ...current.budgets };
   for (const id of missing) budgets[id] = written.budgets[id];
-  return { budgets, order: [...current.order, ...missing], activeId: current.activeId };
+  const order = [...current.order, ...missing];
+  const activeId =
+    current.activeId && budgets[current.activeId]
+      ? current.activeId
+      : written.activeId && budgets[written.activeId]
+        ? written.activeId
+        : (order[0] ?? null);
+  return { budgets, order, activeId };
 }
 
 /**

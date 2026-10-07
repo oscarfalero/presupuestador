@@ -60,8 +60,18 @@ export function CloudSync() {
         lastSynced = written;
         // Pull cloud-only budgets into the store: without this, the next
         // push would read them as local deletes and wipe them (issue #52).
+        // Built from FRESH store state (not the pre-await snapshot):
+        // edits made while the save was in flight must survive, and ids
+        // removed meanwhile are genuine deletes that must not come back.
         // Converges: the follow-up push finds nothing new and stops.
-        const unseen = unseenBudgets(current, written);
+        const fresh = useBudgetStore.getState();
+        const freshDoc: BudgetDoc = { budgets: fresh.budgets, order: fresh.order, activeId: fresh.activeId };
+        const removedDuringFlight = new Set(
+          [...current.order, ...Object.keys(current.budgets)].filter(
+            (id) => !freshDoc.budgets[id] && !freshDoc.order.includes(id),
+          ),
+        );
+        const unseen = unseenBudgets(freshDoc, written, removedDuringFlight);
         if (unseen && !cancelled) {
           useBudgetStore.setState({
             budgets: unseen.budgets,
