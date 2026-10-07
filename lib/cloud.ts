@@ -16,6 +16,50 @@ export interface BudgetDoc {
 
 export type SyncDecision = "pull" | "push" | "empty";
 
+/**
+ * Union-merge for the document-model store (pure, tested).
+ *
+ * Saves must never clobber budgets they have never seen: a session with
+ * older state pushing over newer cloud data used to silently delete
+ * other devices' budgets (issue #52). Merging instead:
+ * - every budget present on either side survives (per-id, local wins),
+ * - cloud order is preserved with local-only budgets appended,
+ * - the active budget falls back to the first entry when it points nowhere.
+ *
+ * Explicit deletions are NOT inferred here — see `deletedSince` +
+ * `saveMerged`: deletes propagate only for ids the pusher previously
+ * synced and now lacks.
+ */
+export function mergeBudgetDocs(cloud: BudgetDoc | null, local: BudgetDoc): BudgetDoc {
+  if (!cloud) return local;
+  const budgets = { ...cloud.budgets, ...local.budgets };
+  const seen = new Set<string>();
+  const order = [...cloud.order, ...local.order].filter((id) => {
+    if (seen.has(id) || !budgets[id]) return false;
+    seen.add(id);
+    return true;
+  });
+  const activeId =
+    local.activeId && budgets[local.activeId]
+      ? local.activeId
+      : cloud.activeId && budgets[cloud.activeId]
+        ? cloud.activeId
+        : (order[0] ?? null);
+  return { budgets, order, activeId };
+}
+
+/**
+ * Ids the pusher previously synced but no longer holds: genuine local
+ * deletes (as opposed to budgets it simply never saw). Pure, tested.
+ */
+export function deletedSince(lastSynced: BudgetDoc | null, current: BudgetDoc): string[] {
+  if (!lastSynced) return [];
+  const currentIds = new Set([...current.order, ...Object.keys(current.budgets)]);
+  return [...new Set([...lastSynced.order, ...Object.keys(lastSynced.budgets)])].filter(
+    (id) => !currentIds.has(id),
+  );
+}
+
 export interface StorageLike {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
@@ -80,8 +124,8 @@ export interface StoreIo<T> {
   save: (userId: string, value: T) => Promise<void>;
 }
 
-export function supabaseBudgetIo(client: SupabaseClient): StoreIo<BudgetDoc> {
-  return {
+export function supabaseBudgetIo(client: SupabaseClient): BudgetStoreIo {
+  const io: BudgetStoreIo = {
     load: async (userId) => {
       const { data, error } = await client
         .from("budget_store")
@@ -100,7 +144,33 @@ export function supabaseBudgetIo(client: SupabaseClient): StoreIo<BudgetDoc> {
         .upsert({ user_id: userId, data: doc }, { onConflict: "user_id" });
       if (error) throw error;
     },
+    /**
+     * Merge-safe save (issue #52): read-modify-write that unions the
+     * local doc with whatever the cloud holds now, then applies the
+     * pusher's genuine deletes. Returns the doc actually written so
+     * callers can track it as the new sync baseline. Concurrent edits
+     * to the SAME budget still resolve last-writer-wins per budget.
+     */
+    saveMerged: async (userId, doc, deletedIds) => {
+      const loaded = await io.load(userId);
+      const merged = mergeBudgetDocs(loaded, doc);
+      for (const id of deletedIds) {
+        delete merged.budgets[id];
+      }
+      merged.order = merged.order.filter((id) => merged.budgets[id]);
+      if (merged.activeId && !merged.budgets[merged.activeId]) {
+        merged.activeId = merged.order[0] ?? null;
+      }
+      await io.save(userId, merged);
+      return merged;
+    },
   };
+  return io;
+}
+
+/** Budget store IO with merge-safe saves. `save` stays for the initial-push path (cloud known-absent). */
+export interface BudgetStoreIo extends StoreIo<BudgetDoc> {
+  saveMerged: (userId: string, doc: BudgetDoc, deletedIds: string[]) => Promise<BudgetDoc>;
 }
 
 export function supabaseCompanyIo(client: SupabaseClient): StoreIo<CompanyProfile> {

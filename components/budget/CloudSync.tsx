@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { getBrowserClient, isCloudEnabled } from "@/lib/supabase";
 import { useSyncStore } from "@/lib/sync-status";
-import { initialSync, supabaseBudgetIo, supabaseCompanyIo } from "@/lib/cloud";
+import { deletedSince, initialSync, supabaseBudgetIo, supabaseCompanyIo, type BudgetDoc } from "@/lib/cloud";
 import { useBudgetStore } from "@/lib/store";
 import { emptyCompany, useCompanyStore } from "@/lib/company";
 
@@ -30,6 +30,11 @@ export function CloudSync() {
     let booting = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const unsubs: Array<() => void> = [];
+    // What we believe the cloud holds (issue #52). Updated on every
+    // pull/push; pushes merge against it so a stale tab can never
+    // clobber budgets it never saw. Deletes propagate only for ids
+    // present here but gone locally.
+    let lastSynced: BudgetDoc | null = null;
 
     async function pushNow() {
       const { data } = await client!.auth.getSession();
@@ -39,11 +44,12 @@ export function CloudSync() {
       try {
         const b = useBudgetStore.getState();
         const c = useCompanyStore.getState();
-        await supabaseBudgetIo(client!).save(userId, {
-          budgets: b.budgets,
-          order: b.order,
-          activeId: b.activeId,
-        });
+        const current: BudgetDoc = { budgets: b.budgets, order: b.order, activeId: b.activeId };
+        lastSynced = await supabaseBudgetIo(client!).saveMerged(
+          userId,
+          current,
+          deletedSince(lastSynced, current),
+        );
         await supabaseCompanyIo(client!).save(userId, c.profile);
         if (!cancelled) setStatus("synced");
       } catch {
@@ -97,6 +103,8 @@ export function CloudSync() {
           return;
         }
         if (cancelled) return;
+        const synced = useBudgetStore.getState();
+        lastSynced = { budgets: synced.budgets, order: synced.order, activeId: synced.activeId };
         setStatus("synced");
         // Subscribe only after the initial reconciliation, so the pull
         // itself never echoes back as a push.
@@ -113,6 +121,7 @@ export function CloudSync() {
       if (event === "SIGNED_IN") void boot();
       if (event === "SIGNED_OUT") {
         teardown();
+        lastSynced = null;
         setStatus("local");
       }
     });

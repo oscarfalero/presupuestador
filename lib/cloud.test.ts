@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   CLOUD_USER_MARKER_KEY,
   decideInitialSync,
+  deletedSince,
   hasLocalSnapshot,
   initialSync,
+  mergeBudgetDocs,
   readMarker,
+  supabaseBudgetIo,
   writeMarker,
   type BudgetDoc,
   type StorageLike,
   type StoreIo,
 } from "./cloud";
+import { createBudget, type Budget } from "./budget-types";
 import { emptyCompany } from "./company";
 import { resolveNextParam } from "./redirect";
 
@@ -194,5 +199,115 @@ describe("initialSync", () => {
     expect(await initialSync(second.args)).toBe("empty");
     expect(second.budgets.saved.value).toBeNull();
     expect(second.company.saved.value).toBeNull();
+  });
+});
+
+describe("mergeBudgetDocs", () => {
+  const doc = (ids: string[], active: string | null, tag = ""): BudgetDoc => ({
+    budgets: Object.fromEntries(
+      ids.map((id) => [id, { ...createBudget({ name: `${tag}${id}`, number: id }), id }]),
+    ),
+    order: ids,
+    activeId: active,
+  });
+  const names = (d: BudgetDoc) => d.order.map((id) => (d.budgets[id] as Budget).name);
+
+  it("returns local untouched when the cloud is empty", () => {
+    const local = doc(["a"], "a");
+    expect(mergeBudgetDocs(null, local)).toBe(local);
+  });
+
+  it("unions both sides with local winning per budget", () => {
+    const cloud = doc(["a", "b"], "a", "cloud-");
+    const local = doc(["a", "c"], "c", "local-");
+    const merged = mergeBudgetDocs(cloud, local);
+    expect(names(merged)).toEqual(["local-a", "cloud-b", "local-c"]);
+    expect((merged.budgets["a"] as Budget).name).toBe("local-a");
+    expect(merged.order).toEqual(["a", "b", "c"]);
+    expect(merged.activeId).toBe("c");
+  });
+
+  it("drops dangling order entries and repairs the active budget", () => {
+    const cloud = doc(["a"], "ghost");
+    const merged = mergeBudgetDocs(cloud, doc([], null));
+    expect(merged.order).toEqual(["a"]);
+    expect(merged.activeId).toBe("a");
+  });
+
+  it("falls back to cloud activeId only when local has none", () => {
+    const merged = mergeBudgetDocs(doc(["a"], "a"), doc(["a", "b"], null));
+    expect(merged.activeId).toBe("a");
+  });
+});
+
+describe("deletedSince", () => {
+  const doc = (ids: string[]): BudgetDoc => ({
+    budgets: Object.fromEntries(ids.map((id) => [id, createBudget({ name: id, number: id })])),
+    order: ids,
+    activeId: ids[0] ?? null,
+  });
+
+  it("returns nothing without a baseline", () => {
+    expect(deletedSince(null, doc(["a"]))).toEqual([]);
+  });
+
+  it("reports only ids the baseline had and current lacks", () => {
+    expect(deletedSince(doc(["a", "b", "c"]), doc(["a", "c", "d"]))).toEqual(["b"]);
+  });
+});
+
+describe("saveMerged (issue #52)", () => {
+  function fakeClient(store: { row: BudgetDoc | null }): SupabaseClient {
+    return {
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: store.row ? { data: store.row } : null, error: null }),
+          }),
+        }),
+        upsert: async (rec: { data: BudgetDoc }) => {
+          store.row = rec.data;
+          return { error: null };
+        },
+      }),
+    } as unknown as SupabaseClient;
+  }
+
+  const doc = (entries: Array<[string, string]>, active: string | null): BudgetDoc => ({
+    budgets: Object.fromEntries(
+      entries.map(([id, name]) => [id, { ...createBudget({ name, number: id }), id }]),
+    ),
+    order: entries.map(([id]) => id),
+    activeId: active,
+  });
+
+  it("a stale push never drops cloud budgets it never saw", async () => {
+    // Device 2 added "c" after device 1 last synced {a, b}.
+    const cloud = { row: doc([["a", "A"], ["b", "B"], ["c", "C"]], "c") };
+    const io = supabaseBudgetIo(fakeClient(cloud));
+    const staleLocal = doc([["a", "A-edited"], ["b", "B"]], "a");
+    const written = await io.saveMerged("u1", staleLocal, []);
+    expect(Object.keys(written.budgets).sort()).toEqual(["a", "b", "c"]);
+    expect((written.budgets["a"] as Budget).name).toBe("A-edited");
+    expect((written.budgets["c"] as Budget).name).toBe("C");
+    expect(written.order).toEqual(["a", "b", "c"]);
+  });
+
+  it("propagates genuine deletes while keeping concurrent additions", async () => {
+    const cloud = { row: doc([["a", "A"], ["gone", "Gone"], ["new", "New"]], "a") };
+    const io = supabaseBudgetIo(fakeClient(cloud));
+    // This device synced {a, gone}, then deleted "gone"; "new" arrived meanwhile.
+    const written = await io.saveMerged("u1", doc([["a", "A"]], "a"), ["gone"]);
+    expect(Object.keys(written.budgets).sort()).toEqual(["a", "new"]);
+    expect(written.order).toEqual(["a", "new"]);
+  });
+
+  it("repairs the active budget when its target was deleted", async () => {
+    const cloud = { row: doc([["a", "A"]], "a") };
+    const io = supabaseBudgetIo(fakeClient(cloud));
+    const written = await io.saveMerged("u1", doc([["a", "A"]], "a"), ["a"]);
+    expect(written.budgets).toEqual({});
+    expect(written.order).toEqual([]);
+    expect(written.activeId).toBeNull();
   });
 });
