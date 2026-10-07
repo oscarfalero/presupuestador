@@ -112,10 +112,20 @@ export function CloudSync() {
           const cloud = await supabaseBudgetIo(client!).load(userId);
           if (cloud && !cancelled) {
             const fresh = useBudgetStore.getState();
-            const unseen = unseenBudgets(
-              { budgets: fresh.budgets, order: fresh.order, activeId: fresh.activeId },
-              cloud,
+            const freshDoc: BudgetDoc = {
+              budgets: fresh.budgets,
+              order: fresh.order,
+              activeId: fresh.activeId,
+            };
+            // Same in-flight guard as the save path: ids removed while
+            // the load was travelling are genuine deletes — re-adding
+            // them would silently undo the user's delete.
+            const removedDuringFlight = new Set(
+              [...current.order, ...Object.keys(current.budgets)].filter(
+                (id) => !freshDoc.budgets[id] && !freshDoc.order.includes(id),
+              ),
             );
+            const unseen = unseenBudgets(freshDoc, cloud, removedDuringFlight);
             if (unseen) {
               useBudgetStore.setState({
                 budgets: unseen.budgets,
