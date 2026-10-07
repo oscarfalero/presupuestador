@@ -334,6 +334,13 @@ describe("docsEqual + profilesEqual + planPush (issue #57)", () => {
     expect(profilesEqual(profile57, { ...profile57, name: "Other" })).toBe(false);
   });
 
+  it("treats null vs missing profile fields as different (fail-safe: saves)", () => {
+    const nulled = { ...profile57, logoDataUrl: null };
+    const missing = { ...profile57 };
+    delete (missing as Partial<typeof missing>).logoDataUrl;
+    expect(profilesEqual(nulled, missing)).toBe(false);
+  });
+
   it("plans saves for unknown baselines, silence for identical state", () => {
     expect(planPush(null, doc57(["a"]), null, profile57)).toEqual({ saveBudgets: true, saveProfile: true });
     // NB: two independently built docs carry fresh random item/chapter

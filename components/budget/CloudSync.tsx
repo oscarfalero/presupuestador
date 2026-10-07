@@ -57,7 +57,10 @@ export function CloudSync() {
       // must not flash "saving" either. Each store saves independently.
       const plan = planPush(lastSynced, current, lastSyncedProfile, c.profile);
       if (!plan.saveBudgets && !plan.saveProfile) {
-        if (!cancelled && useSyncStore.getState().status !== "synced") setStatus("synced");
+        // Only an error state is repaired here (state == last successful
+        // write, so "synced" is honest). Never touch saving/loading: an
+        // overlapping push may still be in flight.
+        if (!cancelled && useSyncStore.getState().status === "error") setStatus("synced");
         return;
       }
       setStatus("saving");
@@ -98,6 +101,33 @@ export function CloudSync() {
         if (plan.saveProfile) {
           await supabaseCompanyIo(client!).save(userId, c.profile);
           lastSyncedProfile = c.profile;
+        }
+        if (!plan.saveBudgets) {
+          // Read-only refresh: this tab only changed the company profile,
+          // but another device may have added budgets meanwhile. Pull
+          // unseen ones into view WITHOUT writing (no updated_at churn,
+          // no "saving" flash — the status stays honest). Safe without
+          // delete handling: unchanged budgets mean nothing new was
+          // deleted locally, so everything unseen is genuinely new.
+          const cloud = await supabaseBudgetIo(client!).load(userId);
+          if (cloud && !cancelled) {
+            const fresh = useBudgetStore.getState();
+            const unseen = unseenBudgets(
+              { budgets: fresh.budgets, order: fresh.order, activeId: fresh.activeId },
+              cloud,
+            );
+            if (unseen) {
+              useBudgetStore.setState({
+                budgets: unseen.budgets,
+                order: unseen.order,
+                activeId: unseen.activeId,
+              });
+              // Baseline becomes the freshly read cloud doc: if another
+              // device edited a shared budget meanwhile, the follow-up
+              // push sees the difference and converges (local wins).
+              lastSynced = cloud;
+            }
+          }
         }
         if (!cancelled) setStatus("synced");
       } catch {

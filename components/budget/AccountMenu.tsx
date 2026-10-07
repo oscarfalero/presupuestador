@@ -74,16 +74,19 @@ export function AccountMenu() {
 
   // Read fresh on every open (cached session, no round-trip): the menu
   // outlives logins, so a mount-time snapshot would go stale (issue #53).
+  const refreshEmail = async () => {
+    try {
+      const client = getBrowserClient();
+      const { data } = (await client?.auth.getSession()) ?? {};
+      setAccountEmail(sessionEmail(data?.session));
+    } catch {
+      setAccountEmail(null);
+    }
+  };
+
   const toggleOpen = () => {
-    setOpen((o) => {
-      if (!o)
-        void (async () => {
-          const client = getBrowserClient();
-          const { data } = (await client?.auth.getSession()) ?? {};
-          setAccountEmail(sessionEmail(data?.session));
-        })();
-      return !o;
-    });
+    if (!open) void refreshEmail();
+    setOpen((o) => !o);
   };
 
   useEffect(() => {
