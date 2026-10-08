@@ -336,6 +336,26 @@ describe("updatedAt stamps (issue #56)", () => {
     expect(stamp()).toBeUndefined();
   });
 
+  it("does not stamp same-value writes", () => {
+    // Writing back the current value is not an edit: no stamp, and —
+    // via docsEqual — no phantom cloud push either.
+    useBudgetStore.getState().setMeta({ clientName: active().clientName });
+    expect(stamp()).toBeUndefined();
+    useBudgetStore.getState().renameChapter("c1", "One");
+    expect(stamp()).toBeUndefined();
+  });
+
+  it("stamps chapter/item deletes and their undo", () => {
+    const s = useBudgetStore.getState();
+    s.removeItem("a1");
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(s.undoDelete()).toBe(true);
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    useBudgetStore.getState().removeChapter("c2");
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(active().chapters.some((c) => c.id === "c2")).toBe(false);
+  });
+
   it("stamps new and duplicated budgets at creation", () => {
     const s = useBudgetStore.getState();
     const id = s.newBudget("Nuevo");

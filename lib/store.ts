@@ -56,6 +56,11 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** Renumber + stamp for mutations built outside updateActive (issue #56). */
+function stamped(budget: Budget): Budget {
+  return renumber({ ...budget, updatedAt: nowIso() });
+}
+
 /** Applies `fn` to the active budget (renumbered). No-op without one. */
 function updateActive(
   set: StoreApi<BudgetState>["setState"],
@@ -70,6 +75,11 @@ function updateActive(
   // Reference-equal return means the action was a no-op (e.g. moving
   // past an edge): stamp nothing, notify nothing.
   if (next === current) return true;
+  // Same-value writes change nothing: skip the stamp (and the notify +
+  // cloud push it would trigger). Key order is stable through spreads,
+  // so plain serialization is exact here; anything unexpected still
+  // serializes unequal and stamps, the fail-safe direction.
+  if (JSON.stringify(next) === JSON.stringify(current)) return true;
   set({ budgets: { ...s.budgets, [id]: renumber({ ...next, updatedAt: nowIso() }) } });
   return true;
 }
@@ -207,7 +217,7 @@ export const useBudgetStore = create<BudgetState>()(
         set({
           budgets: {
             ...s.budgets,
-            [budgetId as string]: renumber({
+            [budgetId as string]: stamped({
               ...budget,
               chapters: budget.chapters.filter((c) => c.id !== id),
               items: budget.items.filter((i) => i.chapterId !== id),
@@ -230,7 +240,7 @@ export const useBudgetStore = create<BudgetState>()(
         if (!budget) return false;
         const apply = (next: Budget) =>
           set({
-            budgets: { ...get().budgets, [snap.budgetId]: renumber(next) },
+            budgets: { ...get().budgets, [snap.budgetId]: stamped(next) },
             activeId: snap.budgetId,
             lastDeleted: null,
           });
@@ -319,7 +329,7 @@ export const useBudgetStore = create<BudgetState>()(
         set({
           budgets: {
             ...s.budgets,
-            [budgetId as string]: renumber({
+            [budgetId as string]: stamped({
               ...budget,
               items: budget.items.filter((i) => i.id !== id),
             }),
