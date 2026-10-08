@@ -34,3 +34,24 @@ export function formatQty(n: number, locale: Locale): string {
   const grouped = groupInt(int, thousands);
   return frac !== undefined ? `${grouped}${decimal}${frac}` : grouped;
 }
+
+/**
+ * Last-modified stamp for display (issue #56): day + short month + year
+ * + time in the active locale (es: "7 oct 2026, 14:32"). Unparseable
+ * input falls back to the raw string, never throws (legacy data).
+ */
+export function formatDateTime(iso: string, locale: Locale): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return iso;
+  }
+}

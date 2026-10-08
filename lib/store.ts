@@ -51,6 +51,11 @@ export function selectActiveBudget(s: BudgetState): Budget | undefined {
   return s.activeId ? s.budgets[s.activeId] : undefined;
 }
 
+/** Current instant for `updatedAt` stamps (issue #56). */
+export function nowIso(): string {
+  return new Date().toISOString();
+}
+
 /** Applies `fn` to the active budget (renumbered). No-op without one. */
 function updateActive(
   set: StoreApi<BudgetState>["setState"],
@@ -61,7 +66,11 @@ function updateActive(
   const id = s.activeId;
   const current = id ? s.budgets[id] : undefined;
   if (!id || !current) return false;
-  set({ budgets: { ...s.budgets, [id]: renumber(fn(current)) } });
+  const next = fn(current);
+  // Reference-equal return means the action was a no-op (e.g. moving
+  // past an edge): stamp nothing, notify nothing.
+  if (next === current) return true;
+  set({ budgets: { ...s.budgets, [id]: renumber({ ...next, updatedAt: nowIso() }) } });
   return true;
 }
 
@@ -381,7 +390,13 @@ export const useBudgetStore = create<BudgetState>()(
         // Commercial texts default from the company profile; the
         // budget keeps its own copy so per-budget edits stay local.
         const { terms, payment } = useCompanyStore.getState().profile;
-        const budget = createBudget({ name, number: suggestBudgetNumber(s.budgets), terms, payment });
+        const budget = createBudget({
+          name,
+          number: suggestBudgetNumber(s.budgets),
+          terms,
+          payment,
+          updatedAt: nowIso(),
+        });
         set({
           budgets: { ...s.budgets, [budget.id]: budget },
           order: [budget.id, ...s.order],
@@ -400,6 +415,7 @@ export const useBudgetStore = create<BudgetState>()(
           id: uid(),
           name: `${source.name}${copySuffix}`,
           number: suggestBudgetNumber(s.budgets),
+          updatedAt: nowIso(),
           chapters: source.chapters.map((c) => ({ ...c, id: chapterIds.get(c.id) as string })),
           items: source.items.map((i) => ({
             ...i,

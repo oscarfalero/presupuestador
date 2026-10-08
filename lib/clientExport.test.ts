@@ -93,4 +93,11 @@ describe("toClientBudget", () => {
     expect(serialized).not.toContain("ratePerHour");
     expect(serialized).not.toContain("otherCost");
   });
+
+  it("never leaks the internal updatedAt stamp (issue #56)", () => {
+    const stamped = { ...budgetWithBreakdown(), updatedAt: "2026-05-05T05:05:05.000Z" };
+    const serialized = JSON.stringify(toClientBudget(stamped));
+    expect(serialized).not.toContain("updatedAt");
+    expect(serialized).not.toContain("2026-05-05");
+  });
 });

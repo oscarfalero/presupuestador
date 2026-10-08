@@ -2,13 +2,15 @@
 
 import { selectActiveBudget, useBudgetStore } from "@/lib/store";
 import { isUnpriced, missingDocTexts, type DocTextKey } from "@/lib/calc";
-import { useStrings } from "@/lib/locale";
+import { formatDateTime } from "@/lib/format";
+import { useLocale, useStrings } from "@/lib/locale";
 
 /** Number/date/client/address fields plus the warning pills. */
 export function MetaFields() {
   const { setMeta } = useBudgetStore();
   const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
+  const locale = useLocale();
   if (!budget) return null;
   const unpricedCount = budget.items.filter(isUnpriced).length;
   const missingTexts = missingDocTexts(budget);
@@ -102,6 +104,9 @@ export function MetaFields() {
             ⚠ {missingTexts.map((key) => sectionLabel[key]).join(", ")}
           </button>
         ) : null}
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          {t["meta.lastModified"]}: {budget.updatedAt ? formatDateTime(budget.updatedAt, locale) : "—"}
+        </span>
       </div>
     </>
   );
