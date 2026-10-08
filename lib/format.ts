@@ -26,6 +26,20 @@ export function formatMoney(n: number, locale: Locale): string {
 }
 
 /**
+ * Budget date for display (issue #38): the model stays ISO
+ * (`YYYY-MM-DD`) so sorting/storage is unaffected; only presentation
+ * is reordered — es: `DD/MM/YYYY`, en: `MM/DD/YYYY`. Manual surgery
+ * (same rationale as formatMoney: identical in every JS engine).
+ * Empty/invalid input falls back to the raw string, never throws.
+ */
+export function formatDate(iso: string, locale: Locale): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso.trim());
+  if (!m) return iso;
+  const [, y, mo, d] = m;
+  return locale === "es" ? `${d}/${mo}/${y}` : `${mo}/${d}/${y}`;
+}
+
+/**
  * Quantities (qty, hours): grouped thousands, entered decimals untouched.
  */
 export function formatQty(n: number, locale: Locale): string {
