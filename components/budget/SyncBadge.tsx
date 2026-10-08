@@ -21,7 +21,9 @@ export function SyncBadge() {
       ? t["sync.synced"]
       : status === "error"
         ? t["sync.error"]
-        : t["sync.saving"];
+        : status === "loading"
+          ? t["sync.loading"]
+          : t["sync.saving"];
   return (
     <span
       title={label}

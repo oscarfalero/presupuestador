@@ -174,6 +174,7 @@ const es = {
   "auth.passwordSaved": "Contraseña actualizada.",
   "auth.passwordError": "No se pudo actualizar la contraseña.",
   "sync.saving": "Guardando…",
+  "sync.loading": "Cargando…",
   "sync.synced": "Sincronizado",
   "sync.error": "Error al sincronizar",
 } as const;
@@ -351,6 +352,7 @@ const en: Record<StringKey, string> = {
   "auth.passwordSaved": "Password updated.",
   "auth.passwordError": "Could not update the password.",
   "sync.saving": "Saving…",
+  "sync.loading": "Loading…",
   "sync.synced": "Synced",
   "sync.error": "Sync error",
 };
