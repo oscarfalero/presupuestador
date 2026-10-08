@@ -15,6 +15,7 @@ import {
   unseenBudgets,
   writeMarker,
   type BudgetDoc,
+  type BudgetStoreIo,
   type StorageLike,
   type StoreIo,
 } from "./cloud";
@@ -484,5 +485,49 @@ describe("saveMerged (issue #52)", () => {
     expect(back?.activeId).toBe("d");
     const written2 = await io.saveMerged("u1", back ?? fresh, deletedSince(written, back ?? fresh));
     expect(Object.keys(written2.budgets).sort()).toEqual(["a", "c", "d"]);
+  });
+});
+
+describe("updatedAt round-trip (issue #56)", () => {
+  const STAMP = "2026-05-05T05:05:05.000Z";
+
+  function fakeIo(store: { row: BudgetDoc | null }): BudgetStoreIo {
+    return supabaseBudgetIo({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: store.row ? { data: store.row } : null, error: null }),
+          }),
+        }),
+        upsert: async (rec: { data: BudgetDoc }) => {
+          store.row = rec.data;
+          return { error: null };
+        },
+      }),
+    } as unknown as SupabaseClient);
+  }
+
+  it("merge and saveMerged carry the stamp; legacy docs stay unstamped", async () => {
+    const stamped: Budget = { ...createBudget({ name: "S", number: "s" }), id: "s", updatedAt: STAMP };
+    const legacy: Budget = { ...createBudget({ name: "L", number: "l" }), id: "l" };
+    expect("updatedAt" in legacy).toBe(false);
+    const local: BudgetDoc = { budgets: { s: stamped, l: legacy }, order: ["s", "l"], activeId: "s" };
+    const cloud: { row: BudgetDoc | null } = {
+      row: {
+        budgets: { c: { ...createBudget({ name: "C", number: "c" }), id: "c" } },
+        order: ["c"],
+        activeId: "c",
+      },
+    };
+    const io = fakeIo(cloud);
+    const written = await io.saveMerged("u1", local, []);
+    expect(written.budgets["s"].updatedAt).toBe(STAMP);
+    expect("updatedAt" in written.budgets["l"]).toBe(false);
+    expect("updatedAt" in written.budgets["c"]).toBe(false);
+    // What landed in the cloud row round-trips back untouched.
+    expect(cloud.row?.budgets["s"].updatedAt).toBe(STAMP);
+    const reread = await io.load("u1");
+    expect(reread?.budgets["s"].updatedAt).toBe(STAMP);
+    expect("updatedAt" in (reread?.budgets["l"] ?? {})).toBe(false);
   });
 });

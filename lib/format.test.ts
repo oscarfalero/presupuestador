@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney, formatQty } from "./format";
+import { formatDateTime, formatMoney, formatQty } from "./format";
+
+describe("formatDateTime (issue #56)", () => {
+  // NB: Node test envs often ship minimal ICU data, so month names may
+  // fall back — assert structure (year/day/time present), not exact words.
+  it("renders day, year and time in both locales", () => {
+    const es = formatDateTime("2026-10-07T14:32:00.000Z", "es");
+    expect(es).toContain("2026");
+    expect(es).toMatch(/14:32|15:32|16:32/);
+    const en = formatDateTime("2026-10-07T14:32:00.000Z", "en");
+    expect(en).toContain("2026");
+    expect(en).toMatch(/14:32|15:32|16:32|2:32|3:32|4:32/);
+  });
+
+  it("falls back to the raw string for garbage input", () => {
+    expect(formatDateTime("not-a-date", "es")).toBe("not-a-date");
+    expect(formatDateTime("", "en")).toBe("");
+  });
+});
 
 describe("formatMoney", () => {
   it("groups thousands in Spanish style", () => {

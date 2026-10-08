@@ -83,6 +83,11 @@ export interface Budget {
   intro: string;
   terms: string;
   payment: string;
+  /**
+   * ISO timestamp of the last local edit. Absent for legacy docs —
+   * unknown, never backfilled with an invented value (issue #56).
+   */
+  updatedAt?: string;
   chapters: Chapter[];
   items: BudgetItem[];
 }

@@ -312,3 +312,73 @@ describe("budgets", () => {
     expect(next.activeId).toBe("b-test");
   });
 });
+
+describe("updatedAt stamps (issue #56)", () => {
+  const stamp = () => active().updatedAt;
+
+  it("starts unknown for budgets without the field", () => {
+    expect(stamp()).toBeUndefined();
+  });
+
+  it("stamps meta, chapter and item mutations", () => {
+    const s = useBudgetStore.getState();
+    s.setMeta({ clientName: "Juanma" });
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    s.addChapter("Extra");
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    s.updateItem("a1", { price: 99 });
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("does not stamp no-op moves", () => {
+    // c1 is already first: moving it up changes nothing.
+    useBudgetStore.getState().moveChapter("c1", -1);
+    expect(stamp()).toBeUndefined();
+  });
+
+  it("does not stamp same-value writes", () => {
+    // Writing back the current value is not an edit: no stamp, and —
+    // via docsEqual — no phantom cloud push either.
+    useBudgetStore.getState().setMeta({ clientName: active().clientName });
+    expect(stamp()).toBeUndefined();
+    useBudgetStore.getState().renameChapter("c1", "One");
+    expect(stamp()).toBeUndefined();
+  });
+
+  it("stamps chapter/item deletes and their undo", () => {
+    const s = useBudgetStore.getState();
+    s.removeItem("a1");
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(s.undoDelete()).toBe(true);
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    useBudgetStore.getState().removeChapter("c2");
+    expect(stamp()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(active().chapters.some((c) => c.id === "c2")).toBe(false);
+  });
+
+  it("stamps new and duplicated budgets at creation", () => {
+    const s = useBudgetStore.getState();
+    const id = s.newBudget("Nuevo");
+    expect(useBudgetStore.getState().budgets[id].updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    const copyId = s.duplicateBudget("b-test", " (copia)");
+    expect(copyId).not.toBeNull();
+    if (copyId) expect(useBudgetStore.getState().budgets[copyId].updatedAt).toBeDefined();
+  });
+
+  it("backfill never invents a timestamp for legacy docs", () => {
+    const next = mergePersistedState(
+      { budgets: { "b-test": fixture() }, order: ["b-test"], activeId: "b-test" },
+      useBudgetStore.getState(),
+    );
+    expect(next.budgets["b-test"].updatedAt).toBeUndefined();
+  });
+
+  it("backfill preserves a carried timestamp", () => {
+    const stamped = { ...fixture(), updatedAt: "2026-01-01T00:00:00.000Z" };
+    const next = mergePersistedState(
+      { budgets: { "b-test": stamped }, order: ["b-test"], activeId: "b-test" },
+      useBudgetStore.getState(),
+    );
+    expect(next.budgets["b-test"].updatedAt).toBe("2026-01-01T00:00:00.000Z");
+  });
+});
