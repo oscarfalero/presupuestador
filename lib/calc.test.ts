@@ -7,6 +7,7 @@ import {
   chapterSubtotal,
   isUnpriced,
   itemAmount,
+  missingDocTexts,
   renumber,
   round2,
 } from "./calc";
@@ -118,6 +119,18 @@ describe("isUnpriced", () => {
     expect(isUnpriced({ quantity: 0, price: 100 })).toBe(true);
     expect(isUnpriced({ quantity: 0, price: 0 })).toBe(true);
     expect(isUnpriced({ quantity: 2, price: 50 })).toBe(false);
+  });
+});
+
+describe("missingDocTexts (issue #51)", () => {
+  it("reports every blank presentation text, whitespace included", () => {
+    expect(missingDocTexts({ intro: "", terms: "  ", payment: "30 días" })).toEqual(["intro", "terms"]);
+    expect(missingDocTexts({ intro: "Hola", terms: "Cond.", payment: "Contado" })).toEqual([]);
+    expect(missingDocTexts({} as { intro: string; terms: string; payment: string })).toEqual([
+      "intro",
+      "terms",
+      "payment",
+    ]);
   });
 });
 

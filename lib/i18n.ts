@@ -33,6 +33,7 @@ const es = {
   "unpriced.pill.one": "artículo sin precio",
   "unpriced.pill.other": "artículos sin precio",
   "unpriced.scrollHint": "Ir al primer artículo sin precio",
+  "doctexts.scrollHint": "Ir al primer texto pendiente",
   "empty.title": "Sin capítulos",
   "empty.body": "Los capítulos agrupan tus partidas (p. ej. Albañilería, Fontanería) y se numeran solos.",
   "empty.cta": "+ Crear primer capítulo",
@@ -173,6 +174,7 @@ const es = {
   "auth.passwordSaved": "Contraseña actualizada.",
   "auth.passwordError": "No se pudo actualizar la contraseña.",
   "sync.saving": "Guardando…",
+  "sync.loading": "Cargando…",
   "sync.synced": "Sincronizado",
   "sync.error": "Error al sincronizar",
 } as const;
@@ -209,6 +211,7 @@ const en: Record<StringKey, string> = {
   "unpriced.pill.one": "item without price",
   "unpriced.pill.other": "items without price",
   "unpriced.scrollHint": "Scroll to the first item without price",
+  "doctexts.scrollHint": "Go to the first pending text",
   "empty.title": "No chapters yet",
   "empty.body": "Chapters group your items (e.g. Masonry, Plumbing) and are numbered automatically.",
   "empty.cta": "+ Create first chapter",
@@ -349,6 +352,7 @@ const en: Record<StringKey, string> = {
   "auth.passwordSaved": "Password updated.",
   "auth.passwordError": "Could not update the password.",
   "sync.saving": "Saving…",
+  "sync.loading": "Loading…",
   "sync.synced": "Synced",
   "sync.error": "Sync error",
 };

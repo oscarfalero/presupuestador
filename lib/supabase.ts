@@ -29,3 +29,17 @@ export function getBrowserClient(): SupabaseClient | null {
   browser ??= createBrowserClient(cfg.url, cfg.anonKey);
   return browser;
 }
+
+export interface SessionLike {
+  user?: { email?: string | null } | null;
+}
+
+/**
+ * Signed-in account email for display in the profile menu (issue #53).
+ * Returns null when signed out. Pure and tested; the caller reads the
+ * cached session (no round-trip).
+ */
+export function sessionEmail(session: SessionLike | null | undefined): string | null {
+  const email = session?.user?.email?.trim();
+  return email ? email : null;
+}

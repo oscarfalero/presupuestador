@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { emptyCompany, useCompanyStore } from "@/lib/company";
 import { useBudgetStore } from "@/lib/store";
 import { clearLocalCache } from "@/lib/cloud";
-import { getBrowserClient, isCloudEnabled } from "@/lib/supabase";
+import { getBrowserClient, isCloudEnabled, sessionEmail } from "@/lib/supabase";
 import { useStrings } from "@/lib/locale";
 import { useAppliedTheme } from "@/components/ThemeToggle";
 
@@ -69,7 +69,25 @@ export function AccountMenu() {
   const [signingOut, setSigningOut] = useState(false);
   const { dark, toggle } = useAppliedTheme();
   const [open, setOpen] = useState(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  // Read fresh on every open (cached session, no round-trip): the menu
+  // outlives logins, so a mount-time snapshot would go stale (issue #53).
+  const refreshEmail = async () => {
+    try {
+      const client = getBrowserClient();
+      const { data } = (await client?.auth.getSession()) ?? {};
+      setAccountEmail(sessionEmail(data?.session));
+    } catch {
+      setAccountEmail(null);
+    }
+  };
+
+  const toggleOpen = () => {
+    if (!open) void refreshEmail();
+    setOpen((o) => !o);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -95,7 +113,7 @@ export function AccountMenu() {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={t["account.menu"]}
@@ -109,6 +127,17 @@ export function AccountMenu() {
           role="menu"
           className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
         >
+          {accountEmail ? (
+            <>
+              <div
+                className="truncate px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400"
+                title={accountEmail}
+              >
+                {accountEmail}
+              </div>
+              <div className="my-1 border-t border-zinc-200 dark:border-zinc-700" />
+            </>
+          ) : null}
           <Link role="menuitem" href="/account" onClick={() => setOpen(false)} className={itemCls}>
             <UserIcon />
             {t["account.title"]}

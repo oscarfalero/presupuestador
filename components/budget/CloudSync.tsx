@@ -6,13 +6,14 @@ import { useSyncStore } from "@/lib/sync-status";
 import {
   deletedSince,
   initialSync,
+  planPush,
   supabaseBudgetIo,
   supabaseCompanyIo,
   unseenBudgets,
   type BudgetDoc,
 } from "@/lib/cloud";
 import { useBudgetStore } from "@/lib/store";
-import { emptyCompany, useCompanyStore } from "@/lib/company";
+import { emptyCompany, useCompanyStore, type CompanyProfile } from "@/lib/company";
 
 const PUSH_DEBOUNCE_MS = 800;
 
@@ -42,44 +43,102 @@ export function CloudSync() {
     // clobber budgets it never saw. Deletes propagate only for ids
     // present here but gone locally.
     let lastSynced: BudgetDoc | null = null;
+    let lastSyncedProfile: CompanyProfile | null = null;
 
     async function pushNow() {
       const { data } = await client!.auth.getSession();
       const userId = data.session?.user?.id;
       if (!userId || cancelled) return;
+      const b = useBudgetStore.getState();
+      const c = useCompanyStore.getState();
+      const current: BudgetDoc = { budgets: b.budgets, order: b.order, activeId: b.activeId };
+      // Issue #57: a load (or a hydration echo, or the convergence
+      // follow-up) with no new changes must not upload anything — and
+      // must not flash "saving" either. Each store saves independently.
+      const plan = planPush(lastSynced, current, lastSyncedProfile, c.profile);
+      if (!plan.saveBudgets && !plan.saveProfile) {
+        // Only an error state is repaired here (state == last successful
+        // write, so "synced" is honest). Never touch saving/loading: an
+        // overlapping push may still be in flight.
+        if (!cancelled && useSyncStore.getState().status === "error") setStatus("synced");
+        return;
+      }
       setStatus("saving");
       try {
-        const b = useBudgetStore.getState();
-        const c = useCompanyStore.getState();
-        const current: BudgetDoc = { budgets: b.budgets, order: b.order, activeId: b.activeId };
-        const written = await supabaseBudgetIo(client!).saveMerged(
-          userId,
-          current,
-          deletedSince(lastSynced, current),
-        );
-        lastSynced = written;
-        // Pull cloud-only budgets into the store: without this, the next
-        // push would read them as local deletes and wipe them (issue #52).
-        // Built from FRESH store state (not the pre-await snapshot):
-        // edits made while the save was in flight must survive, and ids
-        // removed meanwhile are genuine deletes that must not come back.
-        // Converges: the follow-up push finds nothing new and stops.
-        const fresh = useBudgetStore.getState();
-        const freshDoc: BudgetDoc = { budgets: fresh.budgets, order: fresh.order, activeId: fresh.activeId };
-        const removedDuringFlight = new Set(
-          [...current.order, ...Object.keys(current.budgets)].filter(
-            (id) => !freshDoc.budgets[id] && !freshDoc.order.includes(id),
-          ),
-        );
-        const unseen = unseenBudgets(freshDoc, written, removedDuringFlight);
-        if (unseen && !cancelled) {
-          useBudgetStore.setState({
-            budgets: unseen.budgets,
-            order: unseen.order,
-            activeId: unseen.activeId,
-          });
+        if (plan.saveBudgets) {
+          const written = await supabaseBudgetIo(client!).saveMerged(
+            userId,
+            current,
+            deletedSince(lastSynced, current),
+          );
+          lastSynced = written;
+          // Pull cloud-only budgets into the store: without this, the next
+          // push would read them as local deletes and wipe them (issue #52).
+          // Built from FRESH store state (not the pre-await snapshot):
+          // edits made while the save was in flight must survive, and ids
+          // removed meanwhile are genuine deletes that must not come back.
+          // Converges silently now: the follow-up push plans no saves (#57).
+          const fresh = useBudgetStore.getState();
+          const freshDoc: BudgetDoc = {
+            budgets: fresh.budgets,
+            order: fresh.order,
+            activeId: fresh.activeId,
+          };
+          const removedDuringFlight = new Set(
+            [...current.order, ...Object.keys(current.budgets)].filter(
+              (id) => !freshDoc.budgets[id] && !freshDoc.order.includes(id),
+            ),
+          );
+          const unseen = unseenBudgets(freshDoc, written, removedDuringFlight);
+          if (unseen && !cancelled) {
+            useBudgetStore.setState({
+              budgets: unseen.budgets,
+              order: unseen.order,
+              activeId: unseen.activeId,
+            });
+          }
         }
-        await supabaseCompanyIo(client!).save(userId, c.profile);
+        if (plan.saveProfile) {
+          await supabaseCompanyIo(client!).save(userId, c.profile);
+          lastSyncedProfile = c.profile;
+        }
+        if (!plan.saveBudgets) {
+          // Read-only refresh: this tab only changed the company profile,
+          // but another device may have added budgets meanwhile. Pull
+          // unseen ones into view WITHOUT writing (no updated_at churn,
+          // no "saving" flash — the status stays honest). Safe without
+          // delete handling: unchanged budgets mean nothing new was
+          // deleted locally, so everything unseen is genuinely new.
+          const cloud = await supabaseBudgetIo(client!).load(userId);
+          if (cloud && !cancelled) {
+            const fresh = useBudgetStore.getState();
+            const freshDoc: BudgetDoc = {
+              budgets: fresh.budgets,
+              order: fresh.order,
+              activeId: fresh.activeId,
+            };
+            // Same in-flight guard as the save path: ids removed while
+            // the load was travelling are genuine deletes — re-adding
+            // them would silently undo the user's delete.
+            const removedDuringFlight = new Set(
+              [...current.order, ...Object.keys(current.budgets)].filter(
+                (id) => !freshDoc.budgets[id] && !freshDoc.order.includes(id),
+              ),
+            );
+            const unseen = unseenBudgets(freshDoc, cloud, removedDuringFlight);
+            if (unseen) {
+              useBudgetStore.setState({
+                budgets: unseen.budgets,
+                order: unseen.order,
+                activeId: unseen.activeId,
+              });
+              // Baseline becomes the freshly read cloud doc: if another
+              // device edited a shared budget meanwhile, the follow-up
+              // push sees the difference and converges (local wins).
+              lastSynced = cloud;
+            }
+          }
+        }
         if (!cancelled) setStatus("synced");
       } catch {
         if (!cancelled) setStatus("error");
@@ -134,6 +193,7 @@ export function CloudSync() {
         if (cancelled) return;
         const synced = useBudgetStore.getState();
         lastSynced = { budgets: synced.budgets, order: synced.order, activeId: synced.activeId };
+        lastSyncedProfile = useCompanyStore.getState().profile;
         setStatus("synced");
         // Subscribe only after the initial reconciliation, so the pull
         // itself never echoes back as a push.
@@ -151,6 +211,7 @@ export function CloudSync() {
       if (event === "SIGNED_OUT") {
         teardown();
         lastSynced = null;
+        lastSyncedProfile = null;
         setStatus("local");
       }
     });

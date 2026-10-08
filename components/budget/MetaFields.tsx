@@ -1,21 +1,36 @@
 "use client";
 
 import { selectActiveBudget, useBudgetStore } from "@/lib/store";
-import { isUnpriced } from "@/lib/calc";
+import { isUnpriced, missingDocTexts, type DocTextKey } from "@/lib/calc";
 import { useStrings } from "@/lib/locale";
 
-/** Number/date/client/address fields plus the unpriced-items pill. */
+/** Number/date/client/address fields plus the warning pills. */
 export function MetaFields() {
   const { setMeta } = useBudgetStore();
   const budget = useBudgetStore(selectActiveBudget);
   const t = useStrings();
   if (!budget) return null;
   const unpricedCount = budget.items.filter(isUnpriced).length;
+  const missingTexts = missingDocTexts(budget);
 
   const scrollToFirstUnpriced = () => {
     const first = budget.items.find(isUnpriced);
     if (first)
       document.getElementById(`item-row-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const sectionLabel: Record<DocTextKey, string> = {
+    intro: t["section.intro"],
+    terms: t["section.terms"],
+    payment: t["section.payment"],
+  };
+
+  const scrollToFirstMissingText = () => {
+    const key = missingDocTexts(budget)[0];
+    if (!key) return;
+    const el = document.querySelector(`[data-nav-id="meta:${key}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (el as HTMLElement | null)?.focus?.({ preventScroll: true });
   };
 
   return (
@@ -75,6 +90,16 @@ export function MetaFields() {
             className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
           >
             ⚠ {unpricedCount} {unpricedCount === 1 ? t["unpriced.pill.one"] : t["unpriced.pill.other"]}
+          </button>
+        ) : null}
+        {missingTexts.length > 0 ? (
+          <button
+            type="button"
+            onClick={scrollToFirstMissingText}
+            title={t["doctexts.scrollHint"]}
+            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
+          >
+            ⚠ {missingTexts.map((key) => sectionLabel[key]).join(", ")}
           </button>
         ) : null}
       </div>
