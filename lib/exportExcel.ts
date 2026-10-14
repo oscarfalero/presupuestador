@@ -4,6 +4,7 @@ import { fmt, getStrings } from "./i18n";
 import { useLocaleStore } from "./locale";
 import { useCompanyStore, type CompanyProfile } from "./company";
 import { formatPhone } from "./phone";
+import { formatDate } from "./format";
 import type { Budget } from "./budget-types";
 
 /**
@@ -48,6 +49,7 @@ export async function exportClientBudgetToExcel(
   // Loaded on demand so editing never pays the spreadsheet library cost.
   const { default: ExcelJS } = await import("exceljs");
   const t = getStrings(useLocaleStore.getState().locale);
+  const locale = useLocaleStore.getState().locale;
   const wb = new ExcelJS.Workbook();
   wb.creator = "Presupuestador";
   // ---- Sheet 1: executive summary ------------------------------------
@@ -91,7 +93,7 @@ export async function exportClientBudgetToExcel(
     const r = ws.addRow({ title: `${t["export.number"]} ${client.number}` });
     r.font = { bold: true };
   }
-  if (client.date) ws.addRow({ title: client.date });
+  if (client.date) ws.addRow({ title: formatDate(client.date, locale) });
   if (client.clientName) ws.addRow({ title: `${t["export.client"]} ${client.clientName}` });
   if (client.address) {
     const r = tallRow(ws, { title: `${t["meta.address"]}: ${client.address}` }, blockLines(client.address));

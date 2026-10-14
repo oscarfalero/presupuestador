@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useBudgetStore } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
 import { useLocale, useStrings } from "@/lib/locale";
-import { formatMoney } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { ConfirmButton, TrashIcon } from "./ConfirmButton";
 import { AccountMenu } from "./AccountMenu";
 import { SyncBadge } from "./SyncBadge";
@@ -61,7 +61,7 @@ export function BudgetsPage() {
               b.ivaPct,
               b.ivaIncluded,
             );
-            const meta = [b.number, b.clientName, b.date].filter((s) => s && s.trim() !== "").join(" · ");
+            const meta = [b.number, b.clientName, b.date ? formatDate(b.date, locale) : ""].filter((s) => s && s.trim() !== "").join(" · ");
             return (
               <li
                 key={id}

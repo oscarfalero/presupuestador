@@ -4,7 +4,7 @@ import { getStrings } from "@/lib/i18n";
 import { useLocaleStore } from "@/lib/locale";
 import { useCompanyStore } from "@/lib/company";
 import { formatPhone } from "@/lib/phone";
-import { formatMoney } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { pdfBase } from "./pdf/base";
 import { PdfCompanyHeader } from "./pdf/PdfCompanyHeader";
 import { PdfSummary } from "./pdf/PdfSummary";
@@ -48,7 +48,7 @@ export function BudgetPdfDocument({ budget }: { budget: Budget }) {
             {t["export.number"]} {client.number}
           </Text>
         ) : null}
-        {client.date ? <Text style={pdfBase.meta}>{client.date}</Text> : null}
+        {client.date ? <Text style={pdfBase.meta}>{formatDate(client.date, locale)}</Text> : null}
         {client.clientName ? (
           <Text style={pdfBase.meta}>
             {t["export.client"]} {client.clientName}

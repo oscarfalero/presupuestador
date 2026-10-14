@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, formatMoney, formatQty } from "./format";
+import { formatDate, formatDateTime, formatMoney, formatQty } from "./format";
 
 describe("formatDateTime (issue #56)", () => {
   // NB: Node test envs often ship minimal ICU data, so month names may
@@ -16,6 +16,22 @@ describe("formatDateTime (issue #56)", () => {
   it("falls back to the raw string for garbage input", () => {
     expect(formatDateTime("not-a-date", "es")).toBe("not-a-date");
     expect(formatDateTime("", "en")).toBe("");
+  });
+});
+
+describe("formatDate (issue #38)", () => {
+  it("reorders ISO to day-first in Spanish", () => {
+    expect(formatDate("2026-10-05", "es")).toBe("05/10/2026");
+  });
+
+  it("reorders ISO to month-first in English", () => {
+    expect(formatDate("2026-10-05", "en")).toBe("10/05/2026");
+  });
+
+  it("tolerates full ISO datetimes, falls back on garbage", () => {
+    expect(formatDate("2026-10-05T14:32:00.000Z", "es")).toBe("05/10/2026");
+    expect(formatDate("", "es")).toBe("");
+    expect(formatDate("not-a-date", "en")).toBe("not-a-date");
   });
 });
 
