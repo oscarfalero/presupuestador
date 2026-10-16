@@ -37,22 +37,22 @@ export function MetaFields() {
 
   return (
     <>
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm max-md:flex-col max-md:items-stretch">
+        <label className="flex items-center gap-2 max-md:w-full">
           {t["meta.number"]}
           <input
-            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-28 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 max-md:min-h-11 max-md:min-w-0 max-md:flex-1"
             value={budget.number}
             onChange={(e) => setMeta({ number: e.target.value })}
             aria-label={t["meta.number"]}
             data-nav-id="meta:number"
           />
         </label>
-        <label className="flex items-center gap-2">
+        <label className="flex items-center gap-2 max-md:w-full">
           {t["meta.date"]}
           <input
             type="date"
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 max-md:min-h-11 max-md:min-w-0 max-md:flex-1"
             value={budget.date}
             onChange={(e) => setMeta({ date: e.target.value })}
             aria-label={t["meta.date"]}
@@ -61,11 +61,11 @@ export function MetaFields() {
         </label>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm max-md:flex-col max-md:items-stretch">
+        <label className="flex items-center gap-2 max-md:w-full">
           {t["meta.client"]}
           <input
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 max-md:min-h-11 max-md:min-w-0 max-md:flex-1"
             value={budget.clientName}
             onChange={(e) => setMeta({ clientName: e.target.value })}
             placeholder={t["meta.clientPlaceholder"]}
@@ -73,10 +73,10 @@ export function MetaFields() {
             data-nav-id="meta:client"
           />
         </label>
-        <label className="flex min-w-52 flex-1 items-center gap-2">
+        <label className="flex min-w-52 flex-1 items-center gap-2 max-md:min-w-0 max-md:w-full">
           {t["meta.address"]}
           <input
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 max-md:min-h-11"
             value={budget.address}
             onChange={(e) => setMeta({ address: e.target.value })}
             placeholder={t["meta.address"]}
@@ -89,7 +89,7 @@ export function MetaFields() {
             type="button"
             onClick={scrollToFirstUnpriced}
             title={t["unpriced.scrollHint"]}
-            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
+            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70 max-md:min-h-11 max-md:self-start max-md:py-2 max-md:text-left"
           >
             ⚠ {unpricedCount} {unpricedCount === 1 ? t["unpriced.pill.one"] : t["unpriced.pill.other"]}
           </button>
@@ -99,7 +99,7 @@ export function MetaFields() {
             type="button"
             onClick={scrollToFirstMissingText}
             title={t["doctexts.scrollHint"]}
-            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70"
+            className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-100 dark:hover:bg-amber-900/70 max-md:min-h-11 max-md:self-start max-md:py-2 max-md:text-left"
           >
             ⚠ {missingTexts.map((key) => sectionLabel[key]).join(", ")}
           </button>

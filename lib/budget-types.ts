@@ -98,9 +98,26 @@ export function emptyBreakdown(): ItemBreakdown {
   return { materials: [], labor: { hours: 0, ratePerHour: 0 }, otherCost: 0, notes: "" };
 }
 
+/**
+ * Generates an RFC 4122 v4 UUID. Uses `crypto.randomUUID()` in secure
+ * contexts (`localhost` / HTTPS) and falls back to `crypto.getRandomValues`
+ * over plain HTTP on LAN IPs (where `crypto.randomUUID` is unavailable).
+ */
+export function uid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function createBudget(partial?: Partial<Budget>): Budget {
   return {
-    id: crypto.randomUUID(),
+    id: uid(),
     number: "",
     name: "Untitled budget",
     clientName: "",

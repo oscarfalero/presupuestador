@@ -33,7 +33,7 @@ export function SummaryBlock() {
           <label className="flex items-center gap-2">
             {t["meta.vat"]}
             <select
-              className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900"
+              className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:[&>option]:bg-zinc-900 max-md:min-h-11"
               value={budget.ivaIncluded ? String(budget.ivaPct) : "excluded"}
               onChange={(e) =>
                 e.target.value === "excluded"

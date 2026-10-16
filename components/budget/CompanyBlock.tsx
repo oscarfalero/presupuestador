@@ -69,7 +69,7 @@ export function CompanyBlock() {
               <InlineText value={profile.web} onCommit={(web) => updateProfile({ web })} ariaLabel={t["company.web"]} navId="company:web" />
             </span>
           </label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-md:flex-wrap">
             <span>{t["company.title"]} logo</span>
             {profile.logoDataUrl ? (
               <>
@@ -78,7 +78,7 @@ export function CompanyBlock() {
                 <button
                   type="button"
                   onClick={() => clearLogo()}
-                  className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 max-md:min-h-11 max-md:px-4"
                 >
                   {t["company.removeLogo"]}
                 </button>
@@ -87,7 +87,7 @@ export function CompanyBlock() {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="cursor-pointer rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                className="cursor-pointer rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900 max-md:min-h-11 max-md:px-4"
               >
                 {t["company.uploadLogo"]}
               </button>

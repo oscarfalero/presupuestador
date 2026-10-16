@@ -40,7 +40,7 @@ export function PasswordForm() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t["auth.newPassword"]}
           aria-label={t["auth.newPassword"]}
-          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-400"
+          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-400 max-md:min-h-11"
         />
         {notice ? (
           <p
@@ -53,7 +53,7 @@ export function PasswordForm() {
         <button
           type="submit"
           disabled={busy || password.length < 6}
-          className="cursor-pointer self-start rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="cursor-pointer self-start rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 max-md:min-h-11"
         >
           {t["auth.setPassword"]}
         </button>

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { mergePersistedState, selectActiveBudget, useBudgetStore } from "./store";
 import { emptyCompany, useCompanyStore } from "./company";
 import { renumber } from "./calc";
-import { createBudget, type Budget, type BudgetItem } from "./budget-types";
+import { createBudget, uid, type Budget, type BudgetItem } from "./budget-types";
 
 function item(overrides: Partial<BudgetItem> & { id: string; chapterId: string }): BudgetItem {
   return {
@@ -380,5 +380,16 @@ describe("updatedAt stamps (issue #56)", () => {
       useBudgetStore.getState(),
     );
     expect(next.budgets["b-test"].updatedAt).toBe("2026-01-01T00:00:00.000Z");
+  });
+
+  it("uid falls back to getRandomValues in non-secure HTTP contexts", () => {
+    const original = crypto.randomUUID;
+    Object.defineProperty(crypto, "randomUUID", { value: undefined, configurable: true });
+    try {
+      const id = uid();
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    } finally {
+      Object.defineProperty(crypto, "randomUUID", { value: original, configurable: true });
+    }
   });
 });

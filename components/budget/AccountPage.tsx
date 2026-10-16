@@ -23,14 +23,14 @@ export function AccountPage({ section }: { section: AccountSection }) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
+    <div className="mx-auto w-full max-w-5xl px-6 py-10 max-md:px-4 max-md:py-6">
       <Link
         href="/"
-        className="mb-4 inline-block text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
+        className="mb-4 inline-block text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 max-md:inline-flex max-md:min-h-11 max-md:items-center"
       >
         ← {t["budgets.title"]}
       </Link>
-      <h1 className="text-3xl font-semibold tracking-tight">{t["account.title"]}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight max-md:text-2xl">{t["account.title"]}</h1>
       <div className="mt-6 flex flex-col gap-6 md:flex-row">
         <nav aria-label={t["account.title"]} className="flex shrink-0 gap-2 md:w-52 md:flex-col">
           {items.map((item) => {
@@ -40,7 +40,7 @@ export function AccountPage({ section }: { section: AccountSection }) {
                 key={item.section}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium md:flex-none ${
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium md:flex-none max-md:inline-flex max-md:min-h-11 max-md:items-center ${
                   active
                     ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
                     : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"

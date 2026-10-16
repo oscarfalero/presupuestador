@@ -7,9 +7,9 @@ import { useStrings } from "@/lib/locale";
 import { moveEditFocus, useEnterEditSignal } from "@/lib/edit-focus";
 
 const displayCls =
-  "w-full cursor-text rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800";
+  "w-full cursor-text rounded px-1 py-0.5 text-left hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-zinc-400 dark:hover:bg-zinc-800 max-md:min-h-11 max-md:px-2 max-md:py-2";
 const inputCls =
-  "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-300";
+  "w-full rounded border border-zinc-400 bg-white px-1 py-0.5 outline-none focus:border-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-300 max-md:min-h-11 max-md:px-2 max-md:py-2";
 
 interface NavProps {
   /** Unique id locating this field in the Tab order. */
@@ -348,7 +348,7 @@ export function InlineUnit({ value, onCommit, ariaLabel, navId }: InlineUnitProp
       }}
       aria-label={ariaLabel}
       title={t["field.unit"]}
-      className="cursor-pointer appearance-none rounded border border-transparent bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:border-zinc-400 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:border-zinc-600 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900"
+      className="cursor-pointer appearance-none rounded border border-transparent bg-transparent px-1 py-0.5 text-center hover:bg-zinc-100 focus:border-zinc-400 focus:bg-white focus:outline-2 focus:outline-zinc-400 dark:hover:bg-zinc-800 dark:focus:border-zinc-600 dark:focus:bg-zinc-900 dark:[&>option]:bg-zinc-900 max-md:min-h-11 max-md:w-full max-md:px-2 max-md:text-left"
     >
       {UNITS.map((u) => (
         <option key={u} value={u}>

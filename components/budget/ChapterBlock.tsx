@@ -137,19 +137,19 @@ export function ChapterBlock({ chapter, items, allItems, fresh, leaving, onRenam
       }}
       className={`overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950${fresh ? " anim-enter" : ""}${leaving ? " anim-leave" : ""}`}
     >
-      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 dark:bg-zinc-900">
+      <div className="flex items-center gap-2 bg-zinc-50 px-2 py-2 dark:bg-zinc-900 max-md:flex-wrap">
         <button
           type="button"
           aria-label={`${t["chapter.drag"]} ${chapter.order + 1}`}
           title={t["chapter.reorderHint"]}
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+          className="cursor-grab touch-none rounded px-1 py-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 max-md:inline-flex max-md:size-11 max-md:items-center max-md:justify-center max-md:select-none"
         >
           ⠿
         </button>
         <span className="font-semibold whitespace-nowrap tabular-nums">{chapter.order + 1}.</span>
-        <div className="min-w-0 flex-1 font-semibold">
+        <div className="min-w-0 flex-1 font-semibold max-md:basis-[calc(100%-5rem)]">
           <InlineText
             value={chapter.title}
             onCommit={(title) => onRename(chapter.id, title)}
@@ -158,7 +158,7 @@ export function ChapterBlock({ chapter, items, allItems, fresh, leaving, onRenam
             navId={`chapter:${chapter.id}:title`}
           />
         </div>
-        <span className="pr-2 font-bold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100">
+        <span className="pr-2 font-bold whitespace-nowrap text-zinc-900 tabular-nums dark:text-zinc-100 max-md:ml-auto">
           {t["chapter.subtotal"]} {formatMoney(chapterSubtotal(allItems, chapter.id), locale)}
         </span>
         <ConfirmButton
@@ -170,12 +170,12 @@ export function ChapterBlock({ chapter, items, allItems, fresh, leaving, onRenam
           }
           onConfirm={() => onRemoveChapter(chapter.id)}
           ariaLabel={`${t["chapter.delete"]} ${chapter.order + 1}`}
-          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500"
+          className="inline-flex size-7 cursor-pointer items-center justify-center rounded text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400 max-md:size-11"
+          confirmClassName="rounded bg-red-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white hover:bg-red-500 max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3"
         />
       </div>
 
-      <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400 dark:text-zinc-500`}>
+      <div className={`${ITEM_GRID_CLS} px-2 py-1 text-left text-xs uppercase text-zinc-400 dark:text-zinc-500 max-md:hidden`}>
         <span />
         <span className="px-1 font-medium">{t["col.code"]}</span>
         <span className="px-1 font-medium">{t["col.title"]}</span>
@@ -230,7 +230,7 @@ export function ChapterBlock({ chapter, items, allItems, fresh, leaving, onRenam
         <button
           type="button"
           onClick={handleAddItem}
-          className="w-full cursor-pointer border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+          className="w-full cursor-pointer border-t border-zinc-100 px-4 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 max-md:min-h-11"
         >
           {t["item.add"]}
         </button>
