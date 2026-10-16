@@ -20,7 +20,7 @@ export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHe
   if (!budget) return null;
 
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
+    <header className="flex flex-wrap items-end justify-between gap-4 max-md:flex-col max-md:items-stretch max-md:gap-3">
       <div className="min-w-0 flex-1">
         <InlineText
           value={budget.name}
@@ -28,21 +28,21 @@ export function EditorHeader({ exporting, onExportExcel, onExportPdf }: EditorHe
           ariaLabel={t["budget.name"]}
           required
           navId="meta:name"
-          className="text-3xl font-semibold tracking-tight"
+          className="text-3xl font-semibold tracking-tight max-md:text-2xl"
         />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 max-md:flex-wrap">
         <SyncBadge />
         <AccountMenu />
         <button
-          className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="cursor-pointer rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 max-md:min-h-11 max-md:flex-1 max-md:px-3"
           disabled={exporting !== null}
           onClick={onExportExcel}
         >
           {exporting === "excel" ? t["header.preparing"] : t["header.exportExcel"]}
         </button>
         <button
-          className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800 max-md:min-h-11 max-md:flex-1 max-md:px-3"
           disabled={exporting !== null}
           onClick={onExportPdf}
         >

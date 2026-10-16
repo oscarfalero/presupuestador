@@ -107,7 +107,7 @@ export function AccountMenu() {
 
   const initial = name.trim().charAt(0).toUpperCase();
   const itemCls =
-    "flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800";
+    "flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 max-md:min-h-11";
 
   return (
     <div ref={rootRef} className="relative">
@@ -118,14 +118,14 @@ export function AccountMenu() {
         aria-haspopup="menu"
         aria-label={t["account.menu"]}
         title={t["account.menu"]}
-        className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-zinc-300 bg-zinc-100 text-sm font-semibold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+        className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-zinc-300 bg-zinc-100 text-sm font-semibold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 max-md:size-11"
       >
         {initial || <UserIcon />}
       </button>
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 max-md:right-auto max-md:left-0 max-md:max-w-[calc(100vw-2rem)]"
         >
           {accountEmail ? (
             <>

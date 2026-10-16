@@ -58,13 +58,13 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
   return (
     <div
       role="status"
-      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg dark:bg-white dark:text-zinc-900"
+      className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg dark:bg-white dark:text-zinc-900 max-md:right-3 max-md:bottom-3 max-md:left-3 max-md:translate-x-0 max-md:rounded-2xl max-md:p-3"
     >
-      <span className="whitespace-nowrap">{label}</span>
+      <span className="whitespace-nowrap max-md:min-w-0 max-md:flex-1 max-md:truncate">{label}</span>
       <button
         type="button"
         onClick={() => undoDelete()}
-        className="cursor-pointer rounded-full bg-white px-3 py-1 font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-700"
+        className="cursor-pointer rounded-full bg-white px-3 py-1 font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-700 max-md:min-h-11 max-md:shrink-0 max-md:px-4 max-md:whitespace-nowrap"
       >
         {t["undo.action"]} ({fmt(t["undo.seconds"], { n: secondsLeft })})
       </button>
@@ -72,7 +72,7 @@ function ToastBody({ snapshot }: { snapshot: DeletedSnapshot }) {
         type="button"
         onClick={() => dismissDelete()}
         aria-label={t["undo.dismiss"]}
-        className="cursor-pointer rounded-full px-2 text-zinc-400 hover:text-white dark:text-zinc-500 dark:hover:text-zinc-900"
+        className="cursor-pointer rounded-full px-2 text-zinc-400 hover:text-white dark:text-zinc-500 dark:hover:text-zinc-900 max-md:inline-flex max-md:size-11 max-md:shrink-0 max-md:items-center max-md:justify-center"
       >
         ✕
       </button>

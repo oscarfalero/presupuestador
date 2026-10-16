@@ -2,7 +2,7 @@ import { create, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
 import { renumber } from "./calc";
 import { useCompanyStore } from "./company";
-import { createBudget, emptyBreakdown, type Budget, type BudgetItem, type Chapter, type ItemBreakdown, type MaterialCost } from "./budget-types";
+import { createBudget, emptyBreakdown, uid, type Budget, type BudgetItem, type Chapter, type ItemBreakdown, type MaterialCost } from "./budget-types";
 
 export type DeletedSnapshot =
   | { kind: "item"; budgetId: string; item: BudgetItem; at: number }
@@ -40,10 +40,6 @@ interface BudgetState {
   removeBudget: (id: string) => void;
   setActiveBudget: (id: string | null) => void;
   reset: () => void;
-}
-
-function uid(): string {
-  return crypto.randomUUID();
 }
 
 /** Active budget for selectors and one-shot getState reads. */
@@ -319,6 +315,7 @@ export const useBudgetStore = create<BudgetState>()(
           };
         });
       },
+
       removeItem: (id) => {
         const s = get();
         const budgetId = s.activeId;
