@@ -84,6 +84,14 @@ export interface Budget {
   terms: string;
   payment: string;
   /**
+   * ISO timestamp of creation. Drives the budgets list order (newest
+   * first, issue #62); never user-edited and never re-stamped on edit.
+   * Absent on pre-#62 docs: rehydration derives a stable value from the
+   * stored order (see `backfillCreatedAt` in `lib/store.ts`), so a stamp
+   * may be synthetic — treat it as ordering metadata, not a real date.
+   */
+  createdAt?: string;
+  /**
    * ISO timestamp of the last local edit. Absent for legacy docs —
    * unknown, never backfilled with an invented value (issue #56).
    */
@@ -128,6 +136,7 @@ export function createBudget(partial?: Partial<Budget>): Budget {
     intro: "",
     terms: "",
     payment: "",
+    createdAt: new Date().toISOString(),
     chapters: [],
     items: [],
     ...partial,

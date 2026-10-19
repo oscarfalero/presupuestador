@@ -9,8 +9,12 @@ export type DeletedSnapshot =
   | { kind: "chapter"; budgetId: string; chapter: Chapter; items: BudgetItem[]; at: number };
 
 interface BudgetState {
-  /** All budgets keyed by id; `order` drives the list. */
+  /** All budgets keyed by id. */
   budgets: Record<string, Budget>;
+  /**
+   * Insertion/merge order (newest inserted first). NOT the display order:
+   * the list is derived from `createdAt` via `sortBudgetIds` (issue #62).
+   */
   order: string[];
   /** Implicit context for every editing action below. Set from the route. */
   activeId: string | null;
@@ -91,6 +95,58 @@ export function suggestBudgetNumber(budgets: Record<string, Budget>): string {
   return `${year}-${String(max + 1).padStart(3, "0")}`;
 }
 
+/**
+ * Display order for the budgets index (issue #62): newest created first.
+ *
+ * `createdAt` is the only correct key: `updatedAt` would reshuffle the
+ * list whenever an old budget is edited, and `number` is user-editable
+ * free text (empty, duplicated or non-numeric), so it only breaks ties
+ * (natural, descending: a later creation usually has the higher number).
+ * The id is the last resort, keeping the result deterministic and
+ * identical across reloads and devices.
+ */
+export function sortBudgetIds(
+  ids: readonly string[],
+  budgets: Record<string, Budget>,
+): string[] {
+  const createdAt = (id: string) => budgets[id]?.createdAt ?? "";
+  return [...ids].sort((a, b) => {
+    const ca = createdAt(a);
+    const cb = createdAt(b);
+    // ISO-8601 UTC strings compare chronologically as plain strings.
+    if (ca !== cb) return ca < cb ? 1 : -1;
+    const byNumber = compareNatural(budgets[b]?.number ?? "", budgets[a]?.number ?? "");
+    if (byNumber !== 0) return byNumber;
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+}
+
+/**
+ * Dependency-free natural compare: digit runs compare numerically
+ * ("2026-10" > "2026-9"), anything else by code unit. Deliberately not
+ * `localeCompare`, whose ICU collation can differ between the Node build
+ * and a browser (and across devices), which would make same-millisecond
+ * ties sort differently per runtime.
+ */
+function compareNatural(a: string, b: string): number {
+  const ax = a.match(/\d+|\D+/g) ?? [];
+  const bx = b.match(/\d+|\D+/g) ?? [];
+  const shared = Math.min(ax.length, bx.length);
+  for (let i = 0; i < shared; i++) {
+    const x = ax[i];
+    const y = bx[i];
+    if (x === y) continue;
+    if (/^\d+$/.test(x) && /^\d+$/.test(y)) {
+      const diff = Number(x) - Number(y);
+      if (diff !== 0) return diff;
+      // Same value with different padding ("01" vs "1"): longer wins.
+      return x.length - y.length;
+    }
+    return x < y ? -1 : 1;
+  }
+  return ax.length - bx.length;
+}
+
 function sampleBudget(): Budget {
   const chapter1: Chapter = { id: uid(), order: 0, title: "Masonry" };
   const chapter2: Chapter = { id: uid(), order: 1, title: "Plumbing" };
@@ -149,9 +205,80 @@ function sampleState(): Pick<BudgetState, "budgets" | "order" | "activeId"> {
 
 const LEGACY_KEY = "presupuestador-budget-v1";
 
+/**
+ * Base timestamp for synthetic creation dates of pre-#62 budgets. Far
+ * enough in the past that anything created after the upgrade sorts above
+ * them, no matter when the upgrade happens.
+ */
+const LEGACY_CREATED_AT_BASE = Date.UTC(2000, 0, 1);
+
+/** Canonical `toISOString()` output: the only shape this app writes. */
+const ISO_STAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
+/**
+ * A stamp this app can trust: canonical shape AND a real calendar instant.
+ * Shape alone is not enough — "2026-13-45T99:99:99.000Z" matches the regex
+ * but parses to NaN.
+ */
+function isTrustedStamp(stamp: string | undefined): stamp is string {
+  return Boolean(stamp) && ISO_STAMP_RE.test(stamp as string) && Number.isFinite(Date.parse(stamp as string));
+}
+
 function backfill(b: Budget): Budget {
   const defined = Object.fromEntries(Object.entries(b).filter(([, v]) => v !== undefined));
-  return { ...createBudget(), ...defined, id: b.id ?? uid() };
+  // `createBudget()` stamps "now" for real new budgets. A legacy doc never
+  // had `createdAt`, and inventing "now" here would put every old budget
+  // above the actually-newest ones (issue #62): absent stays absent and
+  // `backfillCreatedAt` derives a stable value from the stored order.
+  const defaults = createBudget();
+  if (defined.createdAt === undefined) delete defaults.createdAt;
+  return { ...defaults, ...defined, id: b.id ?? uid() };
+}
+
+/**
+ * Stable creation timestamps for budgets stored before issue #62.
+ * Derived from the persisted display order (first entry = newest,
+ * millisecond-stepped) so the list the user already saw keeps its
+ * relative order, and idempotent — merging twice yields identical
+ * timestamps. Existing canonical values are never overwritten.
+ *
+ * Base selection matters: a doc that already holds real stamps also
+ * holds budgets created by an outdated client (no `createdAt` at all).
+ * Those are recent, so they get stamped just above the newest known
+ * value instead of the 2000 sentinel, which would bury them at the
+ * bottom of the list forever.
+ */
+function backfillCreatedAt(
+  budgets: Record<string, Budget>,
+  order: readonly string[],
+): Record<string, Budget> {
+  const newestMs = order.reduce((max, id) => {
+    const stamp = budgets[id]?.createdAt;
+    if (!isTrustedStamp(stamp)) return max;
+    const ms = Date.parse(stamp);
+    return ms > max ? ms : max;
+  }, Number.NEGATIVE_INFINITY);
+  // Shape-valid but calendar-invalid stamps (month 13, hour 99…) parse to
+  // NaN and are ignored above; `new Date(NaN).toISOString()` would throw,
+  // aborting the whole rehydrate merge. Fall back to the sentinel base.
+  const base = Number.isFinite(newestMs) ? newestMs : LEGACY_CREATED_AT_BASE;
+  let next: Record<string, Budget> | null = null;
+  order.forEach((id, index) => {
+    const budget = budgets[id];
+    if (!budget) return;
+    // Trust only canonical, calendar-valid stamps: a tampered/foreign doc
+    // can carry an unparseable or local-time value, which would make
+    // `toISOString` throw (silently aborting the whole rehydrate) or stamp
+    // different values per timezone. Anything else is repaired below.
+    if (isTrustedStamp(budget.createdAt)) return;
+    next ??= { ...budgets };
+    // Milliseconds, not seconds: the synthetic overshoot above the newest
+    // real stamp stays bounded by the list length, so a budget created
+    // moments later still sorts above them.
+    const offset = order.length - index;
+    next[id] = { ...budget, createdAt: new Date(base + offset).toISOString() };
+  });
+  return next ?? budgets;
 }
 
 type PersistedShape = Pick<BudgetState, "budgets" | "order" | "activeId">;
@@ -422,6 +549,7 @@ export const useBudgetStore = create<BudgetState>()(
           id: uid(),
           name: `${source.name}${copySuffix}`,
           number: suggestBudgetNumber(s.budgets),
+          createdAt: nowIso(),
           updatedAt: nowIso(),
           chapters: source.chapters.map((c) => ({ ...c, id: chapterIds.get(c.id) as string })),
           items: source.items.map((i) => ({
@@ -450,8 +578,12 @@ export const useBudgetStore = create<BudgetState>()(
         const order = s.order.filter((b) => b !== id);
         let activeId = s.activeId;
         if (activeId === id) {
-          const idx = s.order.indexOf(id);
-          activeId = order[Math.min(idx, order.length - 1)] ?? null;
+          // Fall back like the list does: the budget that took the deleted
+          // row's place in display order (newest first), not insertion order.
+          const removedAt = sortBudgetIds(s.order, s.budgets).indexOf(id);
+          const visible = sortBudgetIds(order, budgets);
+          const nextAt = Math.min(Math.max(removedAt, 0), visible.length - 1);
+          activeId = visible[nextAt] ?? null;
         }
         set({
           budgets,
@@ -482,11 +614,17 @@ export function mergePersistedState(
   const p = persisted as Partial<BudgetState> | undefined;
   // Budgets already stored (possibly an explicitly emptied list).
   if (p?.budgets) {
-    const budgets: Record<string, Budget> = {};
-    for (const [id, b] of Object.entries(p.budgets)) budgets[id] = backfill(b);
-    const order = (p.order ?? Object.keys(budgets)).filter((id) => budgets[id]);
-    for (const id of Object.keys(budgets)) if (!order.includes(id)) order.push(id);
-    const activeId = p.activeId && budgets[p.activeId] ? p.activeId : (order[0] ?? null);
+    const stored: Record<string, Budget> = {};
+    for (const [id, b] of Object.entries(p.budgets)) stored[id] = backfill(b);
+    const order = (p.order ?? Object.keys(stored)).filter(
+      (id, index, ids) => stored[id] && ids.indexOf(id) === index,
+    );
+    for (const id of Object.keys(stored)) if (!order.includes(id)) order.push(id);
+    const budgets = backfillCreatedAt(stored, order);
+    const activeId =
+      (p.activeId && budgets[p.activeId] ? p.activeId : undefined) ??
+      sortBudgetIds(order, budgets)[0] ??
+      null;
     return { ...current, budgets, order, activeId };
   }
   // One-time migration from the single-budget key (removed afterwards
@@ -501,7 +639,8 @@ export function mergePersistedState(
         const budget = backfill(rest as Budget);
         if (!budget.intro?.trim() && details?.trim()) budget.intro = details.trim();
         localStorage.removeItem(LEGACY_KEY);
-        return { ...current, budgets: { [budget.id]: budget }, order: [budget.id], activeId: budget.id };
+        const budgets = backfillCreatedAt({ [budget.id]: budget }, [budget.id]);
+        return { ...current, budgets, order: [budget.id], activeId: budget.id };
       }
     } catch {
       // Corrupt legacy snapshot: fall through to the sample.

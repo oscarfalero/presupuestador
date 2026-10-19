@@ -100,4 +100,11 @@ describe("toClientBudget", () => {
     expect(serialized).not.toContain("updatedAt");
     expect(serialized).not.toContain("2026-05-05");
   });
+
+  it("never leaks the internal createdAt stamp (issue #62)", () => {
+    const stamped = { ...budgetWithBreakdown(), createdAt: "2026-04-04T04:04:04.000Z" };
+    const serialized = JSON.stringify(toClientBudget(stamped));
+    expect(serialized).not.toContain("createdAt");
+    expect(serialized).not.toContain("2026-04-04");
+  });
 });
