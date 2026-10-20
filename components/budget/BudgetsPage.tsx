@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useBudgetStore } from "@/lib/store";
+import { useBudgetStore, sortBudgetIds } from "@/lib/store";
 import { budgetSubtotal, budgetTotalWithIva } from "@/lib/calc";
 import { useLocale, useStrings } from "@/lib/locale";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -13,6 +13,7 @@ import { SyncBadge } from "./SyncBadge";
 /** Budgets index: create, open, duplicate and delete persisted budgets. */
 export function BudgetsPage() {
   const { budgets, order, newBudget, duplicateBudget, removeBudget } = useBudgetStore();
+  const sortedIds = sortBudgetIds(order, budgets);
   const t = useStrings();
   const locale = useLocale();
   const router = useRouter();
@@ -39,7 +40,7 @@ export function BudgetsPage() {
         </div>
       </header>
 
-      {order.length === 0 ? (
+      {sortedIds.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
           <p className="text-lg font-medium">{t["budgets.emptyTitle"]}</p>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t["budgets.emptyBody"]}</p>
@@ -53,7 +54,7 @@ export function BudgetsPage() {
         </div>
       ) : (
         <ul className="mt-8 space-y-3">
-          {order.map((id) => {
+          {sortedIds.map((id) => {
             const b = budgets[id];
             if (!b) return null;
             const total = budgetTotalWithIva(

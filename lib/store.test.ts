@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { mergePersistedState, selectActiveBudget, useBudgetStore } from "./store";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mergePersistedState, selectActiveBudget, sortBudgetIds, useBudgetStore } from "./store";
 import { emptyCompany, useCompanyStore } from "./company";
 import { renumber } from "./calc";
 import { createBudget, uid, type Budget, type BudgetItem } from "./budget-types";
@@ -391,5 +391,218 @@ describe("updatedAt stamps (issue #56)", () => {
     } finally {
       Object.defineProperty(crypto, "randomUUID", { value: original, configurable: true });
     }
+  });
+});
+
+describe("budgets list order (issue #62)", () => {
+  // The shared fixture is unrelated here (and its real-clock stamp would
+  // outrank the fake timers below): start from an empty list.
+  beforeEach(() => {
+    useBudgetStore.setState({ budgets: {}, order: [], activeId: null, lastDeleted: null });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const displayed = () => {
+    const s = useBudgetStore.getState();
+    return sortBudgetIds(s.order, s.budgets);
+  };
+
+  it("sorts by createdAt, ignoring the stored order array", () => {
+    const budgets: Record<string, Budget> = {
+      a: { ...fixture(), id: "a", number: "2026-001", createdAt: "2026-01-01T00:00:00.000Z" },
+      b: { ...fixture(), id: "b", number: "2026-002", createdAt: "2026-02-01T00:00:00.000Z" },
+      c: { ...fixture(), id: "c", number: "", createdAt: "2026-03-01T00:00:00.000Z" },
+    };
+    expect(sortBudgetIds(["a", "b", "c"], budgets)).toEqual(["c", "b", "a"]);
+    expect(sortBudgetIds(["c", "a", "b"], budgets)).toEqual(["c", "b", "a"]);
+  });
+
+  it("breaks timestamp ties deterministically by number, then id", () => {
+    const at = "2026-01-01T00:00:00.000Z";
+    const budgets: Record<string, Budget> = {
+      a: { ...fixture(), id: "a", number: "2026-001", createdAt: at },
+      b: { ...fixture(), id: "b", number: "2026-002", createdAt: at },
+      c: { ...fixture(), id: "c", number: "", createdAt: at },
+      d: { ...fixture(), id: "d", number: "", createdAt: at },
+      e: { ...fixture(), id: "e", number: "2026-9", createdAt: at },
+      f: { ...fixture(), id: "f", number: "2026-10", createdAt: at },
+    };
+    expect(sortBudgetIds(["a", "b", "c", "d"], budgets)).toEqual(["b", "a", "c", "d"]);
+    expect(sortBudgetIds(["d", "c", "b", "a"], budgets)).toEqual(["b", "a", "c", "d"]);
+    // Numeric-aware without locale/ICU collation: 10 sorts above 9.
+    expect(sortBudgetIds(["e", "f"], budgets)).toEqual(["f", "e"]);
+  });
+
+  it("ignores ids missing from the budgets map", () => {
+    const budgets: Record<string, Budget> = {
+      a: { ...fixture(), id: "a", createdAt: "2026-01-01T00:00:00.000Z" },
+    };
+    expect(sortBudgetIds(["ghost", "a"], budgets)).toEqual(["a", "ghost"]);
+    expect(sortBudgetIds(["a", "ghost"], budgets)).toEqual(["a", "ghost"]);
+  });
+
+  it("puts a new budget on top and a duplicate above the original", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-01T10:00:00.000Z"));
+    const original = useBudgetStore.getState().newBudget("Original");
+    expect(useBudgetStore.getState().budgets[original].createdAt).toBe("2026-05-01T10:00:00.000Z");
+    vi.setSystemTime(new Date("2026-05-02T10:00:00.000Z"));
+    const second = useBudgetStore.getState().newBudget("Second");
+    expect(displayed().slice(0, 2)).toEqual([second, original]);
+
+    // The copy is a new document: it carries its own creation stamp and
+    // lands above the source, wherever that one sits.
+    vi.setSystemTime(new Date("2026-05-03T10:00:00.000Z"));
+    const copy = useBudgetStore.getState().duplicateBudget(original, " (copia)");
+    expect(copy).not.toBeNull();
+    expect(useBudgetStore.getState().budgets[copy as string].createdAt).toBe(
+      "2026-05-03T10:00:00.000Z",
+    );
+    expect(displayed()[0]).toBe(copy);
+  });
+
+  it("editing an old budget updates updatedAt but never moves it", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T10:00:00.000Z"));
+    const older = useBudgetStore.getState().newBudget("Older");
+    vi.setSystemTime(new Date("2026-06-02T10:00:00.000Z"));
+    const newer = useBudgetStore.getState().newBudget("Newer");
+    vi.setSystemTime(new Date("2026-06-03T10:00:00.000Z"));
+    useBudgetStore.getState().setActiveBudget(older);
+    useBudgetStore.getState().setMeta({ clientName: "Edited" });
+    expect(useBudgetStore.getState().budgets[older]).toMatchObject({
+      createdAt: "2026-06-01T10:00:00.000Z",
+      updatedAt: "2026-06-03T10:00:00.000Z",
+    });
+    expect(displayed().slice(0, 2)).toEqual([newer, older]);
+  });
+
+  it("backfills legacy budgets from the stored order and preserves it", () => {
+    const legacy = (id: string) => ({ ...fixture(), id, createdAt: undefined });
+    const next = mergePersistedState(
+      { budgets: { a: legacy("a"), b: legacy("b"), c: legacy("c") }, order: ["c", "b", "a"], activeId: "c" },
+      useBudgetStore.getState(),
+    );
+    // First stored entry is the newest: strictly decreasing stamps.
+    expect(next.budgets.c.createdAt! > next.budgets.b.createdAt!).toBe(true);
+    expect(next.budgets.b.createdAt! > next.budgets.a.createdAt!).toBe(true);
+    expect(sortBudgetIds(["a", "b", "c"], next.budgets)).toEqual(["c", "b", "a"]);
+    // Anything created after the upgrade outranks the backfilled dates.
+    const fresh = { ...createBudget(), id: "fresh" };
+    expect(sortBudgetIds(["fresh", "a", "b", "c"], { ...next.budgets, fresh })[0]).toBe("fresh");
+  });
+
+  it("keeps backfilled dates idempotent and never overwrites real ones", () => {
+    const legacy = (id: string) => ({ ...fixture(), id, createdAt: undefined });
+    const persisted = { budgets: { a: legacy("a"), b: legacy("b") }, order: ["b", "a"], activeId: "b" };
+    const once = mergePersistedState(persisted, useBudgetStore.getState());
+    const twice = mergePersistedState(once, useBudgetStore.getState());
+    expect(twice.budgets).toEqual(once.budgets);
+
+    const kept = "2025-05-05T00:00:00.000Z";
+    const withStamp = mergePersistedState(
+      { budgets: { a: { ...legacy("a"), createdAt: kept } }, order: ["a"], activeId: "a" },
+      useBudgetStore.getState(),
+    );
+    expect(withStamp.budgets.a.createdAt).toBe(kept);
+  });
+
+  it("stamps unknown dates above the newest real one in mixed docs", () => {
+    // A stale pre-#62 tab can push a budget into an otherwise stamped doc:
+    // it is new, so it must not be buried at the 2000 sentinel.
+    const real = "2026-07-01T00:00:00.000Z";
+    const next = mergePersistedState(
+      {
+        budgets: {
+          old: { ...fixture(), id: "old", createdAt: undefined },
+          fresh: { ...fixture(), id: "fresh", createdAt: real },
+        },
+        order: ["old", "fresh"],
+        activeId: "fresh",
+      },
+      useBudgetStore.getState(),
+    );
+    expect(next.budgets.old.createdAt! > real).toBe(true);
+    expect(sortBudgetIds(["fresh", "old"], next.budgets)).toEqual(["old", "fresh"]);
+  });
+
+  it("uses the legacy sentinel for the one-time single-budget migration", () => {
+    localStorage.setItem(
+      "presupuestador-budget-v1",
+      JSON.stringify({
+        state: { budget: { ...fixture(), id: "legacy-1", createdAt: undefined } },
+        version: 0,
+      }),
+    );
+    const next = mergePersistedState(undefined, useBudgetStore.getState());
+    expect(next.budgets["legacy-1"].createdAt).toBe("2000-01-01T00:00:00.001Z");
+  });
+
+  it("repairs unusable creation stamps instead of throwing", () => {
+    const next = mergePersistedState(
+      {
+        budgets: {
+          bad: { ...fixture(), id: "bad", createdAt: "not-a-date" },
+          dateOnly: { ...fixture(), id: "dateOnly", createdAt: "2026-01-01" },
+          outOfRange: { ...fixture(), id: "outOfRange", createdAt: "2026-13-45T99:99:99.000Z" },
+          stamp: { ...fixture(), id: "stamp", createdAt: "2026-02-02T00:00:00.000Z" },
+        },
+        order: ["bad", "dateOnly", "outOfRange", "stamp"],
+        activeId: "stamp",
+      },
+      useBudgetStore.getState(),
+    );
+    // Canonical stamps survive untouched; anything else is re-derived.
+    expect(next.budgets.stamp.createdAt).toBe("2026-02-02T00:00:00.000Z");
+    for (const id of ["bad", "dateOnly", "outOfRange"]) {
+      expect(next.budgets[id].createdAt).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+      );
+      expect(next.budgets[id].createdAt! > next.budgets.stamp.createdAt!).toBe(true);
+      expect(Number.isNaN(Date.parse(next.budgets[id].createdAt!))).toBe(false);
+    }
+  });
+
+  it("deduplicates the persisted order array", () => {
+    const next = mergePersistedState(
+      {
+        budgets: { a: { ...fixture(), id: "a", createdAt: undefined } },
+        order: ["a", "a"],
+        activeId: "a",
+      },
+      useBudgetStore.getState(),
+    );
+    expect(next.order).toEqual(["a"]);
+  });
+
+  it("falls back to the display neighbour when the active budget is deleted", () => {
+    const stamped = (id: string, name: string, createdAt: string) => ({ ...fixture(), id, name, createdAt });
+    useBudgetStore.setState({
+      budgets: {
+        g: stamped("g", "Gamma", "2026-03-01T00:00:00.000Z"),
+        b: stamped("b", "Beta", "2026-02-01T00:00:00.000Z"),
+        a: stamped("a", "Alpha", "2026-01-01T00:00:00.000Z"),
+      },
+      order: ["a", "b", "g"],
+      activeId: "b",
+      lastDeleted: null,
+    });
+    useBudgetStore.getState().removeBudget("b");
+    // Display order is g, b, a: the row below the deleted one is a.
+    expect(useBudgetStore.getState().activeId).toBe("a");
+  });
+
+  it("clears the active budget when the last one is deleted", () => {
+    useBudgetStore.setState({
+      budgets: { a: { ...fixture(), id: "a", createdAt: "2026-01-01T00:00:00.000Z" } },
+      order: ["a"],
+      activeId: "a",
+      lastDeleted: null,
+    });
+    useBudgetStore.getState().removeBudget("a");
+    expect(useBudgetStore.getState().activeId).toBeNull();
   });
 });
